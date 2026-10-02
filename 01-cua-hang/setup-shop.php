@@ -108,7 +108,7 @@ if (!$menu_items || count($menu_items) < 5) {
     }
 }
 $locations = get_theme_mod('nav_menu_locations', []);
-$locations['storefront-primary'] = $menu_id;
+$locations['primary'] = $menu_id;
 set_theme_mod('nav_menu_locations', $locations);
 echo "Menu: $menu_id\n";
 

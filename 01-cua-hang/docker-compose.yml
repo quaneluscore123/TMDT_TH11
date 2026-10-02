@@ -29,6 +29,8 @@ services:
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./wp-content/plugins:/var/www/html/wp-content/plugins
       - ./wp-content/uploads:/var/www/html/wp-content/uploads
+      - ./wp-content/themes:/var/www/html/wp-content/themes
+      - ./wp-content/languages:/var/www/html/wp-content/languages
 
   nginx:
     image: nginx:alpine
