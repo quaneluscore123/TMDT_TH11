@@ -1,0 +1,20 @@
+shop.sql: OK
+wp-content.tgz: OK
+--- Ban phuc hoi (shop_restore_test) ---
+san pham	40
+don hang	5
+trang	9
+nguoi dung	1
+tuy chon	451
+tong ton kho	0
+checksum posts	103475958773
+--- CSDL dang chay (shop) ---
+san pham	40
+don hang	5
+trang	9
+nguoi dung	1
+tuy chon	451
+tong ton kho	0
+checksum posts	103475958773
+So file uploads giai nen: 292 / dang chay: 292
+KET QUA: PHUC HOI KHOP 100%

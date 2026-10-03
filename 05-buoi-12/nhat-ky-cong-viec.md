@@ -1,0 +1,17 @@
+# Nhật ký công việc — Buổi 12 (Nhóm 25)
+
+Ngày 02/10/2026. Cột **Người thực hiện** do nhóm điền (phần cấu hình và tài liệu được làm cùng trợ lý AI Claude Code; nhóm rà soát và chịu trách nhiệm nội dung).
+
+| Thời gian | Việc | Người thực hiện | Thời lượng | Vấn đề gặp phải | Cách xử lý |
+|---|---|---|---|---|---|
+| 15:05–15:20 | Khảo sát hiện trạng cửa hàng: plugin, theme, người dùng, cài đặt WooCommerce, mã plugin VNPay | | 15' | Quốc gia cửa hàng đang là US:CA; đơn vị khối lượng là lbs trong khi dữ liệu lưu theo kg; sản phẩm **không bật quản lý tồn kho** (không thử được luồng 1 và 6); WooCommerce không có danh sách tỉnh Việt Nam | Ghi vào `setup-shipping.php`: VN:HN, đơn vị kg, bật tồn kho từ `products.csv`; thêm 34 tỉnh/thành bằng `nhom25-checkout-vn.php` |
+| 15:20–15:25 | NV2: kiểm tra an toàn từ bên ngoài **trước khi sửa** (`tools/audit.sh`) | | 5' | — | Lưu `minh-chung/00-audit-truoc-khi-sua.txt` |
+| 15:25–15:30 | NV2: sao lưu CSDL + wp-content, **thử phục hồi** vào CSDL tạm và so sánh | | 5' | Lần đầu kiểm tra checksum lỗi do đường dẫn tuyệt đối trong `SHA256SUMS` | Ghi checksum theo tên tương đối; chạy lại → khớp 100% (`minh-chung/09-thu-phuc-hoi-sao-luu.txt`) |
+| 15:30–19:25 | Làm vượt kế hoạch (cập nhật WooCommerce 10.9.4, đổi nginx/compose, plugin xử lý kết quả VNPay, 4 vùng ship) | | ~4 giờ (phần lớn chờ sao chép file trên Docker Windows) | Không đúng kế hoạch nhóm đã chốt; Docker Desktop tự tắt giữa chừng (2 lần); máy kiểm thử không kết nối được `sandbox.vnpayment.vn` | Dừng lại, **hoàn tác** toàn bộ phần ngoài kế hoạch: khôi phục WooCommerce 9.7.1 từ git và CSDL từ bản sao lưu 15:27 (bản đã thử phục hồi — dùng thật lần này) |
+| 19:25–19:28 | NV1a: `setup-shipping.php` — 2 vùng, phí 15k–25k theo khối lượng, miễn phí từ 320.000đ; hiển thị phí ở trang sản phẩm | | 5' | WooCommerce không có cách tính theo tổng khối lượng đơn | Viết phương thức giao hàng nhỏ `mu-plugins/nhom25-shipping.php` (≤ 1 kg / > 1 kg) |
+| 19:28 | NV1a: kiểm tra 6 giỏ hàng mẫu (Hà Nội / Đà Nẵng, nhẹ / nặng, dưới / trên ngưỡng) | | 3' | — | Kết quả khớp bảng phí (ghi ở `nhat-ky-kiem-thu.md` mục 0) |
+| 19:20–19:30 | NV3: bảng đăng ký dữ liệu → 3 văn bản → đăng lên site (`setup-ho-so-tuan-thu.php`) | | 10' (soạn thảo từ trước, chỉnh lại theo kế hoạch) | Văn bản ban đầu ghi ngưỡng 500k và 4 vùng | Sửa cho khớp 320k, 2 vùng; bỏ câu "giữ giỏ khi thất bại" vì plugin VNPay gốc xóa giỏ |
+| 19:25–19:30 | NV2: xóa akismet, hello, wp-super-cache; cài MFA (Two Factor 0.16.0 – TOTP + mã dự phòng); giới hạn đăng nhập (`nhom25-security.php`) | | 5' | Two Factor bản mới nhất (0.17) yêu cầu WordPress 7.0 | Dùng 0.16.0 (yêu cầu WP 6.8) |
+| 19:30–19:35, 03/10 10:30 | NV2: kiểm tra an toàn **sau khi sửa** (cả đăng nhập đúng mật khẩu → phải hỏi mã 2 lớp), lập biên bản | | 20' | Lần thử đầu thông báo khóa ở lần sai thứ 5 vẫn lộ "mật khẩu cho tên người dùng admin không chính xác" | Sửa bộ lọc `login_errors`: đã khóa thì luôn trả thông báo khóa |
+| (chưa làm) | NV1b: thử 6 luồng bằng thẻ test VNPay sandbox, chụp ảnh | | | Máy chạy công cụ không vào được sandbox VNPay | Nhóm thử trên trình duyệt theo `nhat-ky-kiem-thu.md` |
+| 03/10 10:40 | Dump `db-init.sql`, commit, push | | 10' | Bản dump chứa khóa TOTP của admin → lộ lên GitHub công khai | Dump bảng `wp_usermeta` riêng, bỏ các dòng `_two_factor*`; khóa và mã dự phòng giữ trong `01-cua-hang/backup/admin-2fa-ma-du-phong.txt` (gitignore) |

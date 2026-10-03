@@ -40,6 +40,7 @@ Bài thực hành 11: Dựng cửa hàng và kiến trúc thông tin — WordPre
 4. **Mở trình duyệt**: https://butchixanh.local
    - Cảnh báo SSL là bình thường (chứng chỉ tự ký) → chọn *Nâng cao → Tiếp tục truy cập (không an toàn)*.
    - Đăng nhập admin: `admin` / `admin123`.
+   - Buổi 12: plugin Two Factor đã cài. Mỗi máy tự bật xác thực 2 lớp: *Người dùng → Hồ sơ → Two-Factor Options → Authenticator App* (khóa 2FA không được đưa lên git).
 
 ## Cấu trúc thư mục
 
@@ -49,6 +50,7 @@ Bài thực hành 11: Dựng cửa hàng và kiến trúc thông tin — WordPre
 | `02-dataset/` | Bộ dữ liệu CSV (`products.csv`, `woocommerce-import.csv`, ...) |
 | `03-phan-tich/` | Lược đồ dữ liệu, file phân tích |
 | `04-minh-chung/` | Ảnh minh chứng các trang |
+| `05-buoi-12/` | Buổi 12: nhật ký kiểm thử thanh toán, biên bản rà soát an toàn, hồ sơ tuân thủ (`ho-so-tuan-thu/`), nhật ký công việc |
 
 ## Sự cố thường gặp
 

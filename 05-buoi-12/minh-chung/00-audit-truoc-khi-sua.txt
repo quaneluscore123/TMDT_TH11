@@ -1,0 +1,67 @@
+### Thoi diem: 2026-10-02 15:22:49
+
+### [1] HTTPS - cac trang chinh (ma HTTP, giao thuc)
+/                200 https
+/cua-hang/       404 https
+/shop/           200 https
+/cart/           200 https
+/checkout/       302 https
+/my-account/     200 https
+/wp-login.php    200 https
+
+### [1b] Tai nguyen http:// (mixed content) tren trang chu va trang san pham
+href="http://gmpg.org/xfn/11
+(het danh sach)
+
+### [2] Chuyen huong bat buoc: go dia chi khong co https://
+http://butchixanh.local/ -> 301 https://butchixanh.local//nhttp://butchixanh.local/wp-login.php -> 301 https://butchixanh.local/wp-login.php/nhttp://localhost:8080/wp-login.php (bo qua nginx) -> 000/nhttp://localhost:8080 -> khong ket noi duoc (cong da dong)
+http://localhost:8081/wp-login.php (bo qua nginx) -> 302/nHSTS: KHONG CO
+
+### [5] Gioi han dang nhap: thu sai mat khau 8 lan lien tiep
+lan 1: 200 login_error" class="notice notice-error">
+
+lan 2: 200 login_error" class="notice notice-error">
+
+lan 3: 200 login_error" class="notice notice-error">
+
+lan 4: 200 login_error" class="notice notice-error">
+
+lan 5: 200 login_error" class="notice notice-error">
+
+lan 6: 200 login_error" class="notice notice-error">
+
+lan 7: 200 login_error" class="notice notice-error">
+
+lan 8: 200 login_error" class="notice notice-error">
+
+
+### [5b] Liet ke ten dang nhap
+/?author=1 -> 301 https://butchixanh.local/author/admin/
+[{"id":1,"name":"admin","url":"https:\/\/butchixanh.local","description":"","link":"https:\/\/butchixanh.local\/author\/admin\/","slug":"admin","avatar_urls":{"24":"https:\/\/secure.gravatar.com\/avat
+xmlrpc.php -> 200
+
+### [8] Thong bao loi chi tiet / lo thong tin he thong
+Header: 
+Server: nginx/1.31.6
+X-Powered-By: PHP/8.2.31
+404 page -> 404
+/wp-includes/rss-functions.php -> 200 
+/wp-content/plugins/woo-vnpay/woo-vnpay.php -> 200 
+/wp-content/plugins/woocommerce/includes/wc-core-functions.php -> 200 
+/wp-includes/blocks/index.php -> 200 
+/readme.html -> 200
+/license.txt -> 200
+/wp-content/uploads/wc-logs/ -> 403
+/wp-content/debug.log -> 404
+Phien ban WP trong HTML: generator" content="WordPress 6.9.4 generator" content="WooCommerce 9.7.1 
+
+### [10] Ten mien ben thu ba duoc goi tu trang (script/link/img/iframe)
+-- /
+      1 gmpg.org
+      1 woocommerce.com
+-- /?post_type=product&p=11
+      1 gmpg.org
+      1 woocommerce.com
+-- /checkout/
+      1 gmpg.org
+      1 woocommerce.com

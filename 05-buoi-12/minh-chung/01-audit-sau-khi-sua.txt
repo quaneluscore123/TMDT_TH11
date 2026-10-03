@@ -1,0 +1,65 @@
+### Thoi diem: 2026-10-02 19:30:13
+
+### [1] HTTPS tren toan bo site (ma HTTP khi mo bang https://)
+/                              200
+/shop/                         200
+/cart/                         200
+/checkout/                     302
+/my-account/                   200
+/wp-login.php                  200
+/chinh-sach-quyen-rieng-tu/    200
+Tai nguyen nap qua http:// (mixed content) tren trang chu + trang san pham + thanh toan:
+(het danh sach; chi tinh src/action vi href toi trang ngoai khong tai noi dung)
+
+### [2] Chuyen huong bat buoc khi go dia chi khong co https://
+http://butchixanh.local/              -> 301 https://butchixanh.local/
+http://butchixanh.local/wp-login.php  -> 301 https://butchixanh.local/wp-login.php
+http://butchixanh.local/checkout/     -> 301 https://butchixanh.local/checkout/
+http://localhost:8080 (vao thang WordPress, bo qua nginx) -> khong ket noi duoc (cong da dong)
+http://localhost:8081/wp-login.php (vao thang WordPress, HTTP tron) -> 302
+Header HSTS: 
+
+### [5] Gioi han dang nhap: thu sai mat khau 8 lan lien tiep
+lan 1: HTTP 200 |  Lỗi: tên đăng nhập hoặc mật khẩu không đúng. Còn 4 lần thử. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 2: HTTP 200 |  Lỗi: tên đăng nhập hoặc mật khẩu không đúng. Còn 3 lần thử. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 3: HTTP 200 |  Lỗi: tên đăng nhập hoặc mật khẩu không đúng. Còn 2 lần thử. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 4: HTTP 200 |  Lỗi: tên đăng nhập hoặc mật khẩu không đúng. Còn 1 lần thử. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 5: HTTP 200 |  Tạm khóa: đăng nhập sai quá 5 lần. Vui lòng thử lại sau 15 phút. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 6: HTTP 200 |  Tạm khóa: đăng nhập sai quá 5 lần. Vui lòng thử lại sau 15 phút. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 7: HTTP 200 |  Tạm khóa: đăng nhập sai quá 5 lần. Vui lòng thử lại sau 15 phút. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+lan 8: HTTP 200 |  Tạm khóa: đăng nhập sai quá 5 lần. Vui lòng thử lại sau 15 phút. 		 			 				 Tên người dùng hoặc địa chỉ email 				<input
+
+### [5b] Liet ke ten dang nhap / XML-RPC
+/?author=1           -> 301 https://butchixanh.local/author/admin/
+/wp-json/wp/v2/users -> 200 [{"id":1,"name":"admin","url":"https:\/\/butchixanh.local","description":"","link":"https:\/\/butchixanh.local\/author\/
+/xmlrpc.php (POST)   -> 200
+
+### [8] Thong bao loi chi tiet / lo thong tin he thong
+Header lo phien ban:
+Server: nginx/1.31.6
+X-Powered-By: PHP/8.2.31
+Trang 404 (dia chi sai): HTTP 404, lo duong dan he thong: 0 dong
+/wp-includes/theme-compat/embed.php -> HTTP 500, lo duong dan/loi: 0 dong
+/wp-includes/rss-functions.php -> HTTP 200, lo duong dan/loi: 0 dong
+/wp-content/plugins/woo-vnpay/woo-vnpay.php -> HTTP 200, lo duong dan/loi: 0 dong
+Trang loi 403 cua Apache: <address>Apache/2.4.67 (Debian) Server at butchixanh.local Port 80
+/readme.html -> 200
+/license.txt -> 200
+/wp-content/uploads/wc-logs/ -> 403
+Meta generator trong HTML: generator" content="WordPress 6.9.9 generator" content="WooCommerce 9.7.1 
+
+### [10] Ten mien ben thu ba duoc nap tu trang (script/img/iframe/link stylesheet)
+-- /
+      1 http://gmpg.org
+      1 https://api.w.org
+-- /?post_type=product&p=11
+      1 http://gmpg.org
+      1 https://api.w.org
+-- /checkout/
+      1 http://gmpg.org
+      1 https://api.w.org
+
+### [3] Kiem tra MFA: dang nhap DUNG mat khau admin
+Form ma xac thuc hien ra: 1 truong authcode
+Tieu de: Authentication Code:
+Cookie dang nhap duoc cap: 0
