@@ -57,3 +57,17 @@ add_filter('login_errors', function ($error) {
     if ($data['until'] > time()) return nhom25_lock_message($data);
     return '<strong>Lỗi:</strong> tên đăng nhập hoặc mật khẩu không đúng. Còn ' . max(0, NHOM25_LOGIN_MAX_FAILS - $data['fails']) . ' lần thử.';
 });
+
+// An phien ban phan mem (buoi 12 hang muc 8): bo the generator cua WordPress va WooCommerce
+remove_action('wp_head', 'wp_generator');
+add_filter('the_generator', '__return_empty_string');
+
+// Chan liet ke ten dang nhap qua ?author=N va trang luu tru tac gia (buoi 12 hang muc 4)
+add_action('template_redirect', function () {
+    if (is_author() || (isset($_GET['author']) && !is_admin())) {
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        nocache_headers();
+    }
+}, 0);
