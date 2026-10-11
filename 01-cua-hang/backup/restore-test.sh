@@ -9,7 +9,9 @@ B=${1:?Can duong dan thu muc sao luu}
 (cd "$B" && sha256sum -c SHA256SUMS)
 M="docker exec -i 01-cua-hang-db-1 mysql -uroot -p"$MYSQL_ROOT_PASSWORD""
 $M -e "DROP DATABASE IF EXISTS shop_restore_test; CREATE DATABASE shop_restore_test CHARACTER SET utf8mb4;"
+T0=$(date +%s); echo "Bat dau phuc hoi: $(date '+%Y-%m-%d %H:%M:%S')"
 $M shop_restore_test < "$B/shop.sql"
+T1=$(date +%s); echo "Ket thuc phuc hoi: $(date '+%Y-%m-%d %H:%M:%S') -> thoi gian phuc hoi thuc te: $((T1-T0)) giay"
 Q="SELECT 'san pham', COUNT(*) FROM wp_posts WHERE post_type='product' AND post_status='publish'
 UNION ALL SELECT 'don hang', COUNT(*) FROM wp_posts WHERE post_type='shop_order'
 UNION ALL SELECT 'trang', COUNT(*) FROM wp_posts WHERE post_type='page'
