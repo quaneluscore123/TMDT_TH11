@@ -1,0 +1,6 @@
+# Bi mat va du lieu rieng tung may
+01-cua-hang/.env
+01-cua-hang/certs/*.pem
+01-cua-hang/backup/bak-*/
+01-cua-hang/backup/*.sql.gz
+TruyCap.txt

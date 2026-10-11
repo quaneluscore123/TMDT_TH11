@@ -1,6 +1,8 @@
 # Buổi 13 — Marketing, đo lường và quyết định theo số liệu (Nhóm 25 · Bút Chì Xanh)
 
-**Dữ liệu:** `02-dataset/traffic_daily.csv` (60 ngày, 01/06–30/07/2026, 5 nguồn), `ad_spend.csv` (4 chiến dịch, cùng kỳ), `customers_orders.csv` (300 khách, 12 tháng), `products.csv` (40 sản phẩm, giá bán và giá vốn).
+> **Đây là DỮ LIỆU MẪU, không phải dữ liệu thật của cửa hàng.** Cửa hàng Bút Chì Xanh chạy trên máy cục bộ nên chưa có đủ lưu lượng thật (dưới 300 phiên). Toàn bộ phễu, quảng cáo và khách hàng dưới đây lấy từ bộ dữ liệu mẫu giảng viên phát cho học phần (thư mục `dataset/`, chép vào `02-dataset/`). Phần đo lường trên cửa hàng thật (4 sự kiện, link UTM) ghi ở mục NV1 và chỉ dùng để kiểm chứng cách đo, không dùng để kết luận.
+
+**Dữ liệu mẫu:** `02-dataset/traffic_daily.csv` (60 ngày, 01/06–30/07/2026, 5 nguồn), `ad_spend.csv` (4 chiến dịch, cùng kỳ), `customers_orders.csv` (300 khách, 12 tháng), `products.csv` (40 sản phẩm, giá bán và giá vốn).
 **Tính toán:** mọi con số trong báo cáo được tạo bởi `phan-tich.py` và nằm trong `phan-tich-buoi-13.xlsx`. Chạy lại: `python 06-buoi-13/phan-tich.py`.
 
 ---

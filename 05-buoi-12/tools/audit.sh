@@ -1,7 +1,7 @@
 #!/bin/bash
 # Kiem tra an toan tu ben ngoai (chay tu may host, Git Bash). Dung: bash audit.sh > minh-chung/audit.txt
 # Luu y: muc [5] cố tình dang nhap sai 8 lan -> IP may host bi khoa 15 phut. Mo khoa:
-#   docker exec 01-cua-hang-shop-1 wp --allow-root --path=/var/www/html transient delete --all
+#   (trong 01-cua-hang) docker compose run --rm wpcli wp transient delete --all
 H=https://butchixanh.local
 code() { curl -sk -o /dev/null -w '%{http_code}' "$@"; }
 loc()  { curl -sk -o /dev/null -w '%{http_code} %{redirect_url}' "$@"; }
@@ -58,3 +58,24 @@ for u in / "/?post_type=product&p=11" /checkout/; do
   curl -skL "$H$u" | grep -oE '<(script|img|iframe|link)[^>]+(src|href)="https?://[^"/]+' \
     | grep -oE 'https?://[^"/]+' | grep -v butchixanh.local | sort | uniq -c || echo "   (khong co)"
 done
+
+echo; echo "### [11] Chung thu so (buoi 7 hang muc 01): to chuc phat hanh, thoi han, ten mien"
+echo | openssl s_client -connect butchixanh.local:443 -servername butchixanh.local 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -dates -ext subjectAltName 2>/dev/null
+
+echo; echo "### [12] Tieu de bao mat (buoi 7 hang muc 03)"
+for u in / /checkout/; do
+  echo "-- $u"
+  hdr=$(curl -skI "$H$u")
+  for h in Strict-Transport-Security Content-Security-Policy X-Frame-Options X-Content-Type-Options Referrer-Policy Permissions-Policy Server X-Powered-By; do
+    v=$(printf '%s\n' "$hdr" | grep -i "^$h:" | head -1 | tr -d '\r')
+    printf "  %-27s %s\n" "$h" "${v:-(khong co)}"
+  done
+done
+
+echo; echo "### [13] Thuoc tinh bao ve tep phien (buoi 7 hang muc 04)"
+echo "-- Cookie khi mo trang dang nhap:"
+curl -skI "$H/wp-login.php" | grep -i '^set-cookie' | sed 's/=[^;]*;/=***;/' | tr -d '\r'
+echo "-- Cookie phien gio hang (them 1 san pham vao gio):"
+pid=$(curl -sk "$H/shop/" | grep -o 'add-to-cart=[0-9]*' | head -1 | cut -d= -f2)
+curl -sk -o /dev/null -D - "$H/?add-to-cart=$pid" | grep -i '^set-cookie' | sed 's/=[^;]*;/=***;/' | tr -d '\r'

@@ -5,25 +5,33 @@ services:
     environment:
       MYSQL_DATABASE: shop
       MYSQL_USER: shop
-      MYSQL_PASSWORD: shop123
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?Thieu MYSQL_PASSWORD - hay tao file .env tu .env.example}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Thieu MYSQL_ROOT_PASSWORD - hay tao file .env tu .env.example}"
     volumes:
       - dbdata:/var/lib/mysql
       - ./db-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      retries: 12
 
+  # Khong mo cong ra ngoai: moi truy cap phai di qua nginx (HTTPS)
   shop:
     image: wordpress:6-php8.2-apache
     restart: always
     depends_on:
       - db
-    ports:
-      - "8081:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_NAME: shop
       WORDPRESS_DB_USER: shop
-      WORDPRESS_DB_PASSWORD: shop123
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      VNP_TMN_CODE: ${VNP_TMN_CODE:-}
+      VNP_HASH_SECRET: ${VNP_HASH_SECRET:-}
+      VIETQR_BANK_BIN: ${VIETQR_BANK_BIN:-970436}
+      VIETQR_ACCOUNT_NUMBER: ${VIETQR_ACCOUNT_NUMBER:-}
+      VIETQR_ACCOUNT_NAME: ${VIETQR_ACCOUNT_NAME:-}
     volumes:
       - shopdata:/var/www/html
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
@@ -43,6 +51,40 @@ services:
     volumes:
       - ./certs:/etc/nginx/certs:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # phpMyAdmin chi mo tren may nay (127.0.0.1), khong ra mang ngoai
+  phpmyadmin:
+    image: phpmyadmin:5
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+    ports:
+      - "127.0.0.1:8081:80"
+
+  # WP-CLI: docker compose run --rm wpcli wp <lenh>
+  wpcli:
+    image: wordpress:cli-php8.2
+    profiles: ["tools"]
+    user: "33:33"
+    depends_on:
+      - db
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: shop
+      WORDPRESS_DB_USER: shop
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      VNP_TMN_CODE: ${VNP_TMN_CODE:-}
+      VNP_HASH_SECRET: ${VNP_HASH_SECRET:-}
+    volumes:
+      - shopdata:/var/www/html
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wp-content/plugins:/var/www/html/wp-content/plugins
+      - ./wp-content/uploads:/var/www/html/wp-content/uploads
+      - ./wp-content/themes:/var/www/html/wp-content/themes
+      - ./wp-content/languages:/var/www/html/wp-content/languages
+      - .:/scripts:ro
 
 volumes:
   dbdata:

@@ -20,8 +20,9 @@ update_option('woocommerce_woo_vnpay_settings', [
     'payment_success' => 'processing',
     'payment_failed' => 'cancelled',
     'vnp_Url' => 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
-    'vnp_TmnCode' => 'B06ZF5NH',
-    'vnp_HashSecret' => 'NUDQHRVALUKOTQFDWYXUSVIUKKBCRYQT',
+    // vnp_TmnCode va vnp_HashSecret doc tu .env qua mu-plugins/nhom25-secrets.php
+    'vnp_TmnCode' => '',
+    'vnp_HashSecret' => '',
 ]);
 
 update_option('woocommerce_vietqr_settings', [

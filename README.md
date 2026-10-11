@@ -3,8 +3,9 @@
 Bài thực hành 11: Dựng cửa hàng và kiến trúc thông tin — WordPress + WooCommerce trên Docker.
 
 - Trang chủ: https://butchixanh.local
-- Đăng nhập quản trị: `admin` / `admin123`
-- Database: `shop` / user `shop` / pass `shop123` (root: `root123`)
+- Quản trị: https://butchixanh.local/wp-admin — tài khoản và mật khẩu **không ghi ở đây**; nhóm trưởng gửi riêng cho từng thành viên (file `TruyCap.txt`, không đưa lên git)
+- phpMyAdmin: http://localhost:8081 (chỉ mở trên máy mình)
+- Mật khẩu CSDL và khóa VNPay nằm trong `01-cua-hang/.env` (không đưa lên git)
 
 ## Yêu cầu
 
@@ -28,18 +29,25 @@ Bài thực hành 11: Dựng cửa hàng và kiến trúc thông tin — WordPre
    127.0.0.1 butchixanh.local
    ```
 
-3. **Chạy cửa hàng** (bắt buộc vào thư mục `01-cua-hang`):
+3. **Tạo file bí mật và chứng chỉ** (chỉ làm một lần, trong thư mục `01-cua-hang`):
+
+   ```bash
+   cd 01-cua-hang
+   cp .env.example .env          # rồi mở .env, điền mật khẩu CSDL và khóa VNPay sandbox
+   bash certs/tao-chung-chi.sh   # sinh chứng chỉ tự ký cho butchixanh.local (cần openssl; Git Bash có sẵn)
+   ```
+
+4. **Chạy cửa hàng** (bắt buộc vào thư mục `01-cua-hang`):
 
    ```powershell
-   cd 01-cua-hang
    docker compose up -d
    ```
 
    Lần đầu tiên MySQL sẽ tự nạp dữ liệu từ `db-init.sql` (40 sản phẩm, trang, đơn hàng mẫu) — chờ khoảng 1–2 phút.
 
-4. **Mở trình duyệt**: https://butchixanh.local
+5. **Mở trình duyệt**: https://butchixanh.local
    - Cảnh báo SSL là bình thường (chứng chỉ tự ký) → chọn *Nâng cao → Tiếp tục truy cập (không an toàn)*.
-   - Đăng nhập admin: `admin` / `admin123`.
+   - Đăng nhập quản trị bằng tài khoản nhóm trưởng gửi riêng.
    - Buổi 12: plugin Two Factor đã cài. Mỗi máy tự bật xác thực 2 lớp: *Người dùng → Hồ sơ → Two-Factor Options → Authenticator App* (khóa 2FA không được đưa lên git).
 
 ## Cấu trúc thư mục
@@ -56,7 +64,7 @@ Bài thực hành 11: Dựng cửa hàng và kiến trúc thông tin — WordPre
 
 - **`no configuration file provided`**: bạn đang chạy ở thư mục gốc — hãy `cd 01-cua-hang` trước.
 - **Không mở được `butchixanh.local`**: kiểm tra đã thêm dòng hosts ở bước 2 (bắt buộc, vì WP trỏ `siteurl` về domain này).
-- **Port 80/443/8080 đã bị chiếm** (IIS, Skype...): sửa `ports` trong `docker-compose.yml`.
+- **Port 80/443/8081 đã bị chiếm** (IIS, Skype...): sửa `ports` trong `docker-compose.yml`.
 - **Muốn nạp lại dữ liệu mặc định** (xóa sạch mọi thay đổi):
 
   ```powershell

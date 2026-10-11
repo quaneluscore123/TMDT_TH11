@@ -2,10 +2,12 @@
 # Thu phuc hoi ban sao luu vao CSDL tam "shop_restore_test" va so sanh voi CSDL dang chay.
 # Dung: bash restore-test.sh ./bak-YYYYmmdd-HHMMSS
 set -euo pipefail
+# Doc mat khau tu ../.env (khong ghi cung trong ma nguon)
+set -a; . ../.env; set +a
 export MSYS_NO_PATHCONV=1
 B=${1:?Can duong dan thu muc sao luu}
 (cd "$B" && sha256sum -c SHA256SUMS)
-M="docker exec -i 01-cua-hang-db-1 mysql -uroot -proot123"
+M="docker exec -i 01-cua-hang-db-1 mysql -uroot -p"$MYSQL_ROOT_PASSWORD""
 $M -e "DROP DATABASE IF EXISTS shop_restore_test; CREATE DATABASE shop_restore_test CHARACTER SET utf8mb4;"
 $M shop_restore_test < "$B/shop.sql"
 Q="SELECT 'san pham', COUNT(*) FROM wp_posts WHERE post_type='product' AND post_status='publish'
