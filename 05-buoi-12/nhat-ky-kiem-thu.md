@@ -8,8 +8,8 @@ Môi trường: https://butchixanh.local · WooCommerce 9.7.1 · VNPay **sandbox
 | Hạng mục | Cấu hình | Kiểm tra |
 |---|---|---|
 | Cổng thanh toán | COD, VietQR, VNPay sandbox — `setup-payments.php` | Trang thanh toán hiện đủ 3 phương thức |
-| Phí vận chuyển | `setup-shipping.php` + `mu-plugins/nhom25-shipping.php`: **Nội thành Hà Nội** 15.000đ (đơn ≤ 1 kg) / 20.000đ (> 1 kg); **Các tỉnh khác** 20.000đ / 25.000đ | Giỏ 1 bút gel (0,77 kg) giao Hà Nội → 15.000đ; giao Đà Nẵng → 20.000đ; 2 bút (1,53 kg) giao Đà Nẵng → 25.000đ |
-| Miễn phí vận chuyển | Đơn từ **320.000đ** | Giỏ 1 bút chì HB (290.000đ) → vẫn tính phí; thêm 1 bút gel (tổng 348.000đ) → chỉ còn "Miễn phí vận chuyển" |
+| Phí vận chuyển (cập nhật 11/10) | `setup-shipping.php` + `mu-plugins/nhom25-shipping.php`: **5 vùng** theo khoảng cách từ kho Hà Nội, phí 18.000–38.000đ theo khối lượng (≤ 1 kg / > 1 kg) | `tests/kiem-tra-phi-ship.php` → `minh-chung/11-kiem-tra-phi-ship-5-vung.txt`: đủ 5 vùng, đúng phí từng vùng |
+| Miễn phí vận chuyển (cập nhật 11/10) | Đơn từ **499.000đ** (căn cứ: `06-buoi-13/nguong-mien-phi-van-chuyen.md`) | Giỏ 450.000đ giao Hà Nội → vẫn tính phí; giỏ 522.000đ → chỉ còn "Miễn phí vận chuyển" (cùng file minh chứng 11) |
 | Hiện đủ chi phí ở trang sản phẩm | `mu-plugins/product-info-hooks.php`: bảng phí theo vùng cho chính sản phẩm đó, ngưỡng miễn phí, số tiền còn thiếu | Mở trang sản phẩm bất kỳ |
 | Tồn kho | Bật quản lý tồn kho cho 40 sản phẩm theo `02-dataset/products.csv` | Trang sản phẩm hiện "Còn … hàng" |
 

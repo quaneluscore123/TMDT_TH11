@@ -12,7 +12,7 @@
 |---|---|
 | **Điều kiện kích hoạt** | **Thời gian:** 5 ngày sau khi đơn **đầu tiên** chuyển "Hoàn thành" (đã giao). **Hành vi:** chưa có đơn thứ hai, và chưa hủy đăng ký. Mỗi khách nhận tối đa 1 lần. |
 | **Tiêu đề** | "Bé dùng [tên sản phẩm] thế nào rồi? Gợi ý cho góc học tập" |
-| **Nội dung chính** | Cảm ơn và hỏi thăm về sản phẩm đã mua. 3 sản phẩm **cùng nhóm hàng** khách đã mua (ví dụ mua bút gel → gợi ý ruột bút, vở ô ly). Nhắc miễn phí vận chuyển cho đơn từ 320.000đ. Nút "Đánh giá sản phẩm". |
+| **Nội dung chính** | Cảm ơn và hỏi thăm về sản phẩm đã mua. 3 sản phẩm **cùng nhóm hàng** khách đã mua (ví dụ mua bút gel → gợi ý ruột bút, vở ô ly). Nhắc miễn phí vận chuyển cho đơn từ 499.000đ. Nút "Đánh giá sản phẩm". |
 | **Chỉ số đánh giá** | **Chính:** tỷ lệ đặt đơn thứ hai trong 30 ngày, nhóm nhận thư so với nhóm đối chứng. Phụ: tỷ lệ mở, tỷ lệ nhấp, số đánh giá sản phẩm. |
 | **Vì sao** | Từ 1 đơn lên 2 đơn là bước khó nhất: 76% khách mua lại, nhưng 24% dừng ở đơn đầu. |
 

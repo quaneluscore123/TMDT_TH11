@@ -7,7 +7,17 @@
 ## 1. Giá và tổng tiền
 
 - Giá hiển thị là giá cuối cùng bằng Việt Nam đồng, **không cộng thêm thuế hay phí ẩn**.
-- Phí vận chuyển: nội thành Hà Nội 15.000đ (đơn đến 1 kg) / 20.000đ (trên 1 kg); các tỉnh khác 20.000đ / 25.000đ. Phí hiển thị ngay tại trang sản phẩm và chính xác tại giỏ hàng **trước khi** bạn bấm Đặt hàng. Đơn từ 320.000đ được miễn phí vận chuyển toàn quốc.
+- Phí vận chuyển theo 5 vùng (đơn đến 1 kg / trên 1 kg), xem bảng dưới.
+
+| Vùng giao đến | Phí | Thời gian |
+|---|---|---|
+| Nội thành Hà Nội | 18.000đ / 23.000đ | 1–2 ngày |
+| Đồng bằng và trung du Bắc Bộ | 22.000đ / 27.000đ | 2–3 ngày |
+| Miền núi phía Bắc | 30.000đ / 36.000đ | 3–5 ngày |
+| Miền Trung và Tây Nguyên | 28.000đ / 34.000đ | 3–4 ngày |
+| Miền Nam | 32.000đ / 38.000đ | 3–5 ngày |
+
+Phí hiển thị ngay tại trang sản phẩm và chính xác tại giỏ hàng **trước khi** bạn bấm Đặt hàng. Đơn từ **499.000đ** được miễn phí vận chuyển toàn quốc.
 - Thanh toán COD, VietQR, VNPay đều không thu phụ phí.
 
 ## 2. Đặt hàng và thời điểm hợp đồng hình thành

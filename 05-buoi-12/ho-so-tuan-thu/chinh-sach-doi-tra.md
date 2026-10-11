@@ -7,7 +7,7 @@
 | | Hàng lỗi, giao sai, không đúng mô tả | Đổi ý (hàng còn mới) |
 |---|---|---|
 | Thời hạn | 7 ngày kể từ khi nhận hàng | 7 ngày kể từ khi nhận hàng |
-| Phí gửi hàng về | **Cửa hàng trả** | **Bạn trả** (theo bảng phí vận chuyển hiện hành, từ 15.000đ nội thành Hà Nội) |
+| Phí gửi hàng về | **Cửa hàng trả** | **Bạn trả** (theo bảng phí vận chuyển hiện hành, từ 18.000đ nội thành Hà Nội) |
 | Bạn được nhận | Hàng mới thay thế, hoặc hoàn 100% tiền hàng và phí vận chuyển | Hoàn tiền hàng, hoặc đổi sản phẩm khác |
 
 ## 1. Thời hạn
