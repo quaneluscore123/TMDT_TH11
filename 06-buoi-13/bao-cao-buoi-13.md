@@ -7,23 +7,24 @@
 
 ---
 
-## NV1 · Thiết lập đo lường — *chưa triển khai trên cửa hàng*
+## NV1 · Thiết lập đo lường — đã triển khai trên cửa hàng (11/10/2026)
 
-Phần này cần nhóm chọn công cụ đo (ví dụ GA4) và tạo tài khoản. Dưới đây là thiết kế để triển khai:
+**Công cụ:** plugin đo lường bên thứ nhất `01-cua-hang/wp-content/mu-plugins/nhom25-event-logger.php`, ghi vào bảng `wp_nhom25_events` của chính cửa hàng. Dữ liệu không rời khỏi máy chủ và không dùng cho quảng cáo. Xem phễu ở *Quản trị › Công cụ › Phễu Nhóm 25* (có nút xuất CSV).
 
-| Sự kiện | Tên sự kiện (GA4) | Gắn vào phần tử nào | Ghi chú |
-|---|---|---|---|
-| Phiên truy cập | `session_start` | tự động | |
-| Xem trang sản phẩm | `view_item` | mọi trang `/product/...` | phải khai báo riêng |
-| Thêm vào giỏ | `add_to_cart` | nút "Thêm vào giỏ" (cả trang sản phẩm và danh sách) | phải khai báo riêng |
-| Đơn hoàn tất | `purchase` (kèm `transaction_id` = mã đơn) | trang "Đã nhận đơn" | phải khai báo riêng; dùng mã đơn để không đếm trùng khi khách F5 |
+| Sự kiện | Ghi khi nào | Cách tránh đếm sai |
+|---|---|---|
+| `session` | Lần đầu mở cửa hàng, hoặc sau 30 phút không hoạt động, hoặc khi vào bằng link có UTM | Mã phiên ngẫu nhiên trong cookie `n25_sid` (HttpOnly, Secure, SameSite=Lax) |
+| `view_item` | Mở trang chi tiết sản phẩm | Phễu đếm số **phiên khác nhau**, không đếm số lượt xem |
+| `add_to_cart` | Thêm vào giỏ, cả từ trang chi tiết và từ trang danh mục | Như trên |
+| `begin_checkout` | Mở trang thanh toán khi giỏ có hàng | Như trên |
+| `purchase` | Mở trang "Đã nhận đơn" | Mỗi mã đơn chỉ ghi **một lần**, tải lại trang cảm ơn không ghi trùng |
 
-- **Thẻ nguồn:** mọi liên kết chia sẻ ra ngoài đều gắn `utm_source`, `utm_medium`, `utm_campaign`. Ví dụ bài Facebook khai trương: `https://butchixanh.local/?utm_source=facebook&utm_medium=social&utm_campaign=khaitruong`.
-- **Phân loại mã:**
-  - Mã phục vụ quảng cáo (Facebook Pixel, Google Ads) **chỉ nạp sau khi khách bấm đồng ý** trên banner cookie.
-  - Mã thống kê vận hành nội bộ thuộc nhóm "thống kê", có lựa chọn từ chối riêng.
-- **Kiểm chứng:** đặt 1 đơn thử, chụp DebugView thấy đủ 4 sự kiện.
-- ⚠️ Khi triển khai phải **sửa Chính sách quyền riêng tư và Bảng đăng ký dữ liệu của buổi 12**. Hai văn bản này hiện ghi "không dùng Google Analytics / Facebook Pixel".
+- **Không ghi lượt của quản trị viên** (người có quyền quản lý cửa hàng), nên phải kiểm chứng ở cửa sổ ẩn danh.
+- **Kiểm chứng** (`01-cua-hang/tests/kiem-tra-su-kien.sh`, kết quả `minh-chung-13-1-kiem-chung-su-kien.txt`): một khách mới vào bằng link UTM `thu-nghiem / kiem-chung / b13`, xem 1 sản phẩm, thêm giỏ, vào thanh toán, đặt đơn, **tải lại trang cảm ơn hai lần** → session 1 · view_item 1 · add_to_cart 1 · begin_checkout 1 · purchase **1**. Nhóm cần chụp thêm ảnh trang *Phễu Nhóm 25* làm minh chứng.
+- **Thẻ nguồn:** 3 link cho 3 kênh trong `link-utm.csv`. Lưu lượng từ các link này đủ để kiểm chứng cách đo, **không đủ để kết luận** (dưới 300 phiên), nên phân tích ở NV2–NV3 dùng dữ liệu mẫu.
+- **Phân loại mã theo dõi:**
+  - `n25_sid`, `n25_src` là **đo lường bên thứ nhất**: thống kê vận hành, không chia sẻ cho ai, không dùng cho quảng cáo. Cơ sở: lợi ích chính đáng trong vận hành cửa hàng, có thông báo trong Chính sách quyền riêng tư và Bảng đăng ký dữ liệu (đã cập nhật).
+  - Nếu sau này gắn GA4 hoặc Facebook Pixel: đó là mã **bên thứ ba phục vụ quảng cáo**, chỉ được nạp **sau khi khách bấm đồng ý**, và phải bổ sung vào hai văn bản trên.
 
 **Vì sao NV1 quan trọng với chính bộ dữ liệu này** (xem mục 2.4): lượt nhấp nền tảng quảng cáo báo gấp **5,5 lần** số phiên website ghi nhận cho tìm kiếm trả phí. Phần lớn lưu lượng quảng cáo đang không được gắn đúng nguồn, nên phải sửa đo lường trước khi tin vào các con số theo nguồn.
 

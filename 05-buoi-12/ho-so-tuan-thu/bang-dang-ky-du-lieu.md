@@ -22,7 +22,7 @@ Phiên bản 1.0 · lập ngày 02/10/2026 · Nhóm 25 · Bảng này là **ngu�
 | E | Tài khoản khách hàng / đăng ký | **Không** — đăng ký đang tắt | Chỉ có tài khoản quản trị |
 | F | Đăng ký nhận tin (newsletter) | **Không** có biểu mẫu | Nếu thêm sau này phải bổ sung dòng mới, cơ sở ĐY |
 | G | Biểu mẫu liên hệ | **Không** — liên hệ qua điện thoại/Zalo/email | Không thu qua website |
-| H | Mã theo dõi hành vi | Đã rà soát (xem Biên bản an toàn, hạng mục 10) | **Không** có Google Analytics, Facebook Pixel, Google Fonts. Đã **tắt** "Order Attribution" của WooCommerce |
+| H | Mã theo dõi hành vi | Đã rà soát (xem Biên bản an toàn, hạng mục 10); cập nhật 11/10 | **Không** có Google Analytics, Facebook Pixel, Google Fonts. Đã **tắt** "Order Attribution" của WooCommerce. **Có** đo lường bên thứ nhất `nhom25-event-logger` (mục 2.D) |
 | I | Cookie kỹ thuật, nhật ký máy chủ | Có | Mục 2.D |
 
 ## 2. Bảng đăng ký
@@ -72,6 +72,8 @@ Phiên bản 1.0 · lập ngày 02/10/2026 · Nhóm 25 · Bảng này là **ngu�
 |---|---|---|---|---|
 | Cookie giỏ hàng (`wp_woocommerce_session_*`, `woocommerce_cart_hash`, `woocommerce_items_in_cart`) | Ghi nhớ giỏ hàng (kể cả khi khách đóng trang giữa lúc thanh toán) | HĐ (cookie thiết yếu) | 2 ngày | Không |
 | Cookie đăng nhập (`wordpress_logged_in_*`) | Chỉ cho quản trị viên | LI | Hết phiên / 14 ngày nếu chọn "ghi nhớ" | Không |
+| Cookie thống kê `n25_sid` (mã phiên ngẫu nhiên), `n25_src` (nguồn: utm_source/medium/campaign hoặc tên miền giới thiệu) — thêm 11/10 | Đo phễu theo nguồn (buổi 13): biết kênh nào đưa khách đến và khách dừng ở bước nào | LI (đo lường bên thứ nhất, không quảng cáo, theo hướng dẫn TH13). **Nhóm cần xác nhận lại** nếu muốn chuyển sang ĐY có banner như kế hoạch buổi 12 | 30 phút không hoạt động | Không |
+| Bảng `wp_nhom25_events`: thời điểm, mã phiên, tên sự kiện, nguồn, mã sản phẩm, mã đơn, giá trị đơn. **Không** có IP, thiết bị, tên, email | Như trên | LI | 12 tháng, tự xóa hằng ngày bởi plugin | Không |
 | Mã băm IP + số lần đăng nhập sai | Khóa tạm thời khi đoán mật khẩu (5 lần sai → khóa 15 phút) | LI | 15 phút | Không |
 | Nhật ký truy cập máy chủ (IP, đường dẫn, trình duyệt) | Điều tra sự cố an toàn | LI | Đến khi container được tạo lại (chưa cấu hình xoay vòng — xem Biên bản an toàn) | Không |
 | ~~Nguồn truy cập, UTM, thiết bị (WooCommerce Order Attribution, cookie `sbjs_*`)~~ | Không có ai được giao phân tích và site chưa có banner xin đồng ý | — | **ĐÃ TẮT** — nếu cần đo kênh phải thêm banner xin đồng ý (ĐY) trước | — |

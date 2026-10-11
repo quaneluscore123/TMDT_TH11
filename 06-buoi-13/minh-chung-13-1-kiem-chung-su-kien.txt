@@ -1,0 +1,11 @@
+### Thoi diem: 2026-10-11 15:48:25
+Phien thu: a6c0e04656dafc04e3befe7b239a1a52 · san pham #59
++----------------+--------+------------+------------+----------+
+| event          | so_lan | src        | medium     | campaign |
++----------------+--------+------------+------------+----------+
+| session        |      1 | thu-nghiem | kiem-chung | b13      |
+| view_item      |      1 | thu-nghiem | kiem-chung | b13      |
+| add_to_cart    |      1 | thu-nghiem | kiem-chung | b13      |
+| begin_checkout |      1 | thu-nghiem | kiem-chung | b13      |
+| purchase       |      1 | thu-nghiem | kiem-chung | b13      |
++----------------+--------+------------+------------+----------+
