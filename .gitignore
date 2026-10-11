@@ -4,3 +4,6 @@
 01-cua-hang/backup/bak-*/
 01-cua-hang/backup/*.sql.gz
 TruyCap.txt
+01-cua-hang/wp-content/uploads/wc-logs/
+01-cua-hang/wp-content/uploads/woocommerce_uploads/
+.tmp-*/
