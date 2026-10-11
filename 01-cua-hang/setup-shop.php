@@ -11,9 +11,9 @@ update_option('blogdescription', 'Cửa hàng đồ dùng học tập');
 // ---------- 2. Cài đặt WooCommerce ----------
 update_option('woocommerce_currency', 'VND');
 update_option('woocommerce_currency_pos', 'left');
-update_option('woocommerce_price_thousand_sep', ',');
-update_option('woocommerce_price_decimal_sep', '.');
-update_option('woocommerce_price_num_decimals', 2);
+update_option('woocommerce_price_thousand_sep', '.'); // TH11: dau cham phan cach hang nghin
+update_option('woocommerce_price_decimal_sep', ',');
+update_option('woocommerce_price_num_decimals', 0); // VND khong co phan le
 update_option('woocommerce_enable_guest_checkout', 'yes');
 update_option('woocommerce_enable_checkout_login_reminder', 'no');
 update_option('woocommerce_cart_redirect_after_add', 'no');
@@ -53,14 +53,7 @@ echo "Order tracking page: $track_id\n";
 
 // ---------- 4. Trang chủ + hero ----------
 $home = get_page_by_path('trang-chu');
-$hero = '<div style="background:linear-gradient(120deg,#1c5f8d 0%,#17b8a6 100%);color:#fff;padding:64px 48px;border-radius:4px;display:flex;flex-wrap:wrap;gap:40px;justify-content:space-between;align-items:flex-start">'
-    . '<div style="flex:1 1 340px;max-width:560px">'
-    . '<h1 style="color:#fff;font-size:42px;font-weight:800;margin:0 0 28px">' . $t . '</h1>'
-    . '<p style="font-size:24px;line-height:1.65;margin:0 0 32px">Cửa hàng đồ dùng học tập<br>Chất lượng cao – Giao hàng nhanh<br>– Giá tốt nhất</p>'
-    . '<a href="' . esc_url(get_permalink($pages['shop'])) . '" style="display:inline-block;background:#fff;color:#1c6fa8;padding:14px 28px;border-radius:24px;text-decoration:none;font-weight:600;font-size:17px">Mua sắm ngay</a>'
-    . '</div>'
-    . '<div style="flex:0 1 320px;text-align:center;font-size:21px;line-height:2.1;padding-top:64px">40+ sản phẩm<br>Chất lượng đảm bảo<br>Giao hàng 24h</div>'
-    . '</div>';
+$hero = ''; // noi dung trang chu (cau dinh vi) dat boi setup-trang-chu.php
 if (!$home) {
     $home_id = wp_insert_post([
         'post_type' => 'page',
@@ -71,7 +64,6 @@ if (!$home) {
     ]);
 } else {
     $home_id = $home->ID;
-    wp_update_post(['ID' => $home_id, 'post_content' => $hero]);
 }
 update_option('show_on_front', 'page');
 update_option('page_on_front', $home_id);
@@ -114,13 +106,12 @@ echo "Menu: $menu_id\n";
 
 // ---------- 6. Footer widgets (4 cột) ----------
 $footer_texts = [
-    ['Về chúng tôi', $t . ' - Cửa hàng đồ dùng học tập chất lượng cao. Chính hãng, giá tốt, giao hàng nhanh.'],
+    ['Về chúng tôi', $t . ' bán đồ dùng học tập cho học sinh tiểu học, ghi rõ kiểm định an toàn và khối lớp cho từng sản phẩm.'],
     ['Liên kết nhanh',
         '<a href="' . esc_url(get_permalink($pages['shop'])) . '">Cửa hàng</a><br>'
         . '<a href="' . esc_url(get_permalink($pages['cart'])) . '">Giỏ hàng</a><br>'
         . '<a href="' . esc_url(get_permalink($pages['checkout'])) . '">Thanh toán</a>'],
-    ['Chăm sóc khách hàng', 'Hotline: 1900-xxxx<br>Email: support@butchixanh.vn<br>Thời gian: 8h - 21h'],
-    ['Đăng ký nhận tin', 'Nhận tin khuyến mãi mới nhất từ ' . $t . '.'],
+    ['Chăm sóc khách hàng', 'Điện thoại/Zalo: 0901 234 567<br>Email: admin@butchixanh.vn<br>Thời gian: 8:00–21:00 hằng ngày'],
 ];
 
 global $wp_registered_sidebars;
