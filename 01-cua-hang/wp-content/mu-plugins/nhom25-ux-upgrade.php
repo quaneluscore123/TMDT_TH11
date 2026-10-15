@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Nhom25 - UX/UI Upgrade Pack
- * Description: Bộ nâng cấp toàn diện UX/UI cho Bút Chì Xanh: Sticky Header, Live Search gợi ý sản phẩm, Mini-Cart Drawer với thanh tiến độ Freeship 499k, nút Mua Ngay (Buy Now), Quick View xem nhanh, Trust Badges an toàn chuẩn QCVN.
+ * Description: Bộ nâng cấp toàn diện UX/UI cho Bút Chì Xanh: Sticky Header, Live Search gợi ý sản phẩm, Mini-Cart Drawer với thanh tiến độ Freeship 499k, nút Mua Ngay (Buy Now), Quick View xem nhanh, Trust Badges theo dữ liệu kiểm định thật.
  * Author: Nhom 25 (Bút Chì Xanh)
  * Version: 2.0
  */
@@ -57,6 +57,8 @@ add_filter('woocommerce_add_to_cart_redirect', function ($url) {
 
 // Thêm khối Trust Badges uy tín dưới nút giỏ hàng trên trang sản phẩm
 add_action('woocommerce_single_product_summary', function () {
+    global $product;
+    $da_kiem_dinh = $product && has_term('co', 'pa_kiem-dinh-an-toan', $product->get_id());
     ?>
     <div class="n25-trust-box">
         <div class="n25-trust-box__title">
@@ -66,8 +68,13 @@ add_action('woocommerce_single_product_summary', function () {
             <div class="n25-trust-item">
                 <span class="n25-trust-item__icon">✓</span>
                 <div>
-                    <b>Chứng nhận an toàn QCVN</b>
-                    <span>100% không chì, không chất độc hại cho học sinh</span>
+                    <?php if ($da_kiem_dinh): ?>
+                    <b>Đã kiểm định an toàn</b>
+                    <span>Sản phẩm này có kết quả kiểm định an toàn do nhà cung cấp cung cấp</span>
+                    <?php else: ?>
+                    <b>Thông tin kiểm định minh bạch</b>
+                    <span>Sản phẩm này chưa có giấy kiểm định; xem mục Kiểm định an toàn ở bộ lọc để chọn hàng đã kiểm định</span>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="n25-trust-item">
@@ -287,7 +294,12 @@ function n25_handle_quickview() {
         <div class="n25-qv-summary">
             <h2 class="n25-qv-title"><?php echo esc_html($product->get_name()); ?></h2>
             <div class="n25-qv-sku">Mã SKU: <b><?php echo esc_html($product->get_sku()); ?></b></div>
-            <div class="n25-qv-rating">⭐⭐⭐⭐⭐ <span>(4.9/5 · Đã kiểm định QCVN)</span></div>
+            <?php if ($product->get_review_count() > 0): ?>
+            <div class="n25-qv-rating"><?php echo wc_get_rating_html($product->get_average_rating(), $product->get_review_count()); ?> <span>(<?php echo esc_html(number_format_i18n($product->get_average_rating(), 1)); ?>/5 · <?php echo (int) $product->get_review_count(); ?> đánh giá)</span></div>
+            <?php endif; ?>
+            <?php if (has_term('co', 'pa_kiem-dinh-an-toan', $product->get_id())): ?>
+            <div class="n25-qv-rating"><span>✓ Đã kiểm định an toàn</span></div>
+            <?php endif; ?>
             <div class="n25-qv-price"><?php echo $product->get_price_html(); ?></div>
             <div class="n25-qv-desc"><?php echo wp_kses_post(wp_trim_words($product->get_short_description() ?: $product->get_description(), 30)); ?></div>
             
@@ -307,9 +319,8 @@ function n25_handle_quickview() {
 }
 
 // Thêm đánh giá sao uy tín trên thẻ sản phẩm ở trang shop
-add_action('woocommerce_after_shop_loop_item_title', function () {
-    echo '<div class="n25-loop-rating" title="Đánh giá 5 sao từ phụ huynh"><span class="n25-stars">⭐⭐⭐⭐⭐</span> <span class="n25-rating-count">(5.0)</span></div>';
-}, 7);
+// Khong gan cung 5 sao cho moi san pham (danh gia gia, trai Luat BVQLNTD 2023).
+// WooCommerce/Storefront tu hien so sao khi san pham co danh gia that cua khach.
 
 // =============================================================================
 // 4. HERO BANNER TRÊN ĐẦU TRANG CHỦ (CONCEPT 1)
@@ -320,32 +331,36 @@ add_filter('the_content', function ($content) {
     }
 
     $shop_url = wc_get_page_permalink('shop');
+    $loc_an_toan = add_query_arg('pa_kiem-dinh-an-toan[]', 'co', $shop_url);
+    $term_co = get_term_by('slug', 'co', 'pa_kiem-dinh-an-toan');
+    $so_kiem_dinh = $term_co ? (int) $term_co->count : 0;
+    $tong_sp = (int) array_sum((array) wp_count_posts('product')->publish);
     $hero_html = '
     <div class="n25-hero-banner">
         <div class="n25-hero-banner__content">
             <div class="n25-hero-tag">🌟 Bút Chì Xanh · Tự Hào Đồng Hành Cùng Trẻ Thơ</div>
             <h1 class="n25-hero-title">MÙA TỰU TRƯỜNG RỰC RỠ 2026</h1>
-            <p class="n25-hero-subtitle">Bộ dụng cụ học tập thông minh, đạt tiêu chuẩn an toàn cho bé, bảo vệ hệ xương sống.</p>
+            <p class="n25-hero-subtitle">Đồ dùng học tập cho học sinh tiểu học, ghi rõ sản phẩm nào đã kiểm định an toàn và hợp với khối lớp nào.</p>
             <div class="n25-hero-badges">
-                <span>✓ 100% Đạt tiêu chuẩn kiểm định an toàn</span>
+                <span>✓ ' . $so_kiem_dinh . '/' . $tong_sp . ' sản phẩm có kiểm định an toàn</span>
                 <span>✓ Miễn phí vận chuyển toàn quốc từ 499.000đ</span>
             </div>
             <div class="n25-hero-cta">
                 <a href="' . esc_url($shop_url) . '" class="n25-btn-hero n25-btn-hero--primary">Khám phá cửa hàng →</a>
-                <a href="' . esc_url(add_query_arg('pa_kiem-dinh-an-toan[]', 'co', $shop_url)) . '" class="n25-btn-hero n25-btn-hero--secondary">Sản phẩm kiểm định</a>
+                <a href="' . esc_url($loc_an_toan) . '" class="n25-btn-hero n25-btn-hero--secondary">Sản phẩm kiểm định</a>
             </div>
         </div>
         <div class="n25-hero-card">
-            <div class="n25-hero-card__badge">TIẾT KIỆM 25%</div>
+            <div class="n25-hero-card__badge">NĂM HỌC MỚI</div>
             <div class="n25-hero-card__icon">🎒</div>
-            <h3>Combo Đồ Dùng Chuẩn Lớp 1–5</h3>
+            <h3>Chọn đồ an toàn cho con</h3>
             <ul>
-                <li>• Balo chống gù công thái học siêu nhẹ</li>
-                <li>• Hộp bút + Bộ dụng cụ vẽ chuẩn QCVN</li>
-                <li>• Vở kẻ ô ly & vở kẻ ngang chống lóa mắt</li>
+                <li>• Lọc riêng ' . $so_kiem_dinh . ' sản phẩm đã kiểm định an toàn</li>
+                <li>• Lọc theo khối lớp của con</li>
+                <li>• Biết trước phí ship 5 vùng, đổi trả 7 ngày</li>
             </ul>
-            <div class="n25-hero-card__price">Chỉ từ: <b>389.000đ</b></div>
-            <a href="' . esc_url($shop_url) . '" class="n25-hero-card__btn">Mua Combo Ngay</a>
+            <div class="n25-hero-card__price">Miễn phí ship từ: <b>499.000đ</b></div>
+            <a href="' . esc_url($loc_an_toan) . '" class="n25-hero-card__btn">Xem đồ đã kiểm định</a>
         </div>
     </div>';
 
