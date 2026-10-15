@@ -1,6 +1,6 @@
 # Nhật ký kiểm thử thanh toán — Bút Chì Xanh (Buổi 12 · NV1)
 
-Môi trường: https://butchixanh.local · WooCommerce 9.7.1 · VNPay **sandbox** (`vnp_TmnCode` B06ZF5NH) · COD · VietQR.
+Môi trường: https://butchixanh.local · WooCommerce 9.7.1 · VNPay **sandbox** (`vnp_TmnCode` lưu trong `.env`) · COD · VietQR.
 **Không dùng thẻ thật** — chỉ dùng bộ thẻ giả lập của VNPay sandbox (ngân hàng NCB).
 
 ## 0. Cấu hình đã kiểm tra trước khi thử
