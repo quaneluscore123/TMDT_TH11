@@ -83,3 +83,78 @@ function add_resource_hints() {
     echo '<link rel="preconnect" href="https://butchixanh.local" crossorigin>' . "\n";
 }
 add_action('wp_head', 'add_resource_hints', 1);
+
+// 10. Page cache cho khach chua dang nhap (GET, khong phai admin/cart/checkout/account/ajax)
+// Giam manh do tre do bind-mount Windows: lan thu 2 tra ve HTML tu file, bo qua WordPress
+define('N25_PAGE_CACHE_DIR', WP_CONTENT_DIR . '/cache/n25-pages');
+define('N25_PAGE_CACHE_TTL', 300); // 5 phut
+
+function n25_is_cacheable_request() {
+    if (function_exists('is_admin') && is_admin()) return false;
+    if (function_exists('wp_doing_ajax') && wp_doing_ajax()) return false;
+    if (defined('REST_REQUEST') && REST_REQUEST) return false;
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') return false;
+    // is_user_logged_in chua co khi mu-plugin load -> check cookie truc tiep
+    foreach (array_keys($_COOKIE) as $ck) {
+        if (strpos($ck, 'wordpress_logged_in_') === 0) return false;
+        if (strpos($ck, 'wp-sec') === 0) return false;
+    }
+    if (defined('WP_CLI') && WP_CLI) return false;
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (preg_match('#/(cart|checkout|my-account|wp-admin|wp-login|admin-ajax)(/|$|\?)#', $uri)) return false;
+    if (strpos($uri, 'add-to-cart') !== false) return false;
+    if (strpos($uri, 'wc-ajax') !== false) return false;
+    if (strpos($uri, 'nonce') !== false) return false;
+    return true;
+}
+
+function n25_page_cache_key() {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    return md5($scheme . '|' . $host . '|' . $uri) . '.html';
+}
+
+// Doc cache truoc khi WordPress chay (mu-plugin chay som)
+function n25_page_cache_serve() {
+    if (!n25_is_cacheable_request()) return;
+    $file = N25_PAGE_CACHE_DIR . '/' . n25_page_cache_key();
+    if (!is_readable($file)) return;
+    $age = time() - filemtime($file);
+    if ($age > N25_PAGE_CACHE_TTL) { @unlink($file); return; }
+    header('X-N25-Cache: HIT (age ' . $age . 's)');
+    header('Content-Type: text/html; charset=UTF-8');
+    readfile($file);
+    exit;
+}
+// Chay truoc wp-settings, trong mu-plugin
+n25_page_cache_serve();
+
+// Ghi cache sau khi render xong
+function n25_page_cache_save() {
+    if (!n25_is_cacheable_request()) return;
+    if (headers_sent()) return;
+    // Khong ghi neu response khong phai 200
+    $status = http_response_code();
+    if ($status !== 200 && $status !== false) return;
+    $html = ob_get_contents();
+    if (!$html || strlen($html) < 500) return; // qua ngan, khong nen cache
+    if (!is_dir(N25_PAGE_CACHE_DIR)) {
+        wp_mkdir_p(N25_PAGE_CACHE_DIR);
+        @file_put_contents(N25_PAGE_CACHE_DIR . '/index.php', "<?php // Silence is golden.\n");
+    }
+    @file_put_contents(N25_PAGE_CACHE_DIR . '/' . n25_page_cache_key(), $html);
+    header('X-N25-Cache: MISS');
+}
+add_action('template_redirect', function () {
+    ob_start('n25_page_cache_save');
+}, 0);
+
+// Xoa toan bo cache khi cap nhat san pham/don hang (don gian)
+function n25_page_cache_flush() {
+    if (!is_dir(N25_PAGE_CACHE_DIR)) return;
+    foreach (glob(N25_PAGE_CACHE_DIR . '/*.html') as $f) @unlink($f);
+}
+add_action('save_post', 'n25_page_cache_flush');
+add_action('woocommerce_order_status_changed', 'n25_page_cache_flush');
+add_action('customize_save_after', 'n25_page_cache_flush');

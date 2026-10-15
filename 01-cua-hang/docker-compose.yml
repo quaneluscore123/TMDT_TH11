@@ -40,6 +40,7 @@ services:
       - ./wp-content/themes:/var/www/html/wp-content/themes
       - ./wp-content/languages:/var/www/html/wp-content/languages
       - ./apache-an-phien-ban.conf:/etc/apache2/conf-enabled/zz-nhom25-an-phien-ban.conf:ro
+      - ./php/opcache-tuning.ini:/usr/local/etc/php/conf.d/zz-opcache-tuning.ini:ro
 
   nginx:
     image: nginx:alpine

@@ -6,6 +6,7 @@
 TruyCap.txt
 01-cua-hang/wp-content/uploads/wc-logs/
 01-cua-hang/wp-content/uploads/woocommerce_uploads/
+01-cua-hang/wp-content/cache/
 .tmp-*/
 
 # Goi trien khai len hosting (chua CSDL that)
