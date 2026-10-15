@@ -48,6 +48,29 @@ add_action('woocommerce_single_product_summary', function () {
     echo nhom25_nhan_san_pham($product);
 }, 6);
 
+// ---------- Mua hang khong can dang nhap: noi ro cho khach ----------
+// (Cai dat WooCommerce da cho phep khach vang lai dat hang; day chi la thong bao de khach khong tuong phai dang ky)
+function nhom25_thong_bao_khong_can_tai_khoan()
+{
+    if (is_user_logged_in()) {
+        return;
+    }
+    echo '<div class="n25-guest"><b>Không cần tạo tài khoản.</b> Chỉ cần điền thông tin giao hàng để đặt hàng. '
+        . 'Sau khi đặt, bạn tra cứu đơn bằng <b>mã đơn và email</b> tại <a href="' . esc_url(home_url('/tra-cuu-don-hang/')) . '">Tra cứu đơn</a>.</div>';
+}
+add_action('woocommerce_before_cart', 'nhom25_thong_bao_khong_can_tai_khoan', 5);
+add_action('woocommerce_before_checkout_form', 'nhom25_thong_bao_khong_can_tai_khoan', 5);
+
+add_action('woocommerce_thankyou', function ($order_id) {
+    $order = $order_id ? wc_get_order($order_id) : null;
+    if (!$order || $order->get_customer_id()) {
+        return;
+    }
+    echo '<div class="n25-guest"><b>Lưu lại mã đơn #' . esc_html($order->get_order_number()) . '.</b> '
+        . 'Bạn có thể xem trạng thái đơn bất cứ lúc nào tại <a href="' . esc_url(home_url('/tra-cuu-don-hang/')) . '">Tra cứu đơn</a> '
+        . 'bằng mã đơn và email ' . esc_html($order->get_billing_email()) . ', không cần đăng nhập.</div>';
+}, 5);
+
 // Bo 2 anh san pham truoc/sau bi cat o mep man hinh (Storefront)
 add_action('wp', function () {
     remove_action('woocommerce_after_single_product_summary', 'storefront_single_product_pagination', 30);
@@ -225,6 +248,10 @@ add_action('wp_head', function () {
         .woocommerce-message::before, .woocommerce-info::before { color: var(--n25-teal-d); }
         .woocommerce-error { background: #fcece6; color: #7a2e14; border-left: 4px solid #d9623b; border-radius: 10px; }
         .woocommerce-error::before, .woocommerce-error a { color: #7a2e14; }
+
+        /* Thong bao mua khong can tai khoan */
+        .n25-guest { background: #e8f4f2; border-left: 4px solid var(--n25-teal); border-radius: 10px; padding: 14px 18px; margin: 0 0 1.4em; color: var(--n25-navy); line-height: 1.55; }
+        .n25-guest a { color: var(--n25-teal-d); font-weight: 600; }
 
         /* Gio hang, thanh toan */
         table.shop_table, .cart_totals, #order_review { background: #fff; border-radius: 14px; }

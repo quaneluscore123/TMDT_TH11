@@ -1,0 +1,6 @@
+### Thoi diem: 2026-10-15 17:29:03 · https://butchixanh.local
+1. Mo gio hang khi chua dang nhap: DAT (co ma phien gio hang)
+2. Them san pham #11 vao gio: HTTP 201
+3. Dat don COD khong dang nhap: DAT - don #156, trang thai processing
+4. Kiem tra don: khach la khach vang lai (khong tao tai khoan), email khach.thu@example.com
+5. Da xoa don thu, tra lai ton kho.
