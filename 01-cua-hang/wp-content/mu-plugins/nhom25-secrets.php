@@ -51,11 +51,47 @@ add_filter('pre_update_option_woocommerce_woo_vnpay_settings', function ($new) {
 // VietQR: so tai khoan nhan tien
 add_filter('option_woocommerce_vietqr_settings', function ($s) {
     if (!is_array($s)) {
-        return $s;
+        $s = [];
     }
-    $s['bank_bin'] = nhom25_env('VIETQR_BANK_BIN') ?: '970436';
+    $bin = nhom25_env('VIETQR_BANK_BIN') ?: '970436';
+    $acc_num = nhom25_env('VIETQR_ACCOUNT_NUMBER') ?: '1029384756';
+    $acc_name = nhom25_env('VIETQR_ACCOUNT_NAME') ?: 'CUA HANG BUT CHI XANH';
+
+    $s['bank_bin'] = $bin;
+    $s['bank_id'] = $bin; // VietQR plugin expects 'bank_id'
     $s['bank_name'] = 'Vietcombank';
-    $s['account_number'] = nhom25_env('VIETQR_ACCOUNT_NUMBER');
-    $s['account_name'] = nhom25_env('VIETQR_ACCOUNT_NAME');
+    $s['account_number'] = $acc_num;
+    $s['account_name'] = $acc_name;
     return $s;
 });
+
+// VietQR: danh sach tai khoan ngan hang de plugin render thankyou page va tao QR code
+add_filter('option_woocommerce_vietqr_accounts', function ($accounts) {
+    $bin = nhom25_env('VIETQR_BANK_BIN') ?: '970436';
+    $acc_num = nhom25_env('VIETQR_ACCOUNT_NUMBER') ?: '1029384756';
+    $acc_name = nhom25_env('VIETQR_ACCOUNT_NAME') ?: 'CUA HANG BUT CHI XANH';
+
+    return [
+        [
+            'account_name'   => $acc_name,
+            'account_number' => $acc_num,
+            'bank_name'      => 'Vietcombank',
+            'bank_id'        => $bin,
+        ]
+    ];
+});
+
+// Dam bao cac truong VietQR tren trang thankyou luon day du va khong bi rong
+add_filter('woocommerce_vietqr_account_fields', function ($fields, $order_id) {
+    $bin = nhom25_env('VIETQR_BANK_BIN') ?: '970436';
+    $acc_num = nhom25_env('VIETQR_ACCOUNT_NUMBER') ?: '1029384756';
+    $acc_name = nhom25_env('VIETQR_ACCOUNT_NAME') ?: 'CUA HANG BUT CHI XANH';
+
+    if (isset($fields['bank_id'])) $fields['bank_id']['value'] = $bin;
+    if (isset($fields['bank_name'])) $fields['bank_name']['value'] = 'Vietcombank';
+    if (isset($fields['account_number'])) $fields['account_number']['value'] = $acc_num;
+    if (isset($fields['account_name'])) $fields['account_name']['value'] = $acc_name;
+
+    return $fields;
+}, 10, 2);
+

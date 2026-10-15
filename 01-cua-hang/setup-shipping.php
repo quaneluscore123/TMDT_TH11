@@ -1,4 +1,7 @@
 <?php
+if (!defined('ABSPATH')) {
+    require_once '/var/www/html/wp-load.php';
+}
 // TH12 - NV1a: van chuyen 5 vung theo khoang cach tu kho Ha Noi, phi theo khoi luong (<= 1 kg / > 1 kg),
 // mien phi tu NHOM25_FREE_SHIP_THRESHOLD (499.000d). Can cu chon nguong: 06-buoi-13/nguong-mien-phi-van-chuyen.md
 // Chay (trong 01-cua-hang): docker compose run --rm wpcli wp eval-file /scripts/setup-shipping.php
