@@ -1,7 +1,8 @@
 <?php
-// TH12 - NV1a: van chuyen 2 vung (Noi thanh Ha Noi / Cac tinh khac), phi 15k-25k theo khoi luong, mien phi tu 320.000d
-// Chay: docker cp setup-shipping.php 01-cua-hang-shop-1:/tmp/ && docker cp ../02-dataset/products.csv 01-cua-hang-shop-1:/tmp/
-//       docker exec 01-cua-hang-shop-1 wp --allow-root --path=/var/www/html eval-file /tmp/setup-shipping.php
+// TH12 - NV1a: van chuyen 5 vung theo khoang cach tu kho Ha Noi, phi theo khoi luong (<= 1 kg / > 1 kg),
+// mien phi tu NHOM25_FREE_SHIP_THRESHOLD (499.000d). Can cu chon nguong: 06-buoi-13/nguong-mien-phi-van-chuyen.md
+// Chay (trong 01-cua-hang): docker compose run --rm wpcli wp eval-file /scripts/setup-shipping.php
+// Muon nap lai ton kho tu products.csv: chep file vao /tmp/products.csv cua container truoc khi chay.
 
 // ---------- 1. Cua hang o Ha Noi, chi giao trong Viet Nam ----------
 update_option('woocommerce_default_country', 'VN:HN');
@@ -18,7 +19,10 @@ echo "1. Cua hang VN:HN, chi giao trong nuoc, don vi kg\n";
 
 // ---------- 2. Ton kho tu 02-dataset/products.csv (de kiem thu tru kho / het hang khi dang tra) ----------
 update_option('woocommerce_manage_stock', 'yes');
-$fh = fopen('/tmp/products.csv', 'r');
+$fh = file_exists('/tmp/products.csv') ? fopen('/tmp/products.csv', 'r') : false;
+if (!$fh) {
+    echo "2. Bo qua nap ton kho (khong co /tmp/products.csv) - giu nguyen ton kho hien tai\n";
+} else {
 $head = fgetcsv($fh);
 $head[0] = preg_replace('/^\xEF\xBB\xBF/', '', $head[0]);
 $n = 0;
@@ -34,15 +38,20 @@ while (($row = fgetcsv($fh)) !== false) {
     $n++;
 }
 echo "2. Quan ly ton kho cho $n san pham\n";
+}
 
-// ---------- 3. Hai vung van chuyen ----------
+// ---------- 3. Nam vung van chuyen ----------
 foreach (WC_Shipping_Zones::get_zones() as $z) {
     WC_Shipping_Zones::delete_zone($z['id']);
 }
+$codes = function ($list) { return array_map(function ($c) { return ['VN:' . $c, 'state']; }, $list); };
 $zones = [
     // ten, vi tri, phi <= 1kg, phi > 1kg, thoi gian
-    ['Nội thành Hà Nội', [['VN:HN', 'state']], 15000, 20000, '1–2 ngày'],
-    ['Các tỉnh khác',    [['VN', 'country']],  20000, 25000, '3–5 ngày'],
+    ['Nội thành Hà Nội', $codes(['HN']), 18000, 23000, '1–2 ngày'],
+    ['Đồng bằng và trung du Bắc Bộ', $codes(['HP', 'QNI', 'BN', 'HY', 'NB', 'PT', 'TN']), 22000, 27000, '2–3 ngày'],
+    ['Miền núi phía Bắc', $codes(['TQ', 'LCA', 'LS', 'CB', 'LCH', 'DB', 'SL']), 30000, 36000, '3–5 ngày'],
+    ['Miền Trung và Tây Nguyên', $codes(['TH', 'NA', 'HT', 'QT', 'HUE', 'DN', 'QNG', 'GL', 'DL', 'KH', 'LD']), 28000, 34000, '3–4 ngày'],
+    ['Miền Nam', [['VN', 'country']], 32000, 38000, '3–5 ngày'],
 ];
 foreach ($zones as $i => [$name, $locations, $light, $heavy, $eta]) {
     $zone = new WC_Shipping_Zone();
@@ -57,7 +66,7 @@ foreach ($zones as $i => [$name, $locations, $light, $heavy, $eta]) {
     ]);
     $fid = $zone->add_shipping_method('free_shipping');
     update_option("woocommerce_free_shipping_{$fid}_settings", [
-        'title' => 'Miễn phí vận chuyển (đơn từ 320.000đ)', 'requires' => 'min_amount',
+        'title' => 'Miễn phí vận chuyển (đơn từ ' . number_format(NHOM25_FREE_SHIP_THRESHOLD, 0, ',', '.') . 'đ)', 'requires' => 'min_amount',
         'min_amount' => (string) NHOM25_FREE_SHIP_THRESHOLD, 'ignore_discounts' => 'no',
     ]);
     echo "3. Vung '$name': $light d (<= 1kg) / $heavy d (> 1kg), $eta, mien phi tu " . NHOM25_FREE_SHIP_THRESHOLD . " d\n";

@@ -28,7 +28,8 @@ add_action('wp_enqueue_scripts', 'disable_woocommerce_cart_fragments', 99);
 
 // 3. Tắt WooCommerce scripts/styles trên trang không phải shop
 function disable_woocommerce_assets_on_non_shop() {
-    if (function_exists('is_woocommerce') && !is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page()) {
+    // Trang chu co luoi san pham (nhom25-giao-dien.php) nen van can CSS cua WooCommerce
+    if (function_exists('is_woocommerce') && !is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page() && !is_front_page()) {
         wp_dequeue_style('woocommerce-general');
         wp_dequeue_style('woocommerce-layout');
         wp_dequeue_style('woocommerce-smallscreen');

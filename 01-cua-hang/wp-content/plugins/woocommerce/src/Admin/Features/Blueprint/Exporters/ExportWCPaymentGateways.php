@@ -4,12 +4,14 @@ declare( strict_types = 1);
 
 namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
 
-use Automattic\WooCommerce\Admin\Features\Blueprint\Steps\SetWCPaymentGateways;
 use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
+use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
 use Automattic\WooCommerce\Blueprint\Steps\Step;
 
 /**
- * ExportWCPaymentGateways class
+ * Legacy payment gateways exporter.
+ *
+ * @deprecated 11.2.0 Payment settings are no longer included in Blueprint exports.
  */
 class ExportWCPaymentGateways implements StepExporter {
 	/**
@@ -25,22 +27,7 @@ class ExportWCPaymentGateways implements StepExporter {
 	 * @return Step
 	 */
 	public function export(): Step {
-		$step = new SetWCPaymentGateways();
-		$this->maybe_hide_wcpay_gateways();
-		foreach ( $this->get_wc_payment_gateways() as $id => $payment_gateway ) {
-			if ( in_array( $id, $this->exclude_ids, true ) ) {
-				continue;
-			}
-
-			$step->add_payment_gateway(
-				$id,
-				$payment_gateway->get_title(),
-				$payment_gateway->get_description(),
-				$payment_gateway->is_available() ? 'yes' : 'no'
-			);
-		}
-
-		return $step;
+		return new SetSiteOptions();
 	}
 
 	/**
@@ -58,7 +45,7 @@ class ExportWCPaymentGateways implements StepExporter {
 	 * @return string
 	 */
 	public function get_step_name() {
-		return SetWCPaymentGateways::get_step_name();
+		return 'wcPaymentGateways';
 	}
 
 	/**
@@ -87,6 +74,16 @@ class ExportWCPaymentGateways implements StepExporter {
 	 * @return string
 	 */
 	public function get_description() {
-		return __( 'It includes payment gateways and their settings.', 'woocommerce' );
+		return __( 'Payment settings are not included in Blueprint exports.', 'woocommerce' );
+	}
+
+
+	/**
+	 * Check if the current user has the required capabilities for this step.
+	 *
+	 * @return bool True if the user has the required capabilities. False otherwise.
+	 */
+	public function check_step_capabilities(): bool {
+		return current_user_can( 'manage_woocommerce' );
 	}
 }

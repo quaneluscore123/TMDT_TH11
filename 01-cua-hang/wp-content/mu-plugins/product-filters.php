@@ -30,7 +30,16 @@ function custom_product_filters() {
         .cpf-wrap .cpf-reset{display:inline-block;margin-left:10px;font-size:13px;color:#c00;text-decoration:underline}
     </style>';
 
-    echo '<div class="cpf-wrap">';
+    // Dem dieu kien dang loc truoc de biet co mo san khung loc khong
+    $dang_loc = 0;
+    foreach (array_merge(array_keys($attrs), ['price_range']) as $k) {
+        $v = isset($_GET[$k]) ? $_GET[$k] : [];
+        $dang_loc += count(array_filter((array) $v));
+    }
+
+    echo '<details class="cpf-wrap"' . ($dang_loc ? ' open' : '') . '>';
+    echo '<summary class="cpf-summary"><span class="cpf-summary__title">Lọc sản phẩm</span>'
+        . '<span class="cpf-summary__hint">' . ($dang_loc ? 'Đang lọc ' . (int) $dang_loc . ' điều kiện' : 'Kiểm định an toàn · Khối lớp · Loại · Giá') . '</span></summary>';
     echo '<form method="GET" action="">';
 
     foreach ($attrs as $tax => $label) {
@@ -77,7 +86,7 @@ function custom_product_filters() {
         echo ' <span class="cpf-status">Đang lọc: ' . (int) $active_count . ' điều kiện</span>';
         echo ' <a class="cpf-reset" href="' . esc_url($reset_url) . '">✕ Xóa bộ lọc</a>';
     }
-    echo '</form></div>';
+    echo '</form></details>';
 }
 
 add_action('woocommerce_product_query', 'custom_product_query_filter');

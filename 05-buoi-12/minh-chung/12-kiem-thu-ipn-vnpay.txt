@@ -1,0 +1,12 @@
+### Thoi diem: 2026-10-11 15:37:07
+San pham thu: #11 Bút bi gel 0.5mm, ton kho ban dau 97
+
+Ket qua    Truong hop                       Phan hoi gui VNPay           Trang thai  Ton kho
+DAT        1. Chu ky gia mao (khoa sai)     97 Invalid signature         pending     97
+DAT        2. Sai so tien                   04 Invalid amount            pending     97
+DAT        3. Ngan hang tu choi (ma 11)     00 Confirm Success           failed      97
+DAT        4. Thanh toan thanh cong         00 Confirm Success           processing  96
+DAT        5. Thong bao gui lap lai         02 Order already confirmed   processing  96
+DAT        6. Het hang khi dang tra tien    00 Confirm Success           on-hold     0
+
+Da xoa don thu, ton kho tra ve 97.

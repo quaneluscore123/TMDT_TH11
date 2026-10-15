@@ -1,0 +1,11 @@
+### Thoi diem: 2026-10-11 16:14:26
+### Chu ky Apache tren trang loi 403 (sau khi them apache-an-phien-ban.conf)
+So dong chua 'Apache/' trong /wp-content/uploads/wc-logs/: 0
+Header Server khi goi thang shop: Server: Apache
+### Khoa VNPay trong CSDL (doc thang bang wp_options, khong qua bo loc)
+s:11:"vnp_TmnCode";s:0:""
+s:14:"vnp_HashSecret";s:0:""
+### Tim khoa cu (lay tu lich su git) trong ma nguon hien tai
+So file (ngoai .git va .env) chua khoa cu: 0
+Trong backup/ (khong len git): 2
+(2 file nay la ban sao luu cu trong backup/bak-*, da gitignore, khong len git; xoa sau khi doi khoa)

@@ -13,33 +13,58 @@ final class ProductType {
 	 *
 	 * @var string
 	 */
-	const SIMPLE = 'simple';
+	public const SIMPLE = 'simple';
 
 	/**
 	 * Variable product type.
 	 *
 	 * @var string
 	 */
-	const VARIABLE = 'variable';
+	public const VARIABLE = 'variable';
 
 	/**
 	 * Grouped product type.
 	 *
 	 * @var string
 	 */
-	const GROUPED = 'grouped';
+	public const GROUPED = 'grouped';
 
 	/**
 	 * External/Affiliate product type.
 	 *
 	 * @var string
 	 */
-	const EXTERNAL = 'external';
+	public const EXTERNAL = 'external';
 
 	/**
 	 * Variation product type.
 	 *
 	 * @var string
 	 */
-	const VARIATION = 'variation';
+	public const VARIATION = 'variation';
+
+	/**
+	 * Returns every product type value defined by this enum, as a flat list.
+	 *
+	 * It includes self::VARIATION. Variations are real, creatable products, and
+	 * WC_Product_Variation::get_type() returns this value, but each belongs to a parent rather than
+	 * standing on its own.
+	 *
+	 * For the top-level types a merchant can pick, use wc_get_product_types(). It returns a
+	 * value => label map rather than a list, and being filterable it also carries types an
+	 * extension registered.
+	 *
+	 * @since 10.9.0
+	 *
+	 * @return string[]
+	 */
+	public static function get_all(): array {
+		return array(
+			self::SIMPLE,
+			self::VARIABLE,
+			self::GROUPED,
+			self::EXTERNAL,
+			self::VARIATION,
+		);
+	}
 }

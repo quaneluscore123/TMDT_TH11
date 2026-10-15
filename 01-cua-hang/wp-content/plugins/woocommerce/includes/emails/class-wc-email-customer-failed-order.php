@@ -30,7 +30,7 @@ if ( ! class_exists( 'WC_Email_Customer_Failed_Order', false ) ) :
 			$this->id             = 'customer_failed_order';
 			$this->customer_email = true;
 			$this->title          = __( 'Failed order', 'woocommerce' );
-			$this->description    = __( 'Order failed emails are sent to customers when their orders are marked as failed.', 'woocommerce' );
+			$this->email_group    = 'order-changes';
 			$this->template_html  = 'emails/customer-failed-order.php';
 			$this->template_plain = 'emails/plain/customer-failed-order.php';
 			$this->placeholders   = array(
@@ -43,6 +43,16 @@ if ( ! class_exists( 'WC_Email_Customer_Failed_Order', false ) ) :
 
 			// Call parent constructor.
 			parent::__construct();
+
+			// Must be after parent's constructor which sets `email_improvements_enabled` property.
+			$this->description = $this->email_improvements_enabled
+				? __( 'Receive an email notification when an order that was processing or on hold fails', 'woocommerce' )
+				: __( 'Order failed emails are sent to customers when their orders are marked as failed.', 'woocommerce' );
+
+			if ( $this->block_email_editor_enabled ) {
+				$this->title       = __( 'Order failed', 'woocommerce' );
+				$this->description = __( 'Notifies customers when their order has failed.', 'woocommerce' );
+			}
 		}
 
 		/**
@@ -64,9 +74,7 @@ if ( ! class_exists( 'WC_Email_Customer_Failed_Order', false ) ) :
 				$this->placeholders['{order_number}'] = $this->object->get_order_number();
 			}
 
-			if ( $this->is_enabled() && $this->get_recipient() ) {
-				$this->send( $this->get_recipient(), $this->get_subject(), $this->get_content(), $this->get_headers(), $this->get_attachments() );
-			}
+			$this->send_notification();
 
 			$this->restore_locale();
 		}
@@ -103,6 +111,7 @@ if ( ! class_exists( 'WC_Email_Customer_Failed_Order', false ) ) :
 					'order'              => $this->object,
 					'email_heading'      => $this->get_heading(),
 					'additional_content' => $this->get_additional_content(),
+					'blogname'           => $this->get_blogname(),
 					'sent_to_admin'      => false,
 					'plain_text'         => false,
 					'email'              => $this,
@@ -122,6 +131,7 @@ if ( ! class_exists( 'WC_Email_Customer_Failed_Order', false ) ) :
 					'order'              => $this->object,
 					'email_heading'      => $this->get_heading(),
 					'additional_content' => $this->get_additional_content(),
+					'blogname'           => $this->get_blogname(),
 					'sent_to_admin'      => false,
 					'plain_text'         => true,
 					'email'              => $this,
@@ -136,7 +146,9 @@ if ( ! class_exists( 'WC_Email_Customer_Failed_Order', false ) ) :
 		 * @return string
 		 */
 		public function get_default_additional_content() {
-			return '';
+			return $this->email_improvements_enabled
+				? __( 'If you need any help with your order, please contact us at {store_email}.', 'woocommerce' )
+				: '';
 		}
 	}
 

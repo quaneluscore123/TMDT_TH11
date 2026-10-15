@@ -1,0 +1,9 @@
+### Thoi diem: 2026-10-11 15:32:42
+Tinh         Gio hang   Kg     Vung                                 Phi
+HN           450.000    4.46   Nội thành Hà Nội               Giao hàng tiêu chuẩn (1–2 ngày) = 23.000đ
+HN           522.000    5.54   Nội thành Hà Nội               Miễn phí vận chuyển (đơn từ 499.000đ) = 0đ
+HP           300.000    2.97   Đồng bằng và trung du Bắc Bộ Giao hàng tiêu chuẩn (2–3 ngày) = 27.000đ
+LCA          300.000    2.97   Miền núi phía Bắc              Giao hàng tiêu chuẩn (3–5 ngày) = 36.000đ
+DN           300.000    2.97   Miền Trung và Tây Nguyên        Giao hàng tiêu chuẩn (3–4 ngày) = 34.000đ
+HCM          300.000    2.97   Miền Nam                           Giao hàng tiêu chuẩn (3–5 ngày) = 38.000đ
+HCM          2.002.000  59.88  Miền Nam                           Miễn phí vận chuyển (đơn từ 499.000đ) = 0đ

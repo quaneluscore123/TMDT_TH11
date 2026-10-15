@@ -218,6 +218,24 @@ abstract class Task {
 	}
 
 	/**
+	 * Contextual image URL for the task.
+	 *
+	 * @return string
+	 */
+	public function get_image_url() {
+		return '';
+	}
+
+	/**
+	 * Alt text for the contextual image.
+	 *
+	 * @return string
+	 */
+	public function get_image_alt() {
+		return '';
+	}
+
+	/**
 	 * Check if a task is dismissable.
 	 *
 	 * @return bool
@@ -391,7 +409,9 @@ abstract class Task {
 	}
 
 	/**
-	 * Track task completion if task is viewable.
+	 * Track task completion if task is viewable and is complete.
+	 *
+	 * @return void
 	 */
 	public function possibly_track_completion() {
 		if ( $this->has_previously_completed() ) {
@@ -463,6 +483,33 @@ abstract class Task {
 	}
 
 	/**
+	 * Check if the task is in progress.
+	 *
+	 * @return bool
+	 */
+	public function is_in_progress() {
+		return false;
+	}
+
+	/**
+	 * The task in progress label.
+	 *
+	 * @return string
+	 */
+	public function in_progress_label() {
+		return esc_html__( 'In progress', 'woocommerce' );
+	}
+
+	/**
+	 * If a task is always accessible, relevant for when a task list is hidden but a task can still be viewed.
+	 *
+	 * @return bool
+	 */
+	public function is_always_accessible() {
+		return false;
+	}
+
+	/**
 	 * Check if the task has been visited.
 	 *
 	 * @return bool
@@ -490,7 +537,10 @@ abstract class Task {
 	 * @return array
 	 */
 	public function get_json() {
-		$this->possibly_track_completion();
+		$is_complete = $this->is_complete();
+		if ( $is_complete ) {
+			$this->possibly_track_completion();
+		}
 
 		return array(
 			'id'              => $this->get_id(),
@@ -502,7 +552,11 @@ abstract class Task {
 			'additionalInfo'  => $this->get_additional_info(),
 			'actionLabel'     => $this->get_action_label(),
 			'actionUrl'       => $this->get_action_url(),
-			'isComplete'      => $this->is_complete(),
+			'imageUrl'        => $this->get_image_url(),
+			'imageAlt'        => $this->get_image_alt(),
+			'isComplete'      => $is_complete,
+			'isInProgress'    => $this->is_in_progress(),
+			'inProgressLabel' => $this->in_progress_label(),
 			'time'            => $this->get_time(),
 			'level'           => 3,
 			'isActioned'      => $this->is_actioned(),
@@ -604,5 +658,4 @@ abstract class Task {
 		}
 		return $result;
 	}
-
 }

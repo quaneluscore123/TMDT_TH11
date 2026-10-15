@@ -31,7 +31,7 @@ Chúng tôi **không** hỏi tên công ty, mã bưu chính hay địa chỉ dò
 
 **Khi bạn viết đánh giá sản phẩm**: tên hiển thị (công khai cùng nội dung đánh giá) và email (không công khai). Chúng tôi không lưu địa chỉ IP của bạn khi bạn đánh giá và không dùng ảnh đại diện Gravatar.
 
-**Cookie**: website chỉ dùng cookie cần thiết để giữ giỏ hàng của bạn (kể cả khi bạn lỡ đóng trang giữa lúc thanh toán). Chúng tôi **không** dùng Google Analytics, Facebook Pixel hay công cụ theo dõi quảng cáo nào.
+**Cookie**: website dùng cookie cần thiết để giữ giỏ hàng của bạn (kể cả khi bạn lỡ đóng trang giữa lúc thanh toán). Ngoài ra có hai cookie thống kê của chính cửa hàng (`n25_sid`, `n25_src`): một mã phiên ngẫu nhiên và nguồn bạn đến (ví dụ "facebook"), để biết khách đến từ kênh nào và bỏ dở ở bước nào khi mua. Chúng tôi **không** ghi địa chỉ IP hay thiết bị của bạn vào thống kê này, không gửi cho bên nào khác và không dùng cho quảng cáo. Chúng tôi **không** dùng Google Analytics, Facebook Pixel hay công cụ theo dõi quảng cáo nào.
 
 **An toàn hệ thống**: máy chủ ghi lại địa chỉ IP và trang được truy cập để điều tra khi có sự cố; nếu nhập sai mật khẩu quản trị nhiều lần, địa chỉ IP (đã mã hóa) bị khóa tạm 15 phút.
 
@@ -46,6 +46,8 @@ Chúng tôi không có biểu mẫu đăng ký nhận tin hay biểu mẫu liên
 | Mặt hàng, số tiền, ngày mua, mã giao dịch (không còn tên hay địa chỉ) | 10 năm, theo quy định lưu trữ chứng từ kế toán |
 | Đánh giá sản phẩm | Đến khi bạn yêu cầu xóa |
 | Cookie giỏ hàng | 2 ngày |
+| Cookie thống kê (`n25_sid`, `n25_src`) | 30 phút kể từ lần cuối bạn mở trang |
+| Dữ liệu thống kê lượt mua (mã phiên, nguồn, sản phẩm đã xem/thêm giỏ) | 12 tháng, sau đó tự động xóa |
 | Nhật ký khóa đăng nhập | 15 phút |
 
 ## 4. Chia sẻ với ai

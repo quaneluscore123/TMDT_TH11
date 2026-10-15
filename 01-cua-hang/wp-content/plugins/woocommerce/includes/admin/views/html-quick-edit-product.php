@@ -5,6 +5,10 @@
  * @package WooCommerce\Admin\Notices
  */
 
+use Automattic\WooCommerce\Internal\CostOfGoodsSold\CostOfGoodsSoldController;
+use Automattic\WooCommerce\Enums\CatalogVisibility;
+use Automattic\WooCommerce\Enums\ProductTaxStatus;
+
 defined( 'ABSPATH' ) || exit;
 ?>
 
@@ -42,7 +46,43 @@ defined( 'ABSPATH' ) || exit;
 				</span>
 			</label>
 			<br class="clear" />
+			<?php
+			/**
+			 * Hook to customize the regular expression that validates dates entered in the WooCommerce admin editors.
+			 *
+			 * @since 3.0.0
+			 *
+			 * @param string $pattern Default pattern to use.
+			 */
+			$date_input_html_pattern = apply_filters( 'woocommerce_date_input_html_pattern', '[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])' );
+			?>
+			<label>
+				<span class="title"><?php esc_html_e( 'Sale start', 'woocommerce' ); ?></span>
+				<span class="input-text-wrap">
+					<input type="text" name="_sale_price_dates_from" class="text sale_price_dates_from" placeholder="<?php echo esc_attr_x( 'From&hellip;', 'placeholder', 'woocommerce' ); ?> YYYY-MM-DD" value="" maxlength="10" pattern="<?php echo esc_attr( $date_input_html_pattern ); ?>">
+				</span>
+			</label>
+			<br class="clear" />
+			<label>
+				<span class="title"><?php esc_html_e( 'Sale end', 'woocommerce' ); ?></span>
+				<span class="input-text-wrap">
+					<input type="text" name="_sale_price_dates_to" class="text sale_price_dates_to" placeholder="<?php echo esc_attr_x( 'To&hellip;', 'placeholder', 'woocommerce' ); ?> YYYY-MM-DD" value="" maxlength="10" pattern="<?php echo esc_attr( $date_input_html_pattern ); ?>">
+				</span>
+			</label>
+			<br class="clear" />
 		</div>
+
+		<?php if ( wc_get_container()->get( CostOfGoodsSoldController::class )->feature_is_enabled() ) : ?>
+			<div class="cost_fields">
+				<label>
+					<span class="title"><?php esc_html_e( 'Cost', 'woocommerce' ); ?></span>
+					<span class="input-text-wrap">
+						<input type="text" name="_cogs_value" class="text wc_input_price cogs_value" placeholder="<?php esc_attr_e( 'Cost value', 'woocommerce' ); ?>" value="">
+					</span>
+				</label>
+				<br class="clear" />
+			</div>
+		<?php endif; ?>
 
 		<?php if ( wc_tax_enabled() ) : ?>
 			<label class="alignleft">
@@ -51,9 +91,9 @@ defined( 'ABSPATH' ) || exit;
 					<select class="tax_status" name="_tax_status">
 						<?php
 						$options = array(
-							'taxable'  => __( 'Taxable', 'woocommerce' ),
-							'shipping' => __( 'Shipping only', 'woocommerce' ),
-							'none'     => _x( 'None', 'Tax status', 'woocommerce' ),
+							ProductTaxStatus::TAXABLE  => __( 'Taxable', 'woocommerce' ),
+							ProductTaxStatus::SHIPPING => __( 'Shipping only', 'woocommerce' ),
+							ProductTaxStatus::NONE     => _x( 'None', 'Tax status', 'woocommerce' ),
 						);
 						foreach ( $options as $key => $value ) {
 							echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $value ) . '</option>';
@@ -142,10 +182,10 @@ defined( 'ABSPATH' ) || exit;
 						$options = apply_filters(
 							'woocommerce_product_visibility_options',
 							array(
-								'visible' => __( 'Catalog &amp; search', 'woocommerce' ),
-								'catalog' => __( 'Catalog', 'woocommerce' ),
-								'search'  => __( 'Search', 'woocommerce' ),
-								'hidden'  => __( 'Hidden', 'woocommerce' ),
+								CatalogVisibility::VISIBLE => __( 'Catalog &amp; search', 'woocommerce' ),
+								CatalogVisibility::CATALOG => __( 'Catalog', 'woocommerce' ),
+								CatalogVisibility::SEARCH  => __( 'Search', 'woocommerce' ),
+								CatalogVisibility::HIDDEN  => __( 'Hidden', 'woocommerce' ),
 							)
 						);
 						foreach ( $options as $key => $value ) {

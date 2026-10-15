@@ -1,0 +1,24 @@
+### Thu phuc hoi ban sao luu bak-20261011-155203
+shop.sql: OK
+wp-content.tgz: OK
+Nhom25_backup.sql.gz: OK
+Bat dau phuc hoi: 2026-10-11 15:52:16
+Ket thuc phuc hoi: 2026-10-11 15:52:19 -> thoi gian phuc hoi thuc te: 3 giay
+--- Ban phuc hoi (shop_restore_test) ---
+san pham	40
+don hang	2
+trang	10
+nguoi dung	1
+tuy chon	405
+tong ton kho	4520
+checksum posts	109114758894
+--- CSDL dang chay (shop) ---
+san pham	40
+don hang	2
+trang	10
+nguoi dung	1
+tuy chon	405
+tong ton kho	4520
+checksum posts	109114758894
+So file uploads giai nen: 293 / dang chay: 293
+KET QUA: PHUC HOI KHOP 100%

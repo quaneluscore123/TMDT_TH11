@@ -1,0 +1,12 @@
+# Bi mat va du lieu rieng tung may
+01-cua-hang/.env
+01-cua-hang/certs/*.pem
+01-cua-hang/backup/bak-*/
+01-cua-hang/backup/*.sql.gz
+TruyCap.txt
+01-cua-hang/wp-content/uploads/wc-logs/
+01-cua-hang/wp-content/uploads/woocommerce_uploads/
+.tmp-*/
+
+# Goi trien khai len hosting (chua CSDL that)
+01-cua-hang/trien-khai/goi/

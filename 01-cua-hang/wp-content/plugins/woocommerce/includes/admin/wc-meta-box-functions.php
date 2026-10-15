@@ -68,14 +68,29 @@ function woocommerce_wp_text_input( $field, ?WC_Data $data = null ) {
 	echo '<p class="form-field ' . esc_attr( $field['id'] ) . '_field ' . esc_attr( $field['wrapper_class'] ) . '">
 		<label for="' . esc_attr( $field['id'] ) . '">' . wp_kses_post( $field['label'] ) . '</label>';
 
-	if ( ! empty( $field['description'] ) && false !== $field['desc_tip'] ) {
-		echo wc_help_tip( $field['description'] );
+	$help_tip    = null;
+	$description = null;
+	if ( ! empty( $field['description'] ) ) {
+		if ( is_array( $field['description'] ) ) {
+			$help_tip    = reset( $field['description'] );
+			$description = end( $field['description'] );
+		} elseif ( false !== $field['desc_tip'] ) {
+			$help_tip = $field['description'];
+		} else {
+			$description = $field['description'];
+		}
+	}
+
+	if ( ! is_null( $help_tip ) ) {
+		echo wc_help_tip( $help_tip );
 	}
 
 	echo '<input type="' . esc_attr( $field['type'] ) . '" class="' . esc_attr( $field['class'] ) . '" style="' . esc_attr( $field['style'] ) . '" name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" value="' . esc_attr( $field['value'] ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" ' . implode( ' ', $custom_attributes ) . ' /> ';
 
-	if ( ! empty( $field['description'] ) && false === $field['desc_tip'] ) {
-		echo '<span class="description">' . wp_kses_post( $field['description'] ) . '</span>';
+	if ( ! is_null( $description ) ) {
+		$hidden_class = true === ( $field['description_hidden'] ?? false ) ? ' hidden' : '';
+		//phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<span class="description' . $hidden_class . '">' . wp_kses_post( $description ) . '</span>';
 	}
 
 	echo '</p>';
@@ -250,12 +265,12 @@ function woocommerce_wp_select( $field, ?WC_Data $data = null ) {
 	$tooltip     = ! empty( $field['description'] ) && false !== $field['desc_tip'] ? $field['description'] : '';
 	$description = ! empty( $field['description'] ) && false === $field['desc_tip'] ? $field['description'] : '';
 	?>
-	<p <?php echo wc_implode_html_attributes( $wrapper_attributes ); // WPCS: XSS ok. ?>>
-		<label <?php echo wc_implode_html_attributes( $label_attributes ); // WPCS: XSS ok. ?>><?php echo wp_kses_post( $field['label'] ); ?></label>
+	<p <?php echo wc_implode_html_attributes( $wrapper_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_implode_html_attributes() escapes attribute names and values. ?>>
+		<label <?php echo wc_implode_html_attributes( $label_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_implode_html_attributes() escapes attribute names and values. ?>><?php echo wp_kses_post( $field['label'] ); ?></label>
 		<?php if ( $tooltip ) : ?>
-			<?php echo wc_help_tip( $tooltip ); // WPCS: XSS ok. ?>
+			<?php echo wc_help_tip( $tooltip ); ?>
 		<?php endif; ?>
-		<select <?php echo wc_implode_html_attributes( $field_attributes ); // WPCS: XSS ok. ?>>
+		<select <?php echo wc_implode_html_attributes( $field_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_implode_html_attributes() escapes attribute names and values. ?>>
 			<?php
 			foreach ( $field['options'] as $key => $value ) {
 				echo '<option value="' . esc_attr( $key ) . '"' . wc_selected( $key, $field['value'] ) . '>' . esc_html( $value ) . '</option>';

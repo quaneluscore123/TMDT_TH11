@@ -57,3 +57,72 @@ add_filter('login_errors', function ($error) {
     if ($data['until'] > time()) return nhom25_lock_message($data);
     return '<strong>Lỗi:</strong> tên đăng nhập hoặc mật khẩu không đúng. Còn ' . max(0, NHOM25_LOGIN_MAX_FAILS - $data['fails']) . ' lần thử.';
 });
+
+// An phien ban phan mem (buoi 12 hang muc 8): bo the generator cua WordPress va WooCommerce
+remove_action('wp_head', 'wp_generator');
+add_filter('the_generator', '__return_empty_string');
+
+// Chan liet ke ten dang nhap qua ?author=N va trang luu tru tac gia (buoi 12 hang muc 4)
+add_action('template_redirect', function () {
+    if (is_author() || (isset($_GET['author']) && !is_admin())) {
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        nocache_headers();
+    }
+}, 0);
+
+// ---------- Lop bao ve chay o tang PHP (khong phu thuoc nginx), dung duoc tren hosting chia se ----------
+
+// Khong cho sua ma plugin/giao dien tu trang quan tri (lo tai khoan admin khong thanh lo ma nguon)
+if (!defined('DISALLOW_FILE_EDIT')) {
+    define('DISALLOW_FILE_EDIT', true);
+}
+
+// Tat XML-RPC (kenh do mat khau hang loat) va tieu de X-Pingback
+add_filter('xmlrpc_enabled', '__return_false');
+add_filter('wp_headers', function ($headers) {
+    unset($headers['X-Pingback']);
+    return $headers;
+});
+
+// Tat mat khau ung dung: chi dang nhap qua trang dang nhap co 2FA
+add_filter('wp_is_application_passwords_available', '__return_false');
+
+// Khong liet ke nguoi dung qua REST API (ca /wp-json/wp/v2/users lan /?rest_route=/wp/v2/users) khi chua dang nhap
+add_filter('rest_endpoints', function ($endpoints) {
+    if (!is_user_logged_in()) {
+        foreach (array_keys($endpoints) as $route) {
+            if (strpos($route, '/wp/v2/users') === 0) {
+                unset($endpoints[$route]);
+            }
+        }
+    }
+    return $endpoints;
+});
+
+// Khong dua tai khoan vao so do trang (wp-sitemap-users-1.xml lo ten dang nhap)
+add_filter('wp_sitemaps_add_provider', function ($provider, $name) {
+    return $name === 'users' ? false : $provider;
+}, 10, 2);
+
+// Tieu de bao mat gui tu PHP: nginx cua ban Docker an ban trung (proxy_hide_header), tren hosting chia se
+// thi day la lop chinh cung voi .htaccess trong thu muc trien-khai/
+function nhom25_security_headers()
+{
+    if (headers_sent()) {
+        return;
+    }
+    header_remove('X-Powered-By'); // khong lo phien ban PHP
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+    if (is_ssl()) {
+        header('Strict-Transport-Security: max-age=31536000');
+    }
+}
+add_action('send_headers', 'nhom25_security_headers');
+add_action('login_init', 'nhom25_security_headers');
+add_action('admin_init', 'nhom25_security_headers');

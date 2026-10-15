@@ -5,6 +5,8 @@
  * @package WooCommerce\Gateways
  */
 
+use Automattic\WooCommerce\Enums\PaymentGatewayFeature;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -24,7 +26,7 @@ class WC_Payment_Gateway_ECheck extends WC_Payment_Gateway {
 	 * @since 2.6.0
 	 */
 	public function payment_fields() {
-		if ( $this->supports( 'tokenization' ) && is_checkout() ) {
+		if ( $this->supports( PaymentGatewayFeature::TOKENIZATION ) && is_checkout() ) {
 			$this->tokenization_script();
 			$this->saved_payment_methods();
 			$this->form();
@@ -60,7 +62,7 @@ class WC_Payment_Gateway_ECheck extends WC_Payment_Gateway {
 			<?php do_action( 'woocommerce_echeck_form_start', $this->id ); ?>
 			<?php
 			foreach ( $fields as $field ) {
-				echo $field; // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
+				echo $field; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The public gateway field filter intentionally returns HTML; default fields escape dynamic data.
 			}
 			?>
 			<?php do_action( 'woocommerce_echeck_form_end', $this->id ); ?>

@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: GlotPress/4.0.3\n"
+"X-Generator: GlotPress/4.1.0\n"
 "Language: vi_VN\n"
 "Project-Id-Version: Themes - Twenty Twenty-Five\n"
 
@@ -45,15 +45,154 @@ msgctxt "Answer in the FAQs pattern."
 msgid "This exquisite compilation showcases a diverse array of photographs that capture the essence of different eras and cultures, reflecting the unique styles and perspectives of each artist."
 msgstr "Bộ sưu tập tinh tế này trưng bày một loạt các bức ảnh đa dạng, ghi lại bản chất của các thời đại và nền văn hóa khác nhau, phản ánh phong cách và góc nhìn độc đáo của từng nghệ sĩ."
 
-#: theme.json
-msgctxt "Custom template name"
-msgid "Page No Title"
-msgstr "Trang không có tiêu đề"
+#: functions.php:109
+msgid "A collection of full page layouts."
+msgstr "Bộ sưu tập bố cục trang đầy đủ."
 
 #: theme.json
 msgctxt "Template part name"
 msgid "Sidebar"
 msgstr "Thanh bên"
+
+#: theme.json
+msgctxt "Template part name"
+msgid "Footer"
+msgstr "Chân trang"
+
+#: theme.json
+msgctxt "Template part name"
+msgid "Header"
+msgstr "Đầu trang"
+
+#: theme.json styles/02-noon.json styles/04-afternoon.json
+#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
+#: styles/typography/typography-preset-1.json
+#: styles/typography/typography-preset-3.json
+#: styles/typography/typography-preset-4.json
+#: styles/typography/typography-preset-5.json
+#: styles/typography/typography-preset-7.json
+msgctxt "Font size name"
+msgid "Large"
+msgstr "Lớn"
+
+#: theme.json styles/02-noon.json styles/04-afternoon.json
+#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
+#: styles/typography/typography-preset-1.json
+#: styles/typography/typography-preset-3.json
+#: styles/typography/typography-preset-4.json
+#: styles/typography/typography-preset-5.json
+#: styles/typography/typography-preset-7.json
+msgctxt "Font size name"
+msgid "Medium"
+msgstr "Trung bình"
+
+#: theme.json styles/02-noon.json styles/04-afternoon.json
+#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
+#: styles/typography/typography-preset-1.json
+#: styles/typography/typography-preset-3.json
+#: styles/typography/typography-preset-4.json
+#: styles/typography/typography-preset-5.json
+#: styles/typography/typography-preset-7.json
+msgctxt "Font size name"
+msgid "Small"
+msgstr "Nhỏ"
+
+#: theme.json styles/01-evening.json styles/02-noon.json styles/03-dusk.json
+#: styles/04-afternoon.json styles/05-twilight.json styles/06-morning.json
+#: styles/07-sunrise.json styles/08-midnight.json styles/colors/01-evening.json
+#: styles/colors/02-noon.json styles/colors/03-dusk.json
+#: styles/colors/04-afternoon.json styles/colors/05-twilight.json
+#: styles/colors/06-morning.json styles/colors/07-sunrise.json
+#: styles/colors/08-midnight.json
+msgctxt "Color name"
+msgid "Contrast"
+msgstr "Tương phản"
+
+#: theme.json styles/01-evening.json styles/02-noon.json styles/03-dusk.json
+#: styles/04-afternoon.json styles/05-twilight.json styles/06-morning.json
+#: styles/07-sunrise.json styles/08-midnight.json styles/colors/01-evening.json
+#: styles/colors/02-noon.json styles/colors/03-dusk.json
+#: styles/colors/04-afternoon.json styles/colors/05-twilight.json
+#: styles/colors/06-morning.json styles/colors/07-sunrise.json
+#: styles/colors/08-midnight.json
+msgctxt "Color name"
+msgid "Base"
+msgstr "Nền"
+
+#: patterns/template-query-loop.php
+msgctxt "Pattern title"
+msgid "List of posts, 1 column"
+msgstr "Danh sách bài viết, 1 cột"
+
+#: patterns/hidden-sidebar.php
+msgctxt "Pattern title"
+msgid "Sidebar"
+msgstr "Thanh bên"
+
+#: patterns/hidden-search.php
+msgctxt "Pattern title"
+msgid "Search"
+msgstr "Tìm kiếm"
+
+#: patterns/post-navigation.php
+msgctxt "Pattern title"
+msgid "Post navigation"
+msgstr "Điều hướng bài viết"
+
+#: patterns/comments.php:18
+msgid "Comments"
+msgstr "Bình luận"
+
+#: patterns/comments.php
+msgctxt "Pattern title"
+msgid "Comments"
+msgstr "Bình luận"
+
+#: patterns/hidden-404.php
+msgctxt "Pattern title"
+msgid "404"
+msgstr "404"
+
+#: patterns/footer-columns.php:37 patterns/footer.php:47
+msgid "About"
+msgstr "Giới thiệu"
+
+#: patterns/contact-info-locations.php:34 patterns/footer-social.php:21
+msgid "Facebook"
+msgstr "Facebook"
+
+#: patterns/contact-info-locations.php:33 patterns/footer-social.php:22
+#: patterns/media-instagram-grid.php:24 patterns/page-cv-bio.php:47
+#: patterns/page-link-in-bio-heading-paragraph-links-image.php:36
+#: patterns/page-link-in-bio-with-tight-margins.php:48
+msgid "Instagram"
+msgstr "Instagram"
+
+#: functions.php:80
+msgid "Checkmark"
+msgstr "Dấu tích"
+
+#: theme.json styles/02-noon.json styles/04-afternoon.json
+#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
+#: styles/typography/typography-preset-1.json
+#: styles/typography/typography-preset-3.json
+#: styles/typography/typography-preset-4.json
+#: styles/typography/typography-preset-5.json
+#: styles/typography/typography-preset-7.json
+msgctxt "Font size name"
+msgid "Extra Extra Large"
+msgstr "Cực lớn"
+
+#: theme.json styles/02-noon.json styles/04-afternoon.json
+#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
+#: styles/typography/typography-preset-1.json
+#: styles/typography/typography-preset-3.json
+#: styles/typography/typography-preset-4.json
+#: styles/typography/typography-preset-5.json
+#: styles/typography/typography-preset-7.json
+msgctxt "Font size name"
+msgid "Extra Large"
+msgstr "Rất lớn"
 
 #: theme.json
 msgctxt "Template part name"
@@ -67,23 +206,8 @@ msgstr "Cột chân trang"
 
 #: theme.json
 msgctxt "Template part name"
-msgid "Footer"
-msgstr "Chân trang"
-
-#: theme.json
-msgctxt "Template part name"
 msgid "Header with large title"
 msgstr "Đầu trang với tiêu đề lớn"
-
-#: theme.json
-msgctxt "Template part name"
-msgid "Vertical site header"
-msgstr "Đầu trang dọc"
-
-#: theme.json
-msgctxt "Template part name"
-msgid "Header"
-msgstr "Đầu trang"
 
 #: styles/02-noon.json styles/typography/typography-preset-1.json
 msgctxt "Font family name"
@@ -289,61 +413,6 @@ msgctxt "Style variation name"
 msgid "Dusk"
 msgstr "Chạng vạng"
 
-#: theme.json styles/02-noon.json styles/04-afternoon.json
-#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
-#: styles/typography/typography-preset-1.json
-#: styles/typography/typography-preset-3.json
-#: styles/typography/typography-preset-4.json
-#: styles/typography/typography-preset-5.json
-#: styles/typography/typography-preset-7.json
-msgctxt "Font size name"
-msgid "Extra Extra Large"
-msgstr "Cực lớn"
-
-#: theme.json styles/02-noon.json styles/04-afternoon.json
-#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
-#: styles/typography/typography-preset-1.json
-#: styles/typography/typography-preset-3.json
-#: styles/typography/typography-preset-4.json
-#: styles/typography/typography-preset-5.json
-#: styles/typography/typography-preset-7.json
-msgctxt "Font size name"
-msgid "Extra Large"
-msgstr "Rất lớn"
-
-#: theme.json styles/02-noon.json styles/04-afternoon.json
-#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
-#: styles/typography/typography-preset-1.json
-#: styles/typography/typography-preset-3.json
-#: styles/typography/typography-preset-4.json
-#: styles/typography/typography-preset-5.json
-#: styles/typography/typography-preset-7.json
-msgctxt "Font size name"
-msgid "Large"
-msgstr "Lớn"
-
-#: theme.json styles/02-noon.json styles/04-afternoon.json
-#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
-#: styles/typography/typography-preset-1.json
-#: styles/typography/typography-preset-3.json
-#: styles/typography/typography-preset-4.json
-#: styles/typography/typography-preset-5.json
-#: styles/typography/typography-preset-7.json
-msgctxt "Font size name"
-msgid "Medium"
-msgstr "Trung bình"
-
-#: theme.json styles/02-noon.json styles/04-afternoon.json
-#: styles/05-twilight.json styles/06-morning.json styles/08-midnight.json
-#: styles/typography/typography-preset-1.json
-#: styles/typography/typography-preset-3.json
-#: styles/typography/typography-preset-4.json
-#: styles/typography/typography-preset-5.json
-#: styles/typography/typography-preset-7.json
-msgctxt "Font size name"
-msgid "Small"
-msgstr "Nhỏ"
-
 #: styles/02-noon.json styles/colors/02-noon.json
 msgctxt "Style variation name"
 msgid "Noon"
@@ -415,62 +484,15 @@ msgctxt "Color name"
 msgid "Accent 1"
 msgstr "Màu nhấn 1"
 
-#: theme.json styles/01-evening.json styles/02-noon.json styles/03-dusk.json
-#: styles/04-afternoon.json styles/05-twilight.json styles/06-morning.json
-#: styles/07-sunrise.json styles/08-midnight.json styles/colors/01-evening.json
-#: styles/colors/02-noon.json styles/colors/03-dusk.json
-#: styles/colors/04-afternoon.json styles/colors/05-twilight.json
-#: styles/colors/06-morning.json styles/colors/07-sunrise.json
-#: styles/colors/08-midnight.json
-msgctxt "Color name"
-msgid "Contrast"
-msgstr "Tương phản"
-
-#: theme.json styles/01-evening.json styles/02-noon.json styles/03-dusk.json
-#: styles/04-afternoon.json styles/05-twilight.json styles/06-morning.json
-#: styles/07-sunrise.json styles/08-midnight.json styles/colors/01-evening.json
-#: styles/colors/02-noon.json styles/colors/03-dusk.json
-#: styles/colors/04-afternoon.json styles/colors/05-twilight.json
-#: styles/colors/06-morning.json styles/colors/07-sunrise.json
-#: styles/colors/08-midnight.json
-msgctxt "Color name"
-msgid "Base"
-msgstr "Nền"
-
 #: styles/01-evening.json styles/colors/01-evening.json
 msgctxt "Style variation name"
 msgid "Evening"
 msgstr "Buổi tối"
 
-#: patterns/vertical-header.php
-msgctxt "Pattern description"
-msgid "Vertical site header with site title and navigation."
-msgstr "Đầu trang dọc với tiêu đề trang web và điều hướng."
-
-#: patterns/vertical-header.php
-msgctxt "Pattern title"
-msgid "Vertical site header"
-msgstr "Đầu trang dọc"
-
 #: patterns/text-faqs.php:83
 msgctxt "Question in the FAQs pattern."
 msgid "Are signed copies available?"
 msgstr "Có bản sao có chữ ký không?"
-
-#: patterns/text-faqs.php:67
-msgctxt "Question in the FAQs pattern."
-msgid "When will The Stories Book be released?"
-msgstr "Khi nào Sách những câu chuyện sẽ được phát hành?"
-
-#: patterns/text-faqs.php:47
-msgctxt "Question in the FAQs pattern."
-msgid "How much does The Stories Book cost?"
-msgstr "Sách những câu chuyện giá bao nhiêu?"
-
-#: patterns/text-faqs.php:31
-msgctxt "Question in the FAQs pattern."
-msgid "What is The Stories Book about?"
-msgstr "Sách truyện nói về điều gì?"
 
 #: patterns/text-faqs.php:21
 msgctxt "Heading of the FAQs pattern."
@@ -568,11 +590,6 @@ msgctxt "Pattern title"
 msgid "Right-aligned single post"
 msgstr "Bài đăng đơn căn phải"
 
-#: patterns/template-single-text-blog.php
-msgctxt "Pattern title"
-msgid "Text blog single post"
-msgstr "Bài viết đơn blog văn bản"
-
 #: patterns/template-single-photo-blog.php:79
 msgid "Next Photo"
 msgstr "Ảnh tiếp theo"
@@ -654,16 +671,6 @@ msgctxt "Pattern description"
 msgid "A list of posts, 1 column, with featured image and post date."
 msgstr "Danh sách bài đăng, 1 cột, với ảnh nổi bật và ngày đăng."
 
-#: patterns/template-query-loop.php
-msgctxt "Pattern title"
-msgid "List of posts, 1 column"
-msgstr "Danh sách bài viết, 1 cột"
-
-#: patterns/template-page-vertical-header-blog.php
-msgctxt "Pattern title"
-msgid "Right-aligned page"
-msgstr "Trang căn phải"
-
 #: patterns/template-query-loop-photo-blog.php
 msgctxt "Pattern description"
 msgid "A list of posts, 3 columns, with only featured images."
@@ -692,6 +699,25 @@ msgctxt "Pattern title"
 msgid "News blog query loop"
 msgstr "Vòng lặp truy vấn blog tin tức"
 
+#: patterns/hidden-sidebar.php:38 patterns/page-portfolio-home.php:65
+#: patterns/page-portfolio-home.php:87 patterns/page-portfolio-home.php:121
+#: patterns/page-portfolio-home.php:154 patterns/page-portfolio-home.php:176
+#: patterns/page-portfolio-home.php:203 patterns/template-home-news-blog.php:40
+#: patterns/template-home-posts-grid-news-blog.php:35
+#: patterns/template-home-posts-grid-news-blog.php:60
+#: patterns/template-home-posts-grid-news-blog.php:78
+#: patterns/template-home-posts-grid-news-blog.php:103
+#: patterns/template-home-with-sidebar-news-blog.php:62
+#: patterns/template-home-with-sidebar-news-blog.php:119
+#: patterns/template-query-loop-news-blog.php:55
+#: patterns/template-query-loop-photo-blog.php:22
+#: patterns/template-query-loop-text-blog.php:19
+#: patterns/template-query-loop-vertical-header-blog.php:47
+#: patterns/template-query-loop.php:31
+msgctxt "Message explaining that there are no results returned from a search."
+msgid "Sorry, but nothing was found. Please try a search with different keywords."
+msgstr "Xin lỗi, không tìm thấy gì. Vui lòng thử tìm kiếm bằng các từ khóa khác."
+
 #: patterns/template-page-photo-blog.php
 msgctxt "Pattern title"
 msgid "Photo blog page"
@@ -705,11 +731,6 @@ msgstr "Mới nhất"
 msgctxt "Pattern title"
 msgid "News blog with sidebar"
 msgstr "Blog tin tức với thanh bên"
-
-#: patterns/template-home-text-blog.php
-msgctxt "Pattern title"
-msgid "Text blog home"
-msgstr "Trang chủ blog văn bản"
 
 #: patterns/template-home-posts-grid-news-blog.php:114
 msgid "Architecture"
@@ -729,11 +750,6 @@ msgstr "Trang chủ blog ảnh"
 msgctxt "Pattern title"
 msgid "News blog home"
 msgstr "Trang chủ blog tin tức"
-
-#: patterns/template-archive-text-blog.php
-msgctxt "Pattern title"
-msgid "Text blog archive"
-msgstr "Lưu trữ blog văn bản"
 
 #: patterns/template-archive-photo-blog.php
 msgctxt "Pattern title"
@@ -778,10 +794,6 @@ msgstr "Điện thoại thông minh chụp một đồng cỏ hoa dại tuyệt 
 #: patterns/services-subscriber-only-section.php:55
 msgid "View plans"
 msgstr "Xem gói dịch vụ"
-
-#: patterns/services-subscriber-only-section.php:21
-msgid "Subscribe to get unlimited access"
-msgstr "Đăng ký để có quyền truy cập không giới hạn"
 
 #: patterns/services-subscriber-only-section.php
 msgctxt "Pattern description"
@@ -842,10 +854,6 @@ msgctxt "Name of membership package."
 msgid "Expert"
 msgstr "Chuyên gia"
 
-#: patterns/pricing-3-col.php:89 patterns/pricing-3-col.php:129
-msgid "Month"
-msgstr "Tháng"
-
 #: patterns/pricing-3-col.php:85
 msgid "20€"
 msgstr "20€"
@@ -854,9 +862,29 @@ msgstr "20€"
 msgid "Get access to our paid newsletter and a limited pass for one event."
 msgstr "Nhận quyền truy cập vào bản tin trả phí của chúng tôi và thẻ giới hạn cho một sự kiện."
 
+#: patterns/pricing-2-col.php:78 patterns/pricing-3-col.php:73
+msgctxt "Name of membership package."
+msgid "Single"
+msgstr "Đơn lẻ"
+
+#: patterns/pricing-2-col.php:68 patterns/pricing-2-col.php:112
+#: patterns/pricing-3-col.php:59 patterns/pricing-3-col.php:99
+#: patterns/pricing-3-col.php:139
+msgctxt "Button text, refers to joining a community. Verb."
+msgid "Join"
+msgstr "Tham gia"
+
+#: patterns/pricing-2-col.php:38 patterns/pricing-3-col.php:49
+msgid "0€"
+msgstr "0€"
+
 #: patterns/pricing-3-col.php:41
 msgid "Get access to our free articles and weekly newsletter."
 msgstr "Nhận quyền truy cập vào các bài viết miễn phí và bản tin hàng tuần của chúng tôi."
+
+#: patterns/pricing-2-col.php:18 patterns/pricing-3-col.php:23
+msgid "Pricing"
+msgstr "Giá cả"
 
 #: patterns/pricing-3-col.php:19
 msgid "Choose your membership"
@@ -871,22 +899,6 @@ msgstr "Bảng giá ba cột được thiết kế để giới thiệu các d�
 msgctxt "Pattern title"
 msgid "Pricing, 3 columns"
 msgstr "Giá cả, 3 cột"
-
-#: patterns/pricing-2-col.php:82
-msgid "20€/month"
-msgstr "20€/tháng"
-
-#: patterns/pricing-2-col.php:78 patterns/pricing-3-col.php:73
-msgctxt "Name of membership package."
-msgid "Single"
-msgstr "Đơn lẻ"
-
-#: patterns/pricing-2-col.php:68 patterns/pricing-2-col.php:112
-#: patterns/pricing-3-col.php:59 patterns/pricing-3-col.php:99
-#: patterns/pricing-3-col.php:139
-msgctxt "Button text, refers to joining a community. Verb."
-msgid "Join"
-msgstr "Tham gia"
 
 #: patterns/pricing-2-col.php:60 patterns/pricing-2-col.php:104
 #: patterns/services-subscriber-only-section.php:43
@@ -903,32 +915,19 @@ msgstr "Một bổ sung tao nhã cho bộ sưu tập trang trí nhà cửa."
 msgid "Get a free tote bag."
 msgstr "Nhận một túi tote miễn phí."
 
-#: patterns/pricing-2-col.php:48 patterns/pricing-2-col.php:92
-#: patterns/services-subscriber-only-section.php:31
-msgid "Join our IRL events."
-msgstr "Tham gia các sự kiện trực tiếp của chúng tôi."
-
 #: patterns/pricing-2-col.php:44 patterns/pricing-2-col.php:88
 #: patterns/services-subscriber-only-section.php:27
 msgid "Get access to our paid articles and weekly newsletter."
 msgstr "Nhận quyền truy cập vào các bài viết trả phí và bản tin hàng tuần của chúng tôi."
 
-#: patterns/pricing-2-col.php:38 patterns/pricing-3-col.php:49
-msgid "0€"
-msgstr "0€"
-
-#: patterns/pricing-2-col.php:34 patterns/pricing-3-col.php:37
-msgid "Free"
-msgstr "Miễn phí"
+#: patterns/pricing-2-col.php:82
+msgid "20€/month"
+msgstr "20€/tháng"
 
 #: patterns/pricing-2-col.php:22
 #: patterns/services-subscriber-only-section.php:61
 msgid "Cancel or pause anytime."
 msgstr "Hủy hoặc tạm dừng bất cứ lúc nào."
-
-#: patterns/pricing-2-col.php:18 patterns/pricing-3-col.php:23
-msgid "Pricing"
-msgstr "Giá cả"
 
 #: patterns/pricing-2-col.php
 msgctxt "Pattern description"
@@ -960,11 +959,6 @@ msgstr "Điều hướng bài viết"
 msgctxt "Pattern description"
 msgid "Next and previous post links."
 msgstr "Liên kết bài viết tiếp theo và trước đó."
-
-#: patterns/post-navigation.php
-msgctxt "Pattern title"
-msgid "Post navigation"
-msgstr "Điều hướng bài viết"
 
 #: patterns/page-shop-home.php
 msgctxt "Pattern description"
@@ -1059,29 +1053,14 @@ msgid "Link in bio heading, paragraph, links and full-height image"
 msgstr "Liên kết trong tiểu sử tiêu đề, đoạn văn, liên kết và hình ảnh toàn chiều cao"
 
 #: patterns/page-landing-podcast.php
-msgctxt "Pattern description"
-msgid "A landing page for the podcast with a hero section, description, logos, grid with videos and newsletter signup."
-msgstr "Trang đích cho podcast với phần hero, mô tả, logo, lưới với video và đăng ký bản tin."
-
-#: patterns/page-landing-podcast.php
 msgctxt "Pattern title"
 msgid "Landing page for podcast"
 msgstr "Trang đích cho podcast"
 
 #: patterns/page-landing-event.php
-msgctxt "Pattern description"
-msgid "A landing page for the event with a hero section, description, FAQs and call to action."
-msgstr "Trang đích cho sự kiện với phần hero, mô tả, Câu hỏi thường gặp và kêu gọi hành động."
-
-#: patterns/page-landing-event.php
 msgctxt "Pattern title"
 msgid "Landing page for event"
 msgstr "Trang đích cho sự kiện"
-
-#: patterns/page-landing-book.php
-msgctxt "Pattern description"
-msgid "A landing page for the book with a hero section, pre-order links, locations, FAQs and newsletter signup."
-msgstr "Trang đích cho sách với phần hero, liên kết đặt hàng trước, địa điểm, Câu hỏi thường gặp và đăng ký bản tin."
 
 #: patterns/page-landing-book.php
 msgctxt "Pattern title"
@@ -1101,11 +1080,6 @@ msgstr "LinkedIn"
 #: patterns/services-team-photos.php:32
 msgid "Woman on beach, splashing water."
 msgstr "Người phụ nữ trên bãi biển, té nước."
-
-#: patterns/page-cv-bio.php:31
-msgctxt "Pattern placeholder text."
-msgid "My name is Nora Winslow Keene, and I’m a committed public interest attorney. Living in Denver, Colorado, I’ve spent years championing the rights of underrepresented workers. A graduate of Stanford University, I played a key role in securing critical protections for agricultural laborers, ensuring better wages and access to healthcare. My work has focused on advocating for environmental justice and improving the quality of life for rural communities. Every case I take on is driven by the belief that everyone deserves dignity and fair treatment in the workplace."
-msgstr "Tên tôi là Nora Winslow Keene, và tôi là một luật sư tận tâm vì lợi ích cộng đồng. Sống ở Denver, Colorado, tôi đã dành nhiều năm đấu tranh cho quyền lợi của những người lao động không được đại diện. Tốt nghiệp Đại học Stanford, tôi đóng một vai trò quan trọng trong việc đảm bảo sự bảo vệ quan trọng cho người lao động nông nghiệp, đảm bảo mức lương tốt hơn và tiếp cận với chăm sóc sức khỏe. Công việc của tôi tập trung vào việc vận động cho công bằng môi trường và cải thiện chất lượng cuộc sống cho cộng đồng nông thôn. Mọi trường hợp tôi đảm nhận đều xuất phát từ niềm tin rằng mọi người đều xứng đáng được đối xử công bằng và có nhân phẩm tại nơi làm việc."
 
 #: patterns/page-cv-bio.php:28
 msgctxt "Example heading in pattern."
@@ -1129,6 +1103,11 @@ msgstr "Đăng ký để được thông báo khi trang web của chúng tôi s�
 #: patterns/page-coming-soon.php:29
 msgid "Something great is coming soon"
 msgstr "Điều gì đó tuyệt vời sắp ra mắt"
+
+#: patterns/page-cv-bio.php:31
+msgctxt "Pattern placeholder text."
+msgid "My name is Nora Winslow Keene, and I’m a committed public interest attorney. Living in Denver, Colorado, I’ve spent years championing the rights of underrepresented workers. A graduate of Stanford University, I played a key role in securing critical protections for agricultural laborers, ensuring better wages and access to healthcare. My work has focused on advocating for environmental justice and improving the quality of life for rural communities. Every case I take on is driven by the belief that everyone deserves dignity and fair treatment in the workplace."
+msgstr "Tên tôi là Nora Winslow Keene, và tôi là một luật sư tận tâm vì lợi ích cộng đồng. Sống ở Denver, Colorado, tôi đã dành nhiều năm đấu tranh cho quyền lợi của những người lao động không được đại diện. Tốt nghiệp Đại học Stanford, tôi đóng một vai trò quan trọng trong việc đảm bảo sự bảo vệ quan trọng cho người lao động nông nghiệp, đảm bảo mức lương tốt hơn và tiếp cận với chăm sóc sức khỏe. Công việc của tôi tập trung vào việc vận động cho công bằng môi trường và cải thiện chất lượng cuộc sống cho cộng đồng nông thôn. Mọi trường hợp tôi đảm nhận đều xuất phát từ niềm tin rằng mọi người đều xứng đáng được đối xử công bằng và có nhân phẩm tại nơi làm việc."
 
 #: patterns/page-coming-soon.php:24
 msgid "Event"
@@ -1232,47 +1211,17 @@ msgctxt "Pattern title"
 msgid "Written by"
 msgstr "Viết bởi"
 
-#: patterns/hidden-sidebar.php:38 patterns/page-portfolio-home.php:65
-#: patterns/page-portfolio-home.php:87 patterns/page-portfolio-home.php:121
-#: patterns/page-portfolio-home.php:154 patterns/page-portfolio-home.php:176
-#: patterns/page-portfolio-home.php:203 patterns/template-home-news-blog.php:40
-#: patterns/template-home-posts-grid-news-blog.php:35
-#: patterns/template-home-posts-grid-news-blog.php:60
-#: patterns/template-home-posts-grid-news-blog.php:78
-#: patterns/template-home-posts-grid-news-blog.php:103
-#: patterns/template-home-with-sidebar-news-blog.php:62
-#: patterns/template-home-with-sidebar-news-blog.php:119
-#: patterns/template-query-loop-news-blog.php:55
-#: patterns/template-query-loop-photo-blog.php:22
-#: patterns/template-query-loop-text-blog.php:19
-#: patterns/template-query-loop-vertical-header-blog.php:47
-#: patterns/template-query-loop.php:31
-msgctxt "Message explaining that there are no results returned from a search."
-msgid "Sorry, but nothing was found. Please try a search with different keywords."
-msgstr "Xin lỗi, không tìm thấy gì. Vui lòng thử tìm kiếm bằng các từ khóa khác."
-
-#: patterns/hidden-sidebar.php:37
-#: patterns/template-home-posts-grid-news-blog.php:34
-#: patterns/template-home-with-sidebar-news-blog.php:61
-msgid "Add text or blocks that will display when a query returns no results."
-msgstr "Thêm văn bản hoặc khối sẽ hiển thị khi truy vấn không trả về kết quả."
-
 #: patterns/hidden-sidebar.php:14
 msgid "Other Posts"
 msgstr "Bài viết khác"
-
-#: patterns/hidden-sidebar.php
-msgctxt "Pattern title"
-msgid "Sidebar"
-msgstr "Thanh bên"
 
 #: patterns/cta-heading-search.php:21 patterns/hidden-search.php:14
 msgctxt "Button text. Verb."
 msgid "Search"
 msgstr "Tìm kiếm"
 
-#: patterns/hidden-search.php
-msgctxt "Pattern title"
+#: patterns/cta-heading-search.php:21 patterns/hidden-search.php:14
+msgctxt "Search form label."
 msgid "Search"
 msgstr "Tìm kiếm"
 
@@ -1300,11 +1249,6 @@ msgstr "Không tìm thấy trang"
 msgctxt "image description"
 msgid "Small totara tree on ridge above Long Point"
 msgstr "Cây totara nhỏ trên sườn núi phía trên Long Point"
-
-#: patterns/hidden-404.php
-msgctxt "Pattern title"
-msgid "404"
-msgstr "404"
 
 #: patterns/hero-podcast.php:65
 msgctxt "Button text"
@@ -1349,34 +1293,15 @@ msgctxt "Alt text for hero image."
 msgid "Picture of a person"
 msgstr "Hình ảnh một người"
 
-#: patterns/hero-podcast.php
-msgctxt "Pattern title"
-msgid "Hero podcast"
-msgstr "Podcast hero"
-
-#: patterns/hero-overlapped-book-cover-with-links.php:113
-msgid "Book Image"
-msgstr "Hình ảnh sách"
-
 #: patterns/hero-overlapped-book-cover-with-links.php:34
 msgctxt "Hero - Overlapped book cover pattern subline text"
 msgid "A fine collection of moments in time featuring photographs from Louis Fleckenstein, Paul Strand and Asahachi Kōno."
 msgstr "Một bộ sưu tập tinh tế về những khoảnh khắc thời gian với các bức ảnh của Louis Fleckenstein, Paul Strand và Asahachi Kōno."
 
-#: patterns/hero-overlapped-book-cover-with-links.php:28
-msgctxt "Hero - Overlapped book cover pattern headline text"
-msgid "The Stories Book"
-msgstr "Sách những câu chuyện"
-
 #: patterns/hero-overlapped-book-cover-with-links.php
 msgctxt "Pattern description"
 msgid "A hero with an overlapped book cover and links."
 msgstr "Anh hùng với bìa sách chồng chéo và liên kết."
-
-#: patterns/hero-overlapped-book-cover-with-links.php
-msgctxt "Pattern title"
-msgid "Hero, overlapped book cover with links"
-msgstr "Hero, bìa sách chồng chéo với liên kết"
 
 #: patterns/hero-full-width-image.php:27
 msgctxt "Sample hero paragraph"
@@ -1393,58 +1318,20 @@ msgctxt "Alt text for cover image."
 msgid "Picture of a flower"
 msgstr "Hình ảnh một bông hoa"
 
-#: patterns/hero-full-width-image.php
-msgctxt "Pattern description"
-msgid "A hero with a full width image, heading, short paragraph and button."
-msgstr "Hero với hình ảnh toàn chiều rộng, tiêu đề, đoạn văn ngắn và nút."
-
-#: patterns/hero-full-width-image.php
-msgctxt "Pattern title"
-msgid "Hero, full width image"
-msgstr "Hero, hình ảnh toàn chiều rộng"
-
 #: patterns/hero-book.php:46
 msgctxt "CTA text of the hero section."
 msgid "Available for pre-order now."
 msgstr "Hiện có sẵn để đặt hàng trước."
-
-#: patterns/hero-book.php:42
-msgctxt "Content of the hero section."
-msgid "A fine collection of moments in time featuring photographs from Louis Fleckenstein, Paul Strand and Asahachi Kōno."
-msgstr "Một bộ sưu tập tuyệt vời về những khoảnh khắc thời gian với các bức ảnh của Louis Fleckenstein, Paul Strand và Asahachi Kōno."
-
-#: patterns/hero-book.php:38
-msgctxt "Heading of the hero section."
-msgid "The Stories Book"
-msgstr "Sách những câu chuyện"
-
-#: patterns/hero-book.php:24
-msgid "Image of the book"
-msgstr "Hình ảnh cuốn sách"
 
 #: patterns/hero-book.php
 msgctxt "Pattern description"
 msgid "A hero section for the book with a description and pre-order link."
 msgstr "Phần anh hùng cho cuốn sách với mô tả và liên kết đặt hàng trước."
 
-#: patterns/hero-book.php
-msgctxt "Pattern title"
-msgid "Hero book"
-msgstr "Hero book"
-
 #: patterns/heading-and-paragraph-with-image.php:36
 msgctxt "Alt text for Overview picture."
 msgid "Cliff Palace, Colorado"
 msgstr "Cliff Palace, Colorado"
-
-#: patterns/heading-and-paragraph-with-image.php:27
-msgctxt "Event Overview Text."
-msgid "Held over a weekend, the event is structured around a series of exhibitions, workshops, and panel discussions. The exhibitions showcase a curated selection of photographs that tell compelling stories from various corners of the globe, each image accompanied by detailed narratives that provide context and deeper insight into the historical significance of the scenes depicted. These photographs are drawn from the archives of renowned photographers, as well as emerging talents, ensuring a blend of both classical and contemporary perspectives."
-msgstr "Được tổ chức vào cuối tuần, sự kiện được 구성 xung quanh một loạt các triển lãm, hội thảo và thảo luận nhóm. Các triển lãm giới thiệu tuyển chọn các bức ảnh được tuyển chọn kỹ lưỡng, kể những câu chuyện hấp dẫn từ khắp nơi trên thế giới, mỗi bức ảnh kèm theo những câu chuyện chi tiết cung cấp bối cảnh và cái nhìn sâu sắc hơn về ý nghĩa lịch sử của những cảnh được mô tả. Những bức ảnh này được lấy từ kho lưu trữ của các nhiếp ảnh gia nổi tiếng, cũng như các tài năng mới nổi, đảm bảo sự pha trộn giữa cả quan điểm cổ điển và đương đại."
-
-#: patterns/heading-and-paragraph-with-image.php:23
-msgid "About the event"
-msgstr "Về sự kiện"
 
 #: patterns/heading-and-paragraph-with-image.php
 msgctxt "Pattern description"
@@ -1457,19 +1344,9 @@ msgid "Heading and paragraph with image on the right"
 msgstr "Tiêu đề và đoạn văn với hình ảnh bên phải"
 
 #: patterns/header.php
-msgctxt "Pattern description"
-msgid "Site header with site title and navigation."
-msgstr "Đầu trang với tiêu đề trang web và điều hướng."
-
-#: patterns/header.php
 msgctxt "Pattern title"
 msgid "Header"
 msgstr "Đầu trang"
-
-#: patterns/header-large-title.php
-msgctxt "Pattern description"
-msgid "Site header with large site title and right-aligned navigation."
-msgstr "Đầu trang với tiêu đề trang web lớn và điều hướng căn phải."
 
 #: patterns/header-large-title.php
 msgctxt "Pattern title"
@@ -1477,40 +1354,9 @@ msgid "Header with large title"
 msgstr "Đầu trang với tiêu đề lớn"
 
 #: patterns/header-columns.php
-msgctxt "Pattern description"
-msgid "Site header with site title and navigation in columns."
-msgstr "Đầu trang với tiêu đề trang web và điều hướng trong các cột."
-
-#: patterns/header-columns.php
 msgctxt "Pattern title"
 msgid "Header with columns"
 msgstr "Đầu trang với cột"
-
-#: patterns/header-centered.php
-msgctxt "Pattern description"
-msgid "Site header with centered site title and navigation."
-msgstr "Đầu trang với tiêu đề trang web và điều hướng được căn giữa."
-
-#: patterns/header-centered.php
-msgctxt "Pattern title"
-msgid "Centered site header"
-msgstr "Đầu trang căn giữa"
-
-#: patterns/grid-with-categories.php:64
-msgid "Sunflowers"
-msgstr "Hoa hướng dương"
-
-#: patterns/grid-with-categories.php:50
-msgid "Cactus"
-msgstr "Xương rồng"
-
-#: patterns/grid-with-categories.php:36
-msgid "Anthuriums"
-msgstr "Hoa hồng môn"
-
-#: patterns/grid-with-categories.php:29
-msgid "Close up of a red anthurium."
-msgstr "Cận cảnh một bông hồng môn đỏ."
 
 #: patterns/grid-with-categories.php:22
 msgid "Top Categories"
@@ -1526,13 +1372,10 @@ msgctxt "Pattern title"
 msgid "Grid with categories"
 msgstr "Lưới với danh mục"
 
-#: patterns/grid-videos.php:23
-msgid "Podcast"
-msgstr "Podcast"
-
-#: patterns/grid-videos.php:19
-msgid "Explore the episodes"
-msgstr "Khám phá các tập"
+#: patterns/heading-and-paragraph-with-image.php:27
+msgctxt "Event Overview Text."
+msgid "Held over a weekend, the event is structured around a series of exhibitions, workshops, and panel discussions. The exhibitions showcase a curated selection of photographs that tell compelling stories from various corners of the globe, each image accompanied by detailed narratives that provide context and deeper insight into the historical significance of the scenes depicted. These photographs are drawn from the archives of renowned photographers, as well as emerging talents, ensuring a blend of both classical and contemporary perspectives."
+msgstr "Được tổ chức vào cuối tuần, sự kiện được 구성 xung quanh một loạt các triển lãm, hội thảo và thảo luận nhóm. Các triển lãm giới thiệu tuyển chọn các bức ảnh được tuyển chọn kỹ lưỡng, kể những câu chuyện hấp dẫn từ khắp nơi trên thế giới, mỗi bức ảnh kèm theo những câu chuyện chi tiết cung cấp bối cảnh và cái nhìn sâu sắc hơn về ý nghĩa lịch sử của những cảnh được mô tả. Những bức ảnh này được lấy từ kho lưu trữ của các nhiếp ảnh gia nổi tiếng, cũng như các tài năng mới nổi, đảm bảo sự pha trộn giữa cả quan điểm cổ điển và đương đại."
 
 #: patterns/grid-videos.php
 msgctxt "Pattern description"
@@ -1548,15 +1391,6 @@ msgstr "Lưới với video"
 msgid "https://example.com"
 msgstr "https://example.com"
 
-#: patterns/format-link.php:17
-msgid "The Stories Book, a fine collection of moments in time featuring photographs from Louis Fleckenstein, Paul Strand and Asahachi Kōno, is available for pre-order"
-msgstr "Sách những câu chuyện, một bộ sưu tập tinh tế về những khoảnh khắc thời gian với các bức ảnh của Louis Fleckenstein, Paul Strand và Asahachi Kōno, hiện có sẵn để đặt hàng trước"
-
-#: patterns/format-link.php
-msgctxt "Pattern description"
-msgid "A link post format with a description and an emphasized link for key content."
-msgstr "Định dạng bài viết liên kết với mô tả và liên kết được nhấn mạnh cho nội dung chính."
-
 #: patterns/format-link.php
 msgctxt "Pattern title"
 msgid "Link format"
@@ -1569,11 +1403,6 @@ msgstr "Acoma Pueblo, ở New Mexico, là minh chứng cho sức sống bền b�
 #: patterns/format-audio.php:26
 msgid "Episode 1: Acoma Pueblo with Prof. Fiona Presley"
 msgstr "Tập 1: Acoma Pueblo với Giáo sư Fiona Presley"
-
-#: patterns/format-audio.php
-msgctxt "Pattern description"
-msgid "An audio post format with an image, title, audio player, and description."
-msgstr "Định dạng bài viết âm thanh với hình ảnh, tiêu đề, trình phát âm thanh và mô tả."
 
 #: patterns/format-audio.php
 msgctxt "Pattern title"
@@ -1614,39 +1443,6 @@ msgctxt "Pattern title"
 msgid "Footer with newsletter signup"
 msgstr "Chân trang với đăng ký nhận bản tin"
 
-#: patterns/footer-columns.php:52 patterns/footer.php:61
-msgid "Themes"
-msgstr "Chủ đề"
-
-#: patterns/footer-columns.php:51 patterns/footer.php:59
-msgid "Patterns"
-msgstr "Mẫu"
-
-#: patterns/footer-columns.php:50 patterns/footer.php:57
-msgid "Shop"
-msgstr "Cửa hàng"
-
-#: patterns/footer-columns.php:48
-msgid "Featured"
-msgstr "Nổi bật"
-
-#: patterns/footer-columns.php:39 patterns/footer.php:51
-msgid "Authors"
-msgstr "Tác giả"
-
-#: patterns/footer-columns.php:38 patterns/footer.php:49
-msgid "FAQs"
-msgstr "Câu hỏi thường gặp"
-
-#: patterns/footer-columns.php:37 patterns/footer.php:47
-msgid "About"
-msgstr "Giới thiệu"
-
-#: patterns/footer-columns.php:36 patterns/footer.php:45
-#: patterns/hidden-blog-heading.php:15 patterns/template-home-text-blog.php:20
-msgid "Blog"
-msgstr "Blog"
-
 #: patterns/footer-columns.php
 msgctxt "Pattern description"
 msgid "Footer columns with title, tagline and links."
@@ -1674,9 +1470,471 @@ msgctxt "Pattern title"
 msgid "Centered footer"
 msgstr "Chân trang ở giữa"
 
+#: patterns/event-schedule.php:65 patterns/event-schedule.php:97
+#: patterns/event-schedule.php:150 patterns/event-schedule.php:182
+msgctxt "Pattern placeholder text with link."
+msgid "Lecture by <a href=\"#\">Prof. Fiona Presley</a>"
+msgstr "Bài giảng của <a href=\"#\">Giáo sư Fiona Presley</a>"
+
+#: patterns/event-schedule.php:60 patterns/event-schedule.php:92
+#: patterns/event-schedule.php:145 patterns/event-schedule.php:177
+msgctxt "Example event time in pattern."
+msgid "9 AM — 11 AM"
+msgstr "9 giờ sáng — 11 giờ sáng"
+
 #: patterns/event-schedule.php:174
 msgid "An introduction to African dialects"
 msgstr "Giới thiệu về tiếng địa phương Châu Phi"
+
+#: patterns/cta-events-list.php:45 patterns/cta-events-list.php:83
+#: patterns/cta-events-list.php:114 patterns/cta-events-list.php:152
+#: patterns/event-3-col.php:44 patterns/event-3-col.php:68
+#: patterns/event-3-col.php:92 patterns/event-rsvp.php:37
+#: patterns/event-schedule.php:35 patterns/event-schedule.php:121
+msgctxt "Example event date in pattern."
+msgid "Mon, Jan 1"
+msgstr "Thứ Hai, ngày 1 tháng 1"
+
+#: patterns/event-schedule.php
+msgctxt "Pattern description"
+msgid "A section with specified dates and times for an event."
+msgstr "Phần có ngày và giờ cụ thể cho sự kiện."
+
+#: patterns/event-schedule.php
+msgctxt "Pattern title"
+msgid "Event schedule"
+msgstr "Lịch trình sự kiện"
+
+#: patterns/event-rsvp.php:81
+msgctxt "Abbreviation for \"Please respond\"."
+msgid "RSVP"
+msgstr "RSVP"
+
+#: patterns/event-rsvp.php:73
+msgid "This immersive event celebrates the universal human experience through the lenses of history and ancestry, featuring a diverse array of photographers whose works capture the essence of different cultures and historical moments."
+msgstr "Sự kiện nhập vai này tôn vinh trải nghiệm phổ quát của con người qua lăng kính lịch sử và tổ tiên, giới thiệu một loạt các nhiếp ảnh gia đa dạng với những tác phẩm nắm bắt được bản chất của các nền văn hóa và khoảnh khắc lịch sử khác nhau."
+
+#: patterns/event-rsvp.php
+msgctxt "Pattern description"
+msgid "RSVP for an upcoming event with a cover image and event details."
+msgstr "RSVP cho sự kiện sắp tới với hình ảnh bìa và chi tiết sự kiện."
+
+#: patterns/event-rsvp.php
+msgctxt "Pattern title"
+msgid "Event RSVP"
+msgstr "RSVP sự kiện"
+
+#: patterns/event-3-col.php
+msgctxt "Pattern description"
+msgid "A header with title and text and three columns that show 3 events with their images and titles."
+msgstr "Đầu trang với tiêu đề và văn bản và ba cột hiển thị 3 sự kiện với hình ảnh và tiêu đề của chúng."
+
+#: patterns/event-3-col.php
+msgctxt "Pattern title"
+msgid "Events, 3 columns with event images and titles"
+msgstr "Sự kiện, 3 cột với hình ảnh và tiêu đề sự kiện"
+
+#: patterns/cta-newsletter.php:23
+msgid "Get access to a curated collection of moments in time featuring photographs from historical relevance."
+msgstr "Truy cập vào bộ sưu tập tuyển chọn các khoảnh khắc thời gian với các bức ảnh có liên quan đến lịch sử."
+
+#: patterns/cta-newsletter.php:19
+msgid "Sign up to get daily stories"
+msgstr "Đăng ký để nhận câu chuyện hàng ngày"
+
+#: patterns/cta-newsletter.php
+msgctxt "Pattern title"
+msgid "Newsletter sign-up"
+msgstr "Đăng ký nhận bản tin"
+
+#: patterns/cta-heading-search.php:21 patterns/hidden-search.php:14
+msgctxt "Search input field placeholder text."
+msgid "Type here..."
+msgstr "Nhập tại đây..."
+
+#: patterns/cta-heading-search.php
+msgctxt "Pattern description"
+msgid "Large heading with a search form for quick navigation."
+msgstr "Tiêu đề lớn với biểu mẫu tìm kiếm để điều hướng nhanh."
+
+#: patterns/cta-heading-search.php
+msgctxt "Pattern title"
+msgid "Heading and search form"
+msgstr "Tiêu đề và biểu mẫu tìm kiếm"
+
+#: patterns/cta-grid-products-link.php:134
+msgid "Shop now"
+msgstr "Mua ngay"
+
+#: patterns/cta-grid-products-link.php:59
+msgid "30€"
+msgstr "30€"
+
+#. translators: %s: Starting price, split into three rows using HTML <br> tags.
+#. The price value has a font size set.
+#: patterns/cta-grid-products-link.php:58
+msgid "Starting at%s/month"
+msgstr "Bắt đầu từ%s/tháng"
+
+#: patterns/cta-grid-products-link.php
+msgctxt "Pattern description"
+msgid "A call to action featuring product images."
+msgstr "Lời kêu gọi hành động có hình ảnh sản phẩm."
+
+#: patterns/cta-grid-products-link.php
+msgctxt "Pattern title"
+msgid "Call to action with grid layout with products and link"
+msgstr "Lời kêu gọi hành động với bố cục lưới với sản phẩm và liên kết"
+
+#: patterns/cta-events-list.php
+msgctxt "Pattern description"
+msgid "A list of events with call to action."
+msgstr "Danh sách sự kiện với lời kêu gọi hành động."
+
+#: patterns/cta-events-list.php
+msgctxt "Pattern title"
+msgid "Events list"
+msgstr "Danh sách sự kiện"
+
+#: patterns/cta-centered-heading.php
+msgctxt "Pattern title"
+msgid "Centered heading"
+msgstr "Tiêu đề ở giữa"
+
+#: patterns/cta-book-locations.php:23
+msgid "International editions"
+msgstr "Phiên bản quốc tế"
+
+#: patterns/cta-book-locations.php
+msgctxt "Pattern description"
+msgid "A call to action section with links to get the book in the most popular locations."
+msgstr "Phần lời kêu gọi hành động với các liên kết để mua sách ở các địa điểm phổ biến nhất."
+
+#: patterns/cta-book-locations.php
+msgctxt "Pattern title"
+msgid "Call to action with locations"
+msgstr "Lời kêu gọi hành động với địa điểm"
+
+#: patterns/cta-book-links.php:57
+#: patterns/hero-overlapped-book-cover-with-links.php:100
+msgctxt "Pattern placeholder text with link."
+msgid "Outside Europe? View <a href=\"#\" rel=\"nofollow\">international editions</a>."
+msgstr "Ngoài Châu Âu? Xem <a href=\"#\" rel=\"nofollow\">phiên bản quốc tế</a>."
+
+#: patterns/cta-book-links.php:47
+msgctxt "Example brand name."
+msgid "BAM!"
+msgstr "BAM!"
+
+#: patterns/cta-book-links.php:43
+msgctxt "Example brand name."
+msgid "Spotify"
+msgstr "Spotify"
+
+#: patterns/cta-book-links.php:39
+msgctxt "Example brand name."
+msgid "Bookshop.org"
+msgstr "Bookshop.org"
+
+#: patterns/cta-book-links.php:35
+#: patterns/hero-overlapped-book-cover-with-links.php:62
+msgctxt "Example brand name."
+msgid "Apple Books"
+msgstr "Apple Books"
+
+#: patterns/cta-book-links.php:27
+#: patterns/hero-overlapped-book-cover-with-links.php:77
+msgctxt "Example brand name."
+msgid "Audible"
+msgstr "Audible"
+
+#: patterns/cta-book-links.php:23
+#: patterns/hero-overlapped-book-cover-with-links.php:55
+msgctxt "Example brand name."
+msgid "Amazon"
+msgstr "Amazon"
+
+#: patterns/cta-book-links.php
+msgctxt "Pattern description"
+msgid "A call to action section with links to get the book in different websites."
+msgstr "Phần lời kêu gọi hành động với các liên kết để mua sách trên các trang web khác nhau."
+
+#: patterns/cta-book-links.php
+msgctxt "Pattern title"
+msgid "Call to action with book links"
+msgstr "Lời kêu gọi hành động với liên kết sách"
+
+#: patterns/contact-location-and-link.php:26
+msgid "Get directions"
+msgstr "Nhận chỉ đường"
+
+#: patterns/contact-location-and-link.php:22
+msgid "Visit us at 123 Example St. Manhattan, NY 10300, United States"
+msgstr "Ghé thăm chúng tôi tại 123 Example St. Manhattan, NY 10300, Hoa Kỳ"
+
+#: patterns/contact-location-and-link.php
+msgctxt "Pattern description"
+msgid "Contact section with a location address, a directions link, and an image of the location."
+msgstr "Phần liên hệ với địa chỉ vị trí, liên kết chỉ đường và hình ảnh của vị trí."
+
+#: patterns/contact-location-and-link.php
+msgctxt "Pattern title"
+msgid "Contact location and link"
+msgstr "Liên hệ vị trí và liên kết"
+
+#: patterns/contact-info-locations.php:32 patterns/footer-social.php:23
+#: patterns/page-link-in-bio-heading-paragraph-links-image.php:40
+#: patterns/page-link-in-bio-with-tight-margins.php:52
+msgctxt "Refers to the social media platform formerly known as Twitter."
+msgid "X"
+msgstr "X"
+
+#: patterns/contact-info-locations.php:21
+msgid "How to get in touch with us"
+msgstr "Cách liên hệ với chúng tôi"
+
+#: patterns/contact-info-locations.php
+msgctxt "Pattern description"
+msgid "Contact section with social media links, email, and multiple location details."
+msgstr "Phần liên hệ với liên kết mạng xã hội, email và nhiều chi tiết vị trí."
+
+#: patterns/contact-info-locations.php
+msgctxt "Pattern title"
+msgid "Contact, info and locations"
+msgstr "Liên hệ, thông tin và địa điểm"
+
+#: patterns/contact-centered-social-link.php:21
+msgctxt "Heading of the Contact social link pattern"
+msgid "Got questions? <br><a href=\"#\" rel=\"nofollow\">Feel free to reach out.</a>"
+msgstr "Có câu hỏi? <br><a href=\"#\" rel=\"nofollow\">Vui lòng liên hệ.</a>"
+
+#: patterns/contact-centered-social-link.php
+msgctxt "Pattern description"
+msgid "Centered contact section with a prominent message and social media links."
+msgstr "Phần liên hệ ở giữa với thông báo nổi bật và liên kết mạng xã hội."
+
+#: patterns/contact-centered-social-link.php
+msgctxt "Pattern title"
+msgid "Centered link and social links"
+msgstr "Liên kết và liên kết mạng xã hội ở giữa"
+
+#: patterns/comments.php
+msgctxt "Pattern description"
+msgid "Comments area with comments list, pagination, and comment form."
+msgstr "Khu vực bình luận với danh sách bình luận, phân trang và biểu mẫu bình luận."
+
+#: patterns/binding-format.php
+msgctxt "Pattern description"
+msgid "Prints the name of the post format with the help of the Block Bindings API."
+msgstr "In tên của định dạng bài đăng với sự trợ giúp của Block Bindings API."
+
+#: patterns/binding-format.php
+msgctxt "Pattern title"
+msgid "Post format name"
+msgstr "Tên định dạng bài đăng"
+
+#. translators: %s is the brand name, e.g., 'Fleurs'.
+#: patterns/banner-with-description-and-images-grid.php:31
+#: patterns/overlapped-images.php:47
+msgid "%s is a flower delivery and subscription business. Based in the EU, our mission is not only to deliver stunning flower arrangements across but also foster knowledge and enthusiasm on the beautiful gift of nature: flowers."
+msgstr "%s là một doanh nghiệp giao hoa và đăng ký. Có trụ sở tại EU, sứ mệnh của chúng tôi không chỉ là cung cấp các loại hoa tuyệt đẹp trên khắp mà còn nuôi dưỡng kiến thức và sự nhiệt tình về món quà tuyệt đẹp của thiên nhiên: hoa."
+
+#: patterns/banner-with-description-and-images-grid.php:23
+#: patterns/overlapped-images.php:37
+msgid "About Us"
+msgstr "Về chúng tôi"
+
+#: patterns/banner-with-description-and-images-grid.php
+msgctxt "Pattern description"
+msgid "A banner with a short paragraph, and two images displayed in a grid layout."
+msgstr "Biểu ngữ với một đoạn văn ngắn và hai hình ảnh được hiển thị trong bố cục lưới."
+
+#: patterns/banner-with-description-and-images-grid.php
+msgctxt "Pattern title"
+msgid "Banner with description and images grid"
+msgstr "Biểu ngữ với mô tả và lưới hình ảnh"
+
+#: patterns/banner-poster.php:59
+msgid "#stories"
+msgstr "#câu chuyện"
+
+#: patterns/banner-poster.php:51
+msgid "Let’s hear them."
+msgstr "Hãy lắng nghe họ."
+
+#. translators: This string contains the word "Stories" in four different
+#. languages with the first item in the locale's language.
+#: patterns/banner-poster.php:28 patterns/cta-events-list.php:68
+#: patterns/cta-events-list.php:137 patterns/event-rsvp.php:30
+msgctxt "Placeholder heading in four languages."
+msgid "“Stories, <span lang=\"es\">historias</span>, <span lang=\"uk\">iсторії</span>, <span lang=\"el\">iστορίες</span>”"
+msgstr "“Câu chuyện, <span lang=\"es\">historias</span>, <span lang=\"uk\">історії</span>, <span lang=\"el\">ιστορίες</span>”"
+
+#: patterns/banner-poster.php
+msgctxt "Pattern description"
+msgid "A section that can be used as a banner or a landing page to announce an event."
+msgstr "Một phần có thể được sử dụng làm biểu ngữ hoặc trang đích để thông báo sự kiện."
+
+#: patterns/banner-poster.php
+msgctxt "Pattern title"
+msgid "Poster-like section"
+msgstr "Phần giống như áp phích"
+
+#. translators: %s is the brand name, e.g., 'Fleurs'.
+#: patterns/banner-intro.php:21
+msgctxt "Pattern placeholder text."
+msgid "We're %s, our mission is to deliver exquisite flower arrangements that not only adorn living spaces but also inspire a deeper appreciation for natural beauty."
+msgstr "Chúng tôi là %s, sứ mệnh của chúng tôi là cung cấp các loại hoa tuyệt đẹp không chỉ tô điểm cho không gian sống mà còn truyền cảm hứng cho sự đánh giá sâu sắc hơn về vẻ đẹp tự nhiên."
+
+#: patterns/banner-intro.php
+msgctxt "Pattern description"
+msgid "A large left-aligned heading with a brand name emphasized in bold."
+msgstr "Tiêu đề căn trái lớn với tên thương hiệu được in đậm."
+
+#: patterns/banner-intro.php
+msgctxt "Pattern title"
+msgid "Intro with left-aligned description"
+msgstr "Giới thiệu với mô tả căn trái"
+
+#: patterns/banner-intro-image.php
+msgctxt "Pattern description"
+msgid "A Intro pattern with Short heading, paragraph and image on the left."
+msgstr "Mẫu giới thiệu với tiêu đề ngắn, đoạn văn và hình ảnh bên trái."
+
+#: patterns/banner-intro-image.php
+msgctxt "Pattern title"
+msgid "Short heading and paragraph and image on the left"
+msgstr "Tiêu đề ngắn và đoạn văn và hình ảnh bên trái"
+
+#: patterns/banner-cover-big-heading.php
+msgctxt "Pattern description"
+msgid "A full-width cover section with a large background image and an oversized heading."
+msgstr "Phần bìa toàn chiều rộng với hình nền lớn và tiêu đề quá khổ."
+
+#: patterns/banner-cover-big-heading.php
+msgctxt "Pattern title"
+msgid "Cover with big heading"
+msgstr "Bìa với tiêu đề lớn"
+
+#: patterns/banner-about-book.php:22
+msgid "About the book"
+msgstr "Về cuốn sách"
+
+#: patterns/banner-about-book.php
+msgctxt "Pattern description"
+msgid "Banner with book description and accompanying image for promotion."
+msgstr "Biểu ngữ với mô tả sách và hình ảnh kèm theo để quảng cáo."
+
+#: patterns/banner-about-book.php
+msgctxt "Pattern title"
+msgid "Banner with book description"
+msgstr "Biểu ngữ với mô tả sách"
+
+#: functions.php:136
+msgctxt "Label for the block binding placeholder in the editor"
+msgid "Post format name"
+msgstr "Tên định dạng bài đăng"
+
+#: functions.php:117
+msgid "A collection of post format patterns."
+msgstr "Bộ sưu tập các mẫu định dạng bài đăng."
+
+#: functions.php:108
+msgid "Pages"
+msgstr "Trang"
+
+#: patterns/services-subscriber-only-section.php:21
+msgid "Subscribe to get unlimited access"
+msgstr "Đăng ký để có quyền truy cập không giới hạn"
+
+#: patterns/pricing-3-col.php:89 patterns/pricing-3-col.php:129
+msgid "Month"
+msgstr "Tháng"
+
+#: patterns/pricing-2-col.php:48 patterns/pricing-2-col.php:92
+#: patterns/services-subscriber-only-section.php:31
+msgid "Join our IRL events."
+msgstr "Tham gia các sự kiện trực tiếp của chúng tôi."
+
+#: patterns/pricing-2-col.php:34 patterns/pricing-3-col.php:37
+msgid "Free"
+msgstr "Miễn phí"
+
+#: patterns/hidden-sidebar.php:37
+#: patterns/template-home-posts-grid-news-blog.php:34
+#: patterns/template-home-with-sidebar-news-blog.php:61
+msgid "Add text or blocks that will display when a query returns no results."
+msgstr "Thêm văn bản hoặc khối sẽ hiển thị khi truy vấn không trả về kết quả."
+
+#: patterns/hero-overlapped-book-cover-with-links.php:113
+msgid "Book Image"
+msgstr "Hình ảnh sách"
+
+#: patterns/hero-book.php:42
+msgctxt "Content of the hero section."
+msgid "A fine collection of moments in time featuring photographs from Louis Fleckenstein, Paul Strand and Asahachi Kōno."
+msgstr "Một bộ sưu tập tuyệt vời về những khoảnh khắc thời gian với các bức ảnh của Louis Fleckenstein, Paul Strand và Asahachi Kōno."
+
+#: patterns/hero-book.php:24
+msgid "Image of the book"
+msgstr "Hình ảnh cuốn sách"
+
+#: patterns/heading-and-paragraph-with-image.php:23
+msgid "About the event"
+msgstr "Về sự kiện"
+
+#: patterns/grid-with-categories.php:64
+msgid "Sunflowers"
+msgstr "Hoa hướng dương"
+
+#: patterns/grid-with-categories.php:50
+msgid "Cactus"
+msgstr "Xương rồng"
+
+#: patterns/grid-with-categories.php:36
+msgid "Anthuriums"
+msgstr "Hoa hồng môn"
+
+#: patterns/grid-with-categories.php:29
+msgid "Close up of a red anthurium."
+msgstr "Cận cảnh một bông hồng môn đỏ."
+
+#: patterns/grid-videos.php:23
+msgid "Podcast"
+msgstr "Podcast"
+
+#: patterns/grid-videos.php:19
+msgid "Explore the episodes"
+msgstr "Khám phá các tập"
+
+#: patterns/footer-columns.php:52 patterns/footer.php:61
+msgid "Themes"
+msgstr "Chủ đề"
+
+#: patterns/footer-columns.php:51 patterns/footer.php:59
+msgid "Patterns"
+msgstr "Mẫu"
+
+#: patterns/footer-columns.php:50 patterns/footer.php:57
+msgid "Shop"
+msgstr "Cửa hàng"
+
+#: patterns/footer-columns.php:48
+msgid "Featured"
+msgstr "Nổi bật"
+
+#: patterns/footer-columns.php:39 patterns/footer.php:51
+msgid "Authors"
+msgstr "Tác giả"
+
+#: patterns/footer-columns.php:38 patterns/footer.php:49
+msgid "FAQs"
+msgstr "Câu hỏi thường gặp"
+
+#: patterns/footer-columns.php:36 patterns/footer.php:45
+#: patterns/hidden-blog-heading.php:15 patterns/template-home-text-blog.php:20
+msgid "Blog"
+msgstr "Blog"
 
 #: patterns/event-schedule.php:163
 msgid "Black and white photo of an African woman."
@@ -1698,18 +1956,6 @@ msgstr "Những điều bạn chưa biết về đại dương sâu thẳm"
 msgid "View of the deep ocean."
 msgstr "Cảnh quan đại dương sâu thẳm."
 
-#: patterns/event-schedule.php:65 patterns/event-schedule.php:97
-#: patterns/event-schedule.php:150 patterns/event-schedule.php:182
-msgctxt "Pattern placeholder text with link."
-msgid "Lecture by <a href=\"#\">Prof. Fiona Presley</a>"
-msgstr "Bài giảng của <a href=\"#\">Giáo sư Fiona Presley</a>"
-
-#: patterns/event-schedule.php:60 patterns/event-schedule.php:92
-#: patterns/event-schedule.php:145 patterns/event-schedule.php:177
-msgctxt "Example event time in pattern."
-msgid "9 AM — 11 AM"
-msgstr "9 giờ sáng — 11 giờ sáng"
-
 #: patterns/event-schedule.php:57
 msgid "Fauna from North America and its characteristics"
 msgstr "Hệ động vật Bắc Mỹ và đặc điểm của chúng"
@@ -1722,42 +1968,13 @@ msgstr "Chim trên hồ."
 msgid "Agenda"
 msgstr "Lịch trình"
 
-#: patterns/event-schedule.php
-msgctxt "Pattern description"
-msgid "A section with specified dates and times for an event."
-msgstr "Phần có ngày và giờ cụ thể cho sự kiện."
-
-#: patterns/event-schedule.php
-msgctxt "Pattern title"
-msgid "Event schedule"
-msgstr "Lịch trình sự kiện"
-
 #: patterns/event-rsvp.php:91
 msgid "Close up photo of white flowers on a grey background"
 msgstr "Ảnh cận cảnh hoa trắng trên nền xám"
 
-#: patterns/event-rsvp.php:81
-msgctxt "Abbreviation for \"Please respond\"."
-msgid "RSVP"
-msgstr "RSVP"
-
-#: patterns/event-rsvp.php:73
-msgid "This immersive event celebrates the universal human experience through the lenses of history and ancestry, featuring a diverse array of photographers whose works capture the essence of different cultures and historical moments."
-msgstr "Sự kiện nhập vai này tôn vinh trải nghiệm phổ quát của con người qua lăng kính lịch sử và tổ tiên, giới thiệu một loạt các nhiếp ảnh gia đa dạng với những tác phẩm nắm bắt được bản chất của các nền văn hóa và khoảnh khắc lịch sử khác nhau."
-
 #: patterns/event-rsvp.php:57
 msgid "Free Workshop"
 msgstr "Hội thảo miễn phí"
-
-#: patterns/event-rsvp.php
-msgctxt "Pattern description"
-msgid "RSVP for an upcoming event with a cover image and event details."
-msgstr "RSVP cho sự kiện sắp tới với hình ảnh bìa và chi tiết sự kiện."
-
-#: patterns/event-rsvp.php
-msgctxt "Pattern title"
-msgid "Event RSVP"
-msgstr "RSVP sự kiện"
 
 #: patterns/event-3-col.php:50 patterns/event-3-col.php:74
 #: patterns/event-3-col.php:98
@@ -1778,62 +1995,15 @@ msgstr "Đây là một số sự kiện sắp diễn ra."
 msgid "Events"
 msgstr "Sự kiện"
 
-#: patterns/event-3-col.php
-msgctxt "Pattern description"
-msgid "A header with title and text and three columns that show 3 events with their images and titles."
-msgstr "Đầu trang với tiêu đề và văn bản và ba cột hiển thị 3 sự kiện với hình ảnh và tiêu đề của chúng."
-
-#: patterns/event-3-col.php
-msgctxt "Pattern title"
-msgid "Events, 3 columns with event images and titles"
-msgstr "Sự kiện, 3 cột với hình ảnh và tiêu đề sự kiện"
-
 #: patterns/cta-newsletter.php:32 patterns/footer-newsletter.php:30
 #: patterns/page-coming-soon.php:39
 #: patterns/services-subscriber-only-section.php:51
 msgid "Subscribe"
 msgstr "Đăng ký"
 
-#: patterns/cta-newsletter.php:23
-msgid "Get access to a curated collection of moments in time featuring photographs from historical relevance."
-msgstr "Truy cập vào bộ sưu tập tuyển chọn các khoảnh khắc thời gian với các bức ảnh có liên quan đến lịch sử."
-
-#: patterns/cta-newsletter.php:19
-msgid "Sign up to get daily stories"
-msgstr "Đăng ký để nhận câu chuyện hàng ngày"
-
-#: patterns/cta-newsletter.php
-msgctxt "Pattern title"
-msgid "Newsletter sign-up"
-msgstr "Đăng ký nhận bản tin"
-
-#: patterns/cta-heading-search.php:21 patterns/hidden-search.php:14
-msgctxt "Search input field placeholder text."
-msgid "Type here..."
-msgstr "Nhập tại đây..."
-
-#: patterns/cta-heading-search.php:21 patterns/hidden-search.php:14
-msgctxt "Search form label."
-msgid "Search"
-msgstr "Tìm kiếm"
-
 #: patterns/cta-heading-search.php:18
 msgid "What are you looking for?"
 msgstr "Bạn đang tìm kiếm gì?"
-
-#: patterns/cta-heading-search.php
-msgctxt "Pattern description"
-msgid "Large heading with a search form for quick navigation."
-msgstr "Tiêu đề lớn với biểu mẫu tìm kiếm để điều hướng nhanh."
-
-#: patterns/cta-heading-search.php
-msgctxt "Pattern title"
-msgid "Heading and search form"
-msgstr "Tiêu đề và biểu mẫu tìm kiếm"
-
-#: patterns/cta-grid-products-link.php:134
-msgid "Shop now"
-msgstr "Mua ngay"
 
 #: patterns/cta-grid-products-link.php:114
 msgid "Botany flowers"
@@ -1855,16 +2025,6 @@ msgstr "Phù hợp với nhu cầu của bạn"
 msgid "Flora of Akaka Falls State Park"
 msgstr "Hệ thực vật của Công viên Bang Thác Akaka"
 
-#: patterns/cta-grid-products-link.php:59
-msgid "30€"
-msgstr "30€"
-
-#. translators: %s: Starting price, split into three rows using HTML <br> tags.
-#. The price value has a font size set.
-#: patterns/cta-grid-products-link.php:58
-msgid "Starting at%s/month"
-msgstr "Bắt đầu từ%s/tháng"
-
 #: patterns/cta-grid-products-link.php:38
 msgid "Closeup of plantlife in the Malibu Canyon area"
 msgstr "Cận cảnh thực vật ở khu vực Hẻm núi Malibu"
@@ -1882,16 +2042,6 @@ msgstr "Hoa đen trắng"
 msgid "Our online store."
 msgstr "Cửa hàng trực tuyến của chúng tôi."
 
-#: patterns/cta-grid-products-link.php
-msgctxt "Pattern description"
-msgid "A call to action featuring product images."
-msgstr "Lời kêu gọi hành động có hình ảnh sản phẩm."
-
-#: patterns/cta-grid-products-link.php
-msgctxt "Pattern title"
-msgid "Call to action with grid layout with products and link"
-msgstr "Lời kêu gọi hành động với bố cục lưới với sản phẩm và liên kết"
-
 #: patterns/cta-events-list.php:106 patterns/cta-events-list.php:144
 msgid "Thornville, OH, USA"
 msgstr "Thornville, OH, Hoa Kỳ"
@@ -1905,15 +2055,6 @@ msgstr "Thành phố Mexico, Mexico"
 msgid "Buy Tickets"
 msgstr "Mua vé"
 
-#: patterns/cta-events-list.php:45 patterns/cta-events-list.php:83
-#: patterns/cta-events-list.php:114 patterns/cta-events-list.php:152
-#: patterns/event-3-col.php:44 patterns/event-3-col.php:68
-#: patterns/event-3-col.php:92 patterns/event-rsvp.php:37
-#: patterns/event-schedule.php:35 patterns/event-schedule.php:121
-msgctxt "Example event date in pattern."
-msgid "Mon, Jan 1"
-msgstr "Thứ Hai, ngày 1 tháng 1"
-
 #: patterns/cta-events-list.php:37
 msgid "Atlanta, GA, USA"
 msgstr "Atlanta, GA, Hoa Kỳ"
@@ -1925,16 +2066,6 @@ msgstr "Đây là một số sự kiện sắp diễn ra"
 #: patterns/cta-events-list.php:19
 msgid "Upcoming events"
 msgstr "Sự kiện sắp diễn ra"
-
-#: patterns/cta-events-list.php
-msgctxt "Pattern description"
-msgid "A list of events with call to action."
-msgstr "Danh sách sự kiện với lời kêu gọi hành động."
-
-#: patterns/cta-events-list.php
-msgctxt "Pattern title"
-msgid "Events list"
-msgstr "Danh sách sự kiện"
 
 #: patterns/banner-intro-image.php:42 patterns/cta-centered-heading.php:28
 #: patterns/hero-full-width-image.php:33
@@ -1951,16 +2082,6 @@ msgstr "Giống như những bông hoa nở rộ ở những nơi không ngờ t
 #: patterns/template-home-photo-blog.php:27
 msgid "Tell your story"
 msgstr "Kể câu chuyện của bạn"
-
-#: patterns/cta-centered-heading.php
-msgctxt "Pattern description"
-msgid "A hero with a centered heading, paragraph and button."
-msgstr "Hero với tiêu đề, đoạn văn và nút ở giữa."
-
-#: patterns/cta-centered-heading.php
-msgctxt "Pattern title"
-msgid "Centered heading"
-msgstr "Tiêu đề ở giữa"
 
 #: patterns/cta-book-locations.php:131
 msgid "United Kingdom"
@@ -2001,109 +2122,9 @@ msgstr "Nhà sách"
 msgid "Australia"
 msgstr "Úc"
 
-#: patterns/cta-book-locations.php:27
-msgid "The Stories Book will be available from these international retailers."
-msgstr "Sách những câu chuyện sẽ có sẵn từ các nhà bán lẻ quốc tế này."
-
-#: patterns/cta-book-locations.php:23
-msgid "International editions"
-msgstr "Phiên bản quốc tế"
-
-#: patterns/cta-book-locations.php
-msgctxt "Pattern description"
-msgid "A call to action section with links to get the book in the most popular locations."
-msgstr "Phần lời kêu gọi hành động với các liên kết để mua sách ở các địa điểm phổ biến nhất."
-
-#: patterns/cta-book-locations.php
-msgctxt "Pattern title"
-msgid "Call to action with locations"
-msgstr "Lời kêu gọi hành động với địa điểm"
-
-#: patterns/cta-book-links.php:57
-#: patterns/hero-overlapped-book-cover-with-links.php:100
-msgctxt "Pattern placeholder text with link."
-msgid "Outside Europe? View <a href=\"#\" rel=\"nofollow\">international editions</a>."
-msgstr "Ngoài Châu Âu? Xem <a href=\"#\" rel=\"nofollow\">phiên bản quốc tế</a>."
-
-#: patterns/cta-book-links.php:51
-msgctxt "Example brand name."
-msgid "Simon &amp; Schuster"
-msgstr "Simon &amp; Schuster"
-
-#: patterns/cta-book-links.php:47
-msgctxt "Example brand name."
-msgid "BAM!"
-msgstr "BAM!"
-
-#: patterns/cta-book-links.php:43
-msgctxt "Example brand name."
-msgid "Spotify"
-msgstr "Spotify"
-
-#: patterns/cta-book-links.php:39
-msgctxt "Example brand name."
-msgid "Bookshop.org"
-msgstr "Bookshop.org"
-
-#: patterns/cta-book-links.php:35
-#: patterns/hero-overlapped-book-cover-with-links.php:62
-msgctxt "Example brand name."
-msgid "Apple Books"
-msgstr "Apple Books"
-
-#: patterns/cta-book-links.php:31
-#: patterns/hero-overlapped-book-cover-with-links.php:84
-msgctxt "Example brand name."
-msgid "Barnes &amp; Noble"
-msgstr "Barnes &amp; Noble"
-
-#: patterns/cta-book-links.php:27
-#: patterns/hero-overlapped-book-cover-with-links.php:77
-msgctxt "Example brand name."
-msgid "Audible"
-msgstr "Audible"
-
-#: patterns/cta-book-links.php:23
-#: patterns/hero-overlapped-book-cover-with-links.php:55
-msgctxt "Example brand name."
-msgid "Amazon"
-msgstr "Amazon"
-
-#: patterns/cta-book-links.php:17
-msgid "Buy your copy of The Stories Book"
-msgstr "Mua bản sao của Sách những câu chuyện"
-
-#: patterns/cta-book-links.php
-msgctxt "Pattern description"
-msgid "A call to action section with links to get the book in different websites."
-msgstr "Phần lời kêu gọi hành động với các liên kết để mua sách trên các trang web khác nhau."
-
-#: patterns/cta-book-links.php
-msgctxt "Pattern title"
-msgid "Call to action with book links"
-msgstr "Lời kêu gọi hành động với liên kết sách"
-
 #: patterns/contact-location-and-link.php:36
 msgid "The business location"
 msgstr "Địa điểm kinh doanh"
-
-#: patterns/contact-location-and-link.php:26
-msgid "Get directions"
-msgstr "Nhận chỉ đường"
-
-#: patterns/contact-location-and-link.php:22
-msgid "Visit us at 123 Example St. Manhattan, NY 10300, United States"
-msgstr "Ghé thăm chúng tôi tại 123 Example St. Manhattan, NY 10300, Hoa Kỳ"
-
-#: patterns/contact-location-and-link.php
-msgctxt "Pattern description"
-msgid "Contact section with a location address, a directions link, and an image of the location."
-msgstr "Phần liên hệ với địa chỉ vị trí, liên kết chỉ đường và hình ảnh của vị trí."
-
-#: patterns/contact-location-and-link.php
-msgctxt "Pattern title"
-msgid "Contact location and link"
-msgstr "Liên hệ vị trí và liên kết"
 
 #: patterns/contact-info-locations.php:86
 msgid "Portland"
@@ -2142,81 +2163,10 @@ msgstr "Email"
 msgid "TikTok"
 msgstr "TikTok"
 
-#: patterns/contact-info-locations.php:34 patterns/footer-social.php:21
-msgid "Facebook"
-msgstr "Facebook"
-
-#: patterns/contact-info-locations.php:33 patterns/footer-social.php:22
-#: patterns/media-instagram-grid.php:24 patterns/page-cv-bio.php:47
-#: patterns/page-link-in-bio-heading-paragraph-links-image.php:36
-#: patterns/page-link-in-bio-with-tight-margins.php:48
-msgid "Instagram"
-msgstr "Instagram"
-
-#: patterns/contact-info-locations.php:32 patterns/footer-social.php:23
-#: patterns/page-link-in-bio-heading-paragraph-links-image.php:40
-#: patterns/page-link-in-bio-with-tight-margins.php:52
-msgctxt "Refers to the social media platform formerly known as Twitter."
-msgid "X"
-msgstr "X"
-
 #: patterns/contact-info-locations.php:29
 #: patterns/contact-info-locations.php:31 patterns/footer-social.php:20
 msgid "Social media"
 msgstr "Mạng xã hội"
-
-#: patterns/contact-info-locations.php:21
-msgid "How to get in touch with us"
-msgstr "Cách liên hệ với chúng tôi"
-
-#: patterns/contact-info-locations.php
-msgctxt "Pattern description"
-msgid "Contact section with social media links, email, and multiple location details."
-msgstr "Phần liên hệ với liên kết mạng xã hội, email và nhiều chi tiết vị trí."
-
-#: patterns/contact-info-locations.php
-msgctxt "Pattern title"
-msgid "Contact, info and locations"
-msgstr "Liên hệ, thông tin và địa điểm"
-
-#: patterns/contact-centered-social-link.php:21
-msgctxt "Heading of the Contact social link pattern"
-msgid "Got questions? <br><a href=\"#\" rel=\"nofollow\">Feel free to reach out.</a>"
-msgstr "Có câu hỏi? <br><a href=\"#\" rel=\"nofollow\">Vui lòng liên hệ.</a>"
-
-#: patterns/contact-centered-social-link.php
-msgctxt "Pattern description"
-msgid "Centered contact section with a prominent message and social media links."
-msgstr "Phần liên hệ ở giữa với thông báo nổi bật và liên kết mạng xã hội."
-
-#: patterns/contact-centered-social-link.php
-msgctxt "Pattern title"
-msgid "Centered link and social links"
-msgstr "Liên kết và liên kết mạng xã hội ở giữa"
-
-#: patterns/comments.php:18
-msgid "Comments"
-msgstr "Bình luận"
-
-#: patterns/comments.php
-msgctxt "Pattern description"
-msgid "Comments area with comments list, pagination, and comment form."
-msgstr "Khu vực bình luận với danh sách bình luận, phân trang và biểu mẫu bình luận."
-
-#: patterns/comments.php
-msgctxt "Pattern title"
-msgid "Comments"
-msgstr "Bình luận"
-
-#: patterns/binding-format.php
-msgctxt "Pattern description"
-msgid "Prints the name of the post format with the help of the Block Bindings API."
-msgstr "In tên của định dạng bài đăng với sự trợ giúp của Block Bindings API."
-
-#: patterns/binding-format.php
-msgctxt "Pattern title"
-msgid "Post format name"
-msgstr "Tên định dạng bài đăng"
 
 #: patterns/banner-with-description-and-images-grid.php:48
 #: patterns/overlapped-images.php:26
@@ -2228,35 +2178,6 @@ msgstr "Ảnh chụp cận cảnh hoa đen trắng."
 msgid "Photography close up of a red flower."
 msgstr "Ảnh chụp cận cảnh một bông hoa màu đỏ."
 
-#. translators: %s is the brand name, e.g., 'Fleurs'.
-#: patterns/banner-with-description-and-images-grid.php:31
-#: patterns/overlapped-images.php:47
-msgid "%s is a flower delivery and subscription business. Based in the EU, our mission is not only to deliver stunning flower arrangements across but also foster knowledge and enthusiasm on the beautiful gift of nature: flowers."
-msgstr "%s là một doanh nghiệp giao hoa và đăng ký. Có trụ sở tại EU, sứ mệnh của chúng tôi không chỉ là cung cấp các loại hoa tuyệt đẹp trên khắp mà còn nuôi dưỡng kiến thức và sự nhiệt tình về món quà tuyệt đẹp của thiên nhiên: hoa."
-
-#: patterns/banner-with-description-and-images-grid.php:23
-#: patterns/overlapped-images.php:37
-msgid "About Us"
-msgstr "Về chúng tôi"
-
-#: patterns/banner-with-description-and-images-grid.php
-msgctxt "Pattern description"
-msgid "A banner with a short paragraph, and two images displayed in a grid layout."
-msgstr "Biểu ngữ với một đoạn văn ngắn và hai hình ảnh được hiển thị trong bố cục lưới."
-
-#: patterns/banner-with-description-and-images-grid.php
-msgctxt "Pattern title"
-msgid "Banner with description and images grid"
-msgstr "Biểu ngữ với mô tả và lưới hình ảnh"
-
-#: patterns/banner-poster.php:59
-msgid "#stories"
-msgstr "#câu chuyện"
-
-#: patterns/banner-poster.php:51
-msgid "Let’s hear them."
-msgstr "Hãy lắng nghe họ."
-
 #: patterns/banner-poster.php:39
 msgid "Fuego Bar, Mexico City"
 msgstr "Quán bar Fuego, Thành phố Mexico"
@@ -2266,27 +2187,9 @@ msgctxt "Example event date in pattern."
 msgid "Aug 08—10 2025"
 msgstr "08—10 tháng 8 năm 2025"
 
-#. translators: This string contains the word "Stories" in four different
-#. languages with the first item in the locale's language.
-#: patterns/banner-poster.php:28 patterns/cta-events-list.php:68
-#: patterns/cta-events-list.php:137 patterns/event-rsvp.php:30
-msgctxt "Placeholder heading in four languages."
-msgid "“Stories, <span lang=\"es\">historias</span>, <span lang=\"uk\">iсторії</span>, <span lang=\"el\">iστορίες</span>”"
-msgstr "“Câu chuyện, <span lang=\"es\">historias</span>, <span lang=\"uk\">історії</span>, <span lang=\"el\">ιστορίες</span>”"
-
 #: patterns/banner-poster.php:15
 msgid "Picture of a historical building in ruins."
 msgstr "Hình ảnh một tòa nhà lịch sử đổ nát."
-
-#: patterns/banner-poster.php
-msgctxt "Pattern description"
-msgid "A section that can be used as a banner or a landing page to announce an event."
-msgstr "Một phần có thể được sử dụng làm biểu ngữ hoặc trang đích để thông báo sự kiện."
-
-#: patterns/banner-poster.php
-msgctxt "Pattern title"
-msgid "Poster-like section"
-msgstr "Phần giống như áp phích"
 
 #: patterns/banner-intro.php:22
 #: patterns/banner-with-description-and-images-grid.php:32
@@ -2294,22 +2197,6 @@ msgstr "Phần giống như áp phích"
 msgctxt "Example brand name."
 msgid "Fleurs"
 msgstr "Fleurs"
-
-#. translators: %s is the brand name, e.g., 'Fleurs'.
-#: patterns/banner-intro.php:21
-msgctxt "Pattern placeholder text."
-msgid "We're %s, our mission is to deliver exquisite flower arrangements that not only adorn living spaces but also inspire a deeper appreciation for natural beauty."
-msgstr "Chúng tôi là %s, sứ mệnh của chúng tôi là cung cấp các loại hoa tuyệt đẹp không chỉ tô điểm cho không gian sống mà còn truyền cảm hứng cho sự đánh giá sâu sắc hơn về vẻ đẹp tự nhiên."
-
-#: patterns/banner-intro.php
-msgctxt "Pattern description"
-msgid "A large left-aligned heading with a brand name emphasized in bold."
-msgstr "Tiêu đề căn trái lớn với tên thương hiệu được in đậm."
-
-#: patterns/banner-intro.php
-msgctxt "Pattern title"
-msgid "Intro with left-aligned description"
-msgstr "Giới thiệu với mô tả căn trái"
 
 #: patterns/banner-intro-image.php:35
 msgctxt "Sample description for banner with flower."
@@ -2326,16 +2213,6 @@ msgctxt "Alt text for intro picture."
 msgid "Picture of a flower"
 msgstr "Hình ảnh một bông hoa"
 
-#: patterns/banner-intro-image.php
-msgctxt "Pattern description"
-msgid "A Intro pattern with Short heading, paragraph and image on the left."
-msgstr "Mẫu giới thiệu với tiêu đề ngắn, đoạn văn và hình ảnh bên trái."
-
-#: patterns/banner-intro-image.php
-msgctxt "Pattern title"
-msgid "Short heading and paragraph and image on the left"
-msgstr "Tiêu đề ngắn và đoạn văn và hình ảnh bên trái"
-
 #: patterns/banner-cover-big-heading.php:27 patterns/footer-columns.php:33
 #: patterns/footer-columns.php:35 patterns/footer-newsletter.php:20
 #: patterns/template-home-photo-blog.php:22
@@ -2347,63 +2224,186 @@ msgstr "Câu chuyện"
 msgid "Photo of a field full of flowers, a blue sky and a tree."
 msgstr "Ảnh chụp một cánh đồng đầy hoa, bầu trời xanh và một cái cây."
 
-#: patterns/banner-cover-big-heading.php
-msgctxt "Pattern description"
-msgid "A full-width cover section with a large background image and an oversized heading."
-msgstr "Phần bìa toàn chiều rộng với hình nền lớn và tiêu đề quá khổ."
-
-#: patterns/banner-cover-big-heading.php
-msgctxt "Pattern title"
-msgid "Cover with big heading"
-msgstr "Bìa với tiêu đề lớn"
-
 #: patterns/banner-about-book.php:34
 msgid "Image of a book"
 msgstr "Hình ảnh một cuốn sách"
+
+#: patterns/cta-book-links.php:51
+msgctxt "Example brand name."
+msgid "Simon &amp; Schuster"
+msgstr "Simon &amp; Schuster"
+
+#: patterns/cta-book-links.php:31
+#: patterns/hero-overlapped-book-cover-with-links.php:84
+msgctxt "Example brand name."
+msgid "Barnes &amp; Noble"
+msgstr "Barnes &amp; Noble"
+
+#: patterns/page-landing-podcast.php
+msgctxt "Pattern description"
+msgid "A landing page for the podcast with a hero section, description, logos, grid with videos and newsletter signup."
+msgstr "Trang đích cho podcast với phần hero, mô tả, logo, lưới với video và đăng ký bản tin."
+
+#: patterns/page-landing-event.php
+msgctxt "Pattern description"
+msgid "A landing page for the event with a hero section, description, FAQs and call to action."
+msgstr "Trang đích cho sự kiện với phần hero, mô tả, Câu hỏi thường gặp và kêu gọi hành động."
+
+#: patterns/page-landing-book.php
+msgctxt "Pattern description"
+msgid "A landing page for the book with a hero section, pre-order links, locations, FAQs and newsletter signup."
+msgstr "Trang đích cho sách với phần hero, liên kết đặt hàng trước, địa điểm, Câu hỏi thường gặp và đăng ký bản tin."
+
+#: patterns/hero-podcast.php
+msgctxt "Pattern title"
+msgid "Hero podcast"
+msgstr "Podcast hero"
+
+#: patterns/hero-overlapped-book-cover-with-links.php
+msgctxt "Pattern title"
+msgid "Hero, overlapped book cover with links"
+msgstr "Hero, bìa sách chồng chéo với liên kết"
+
+#: patterns/hero-full-width-image.php
+msgctxt "Pattern description"
+msgid "A hero with a full width image, heading, short paragraph and button."
+msgstr "Hero với hình ảnh toàn chiều rộng, tiêu đề, đoạn văn ngắn và nút."
+
+#: patterns/hero-full-width-image.php
+msgctxt "Pattern title"
+msgid "Hero, full width image"
+msgstr "Hero, hình ảnh toàn chiều rộng"
+
+#: patterns/hero-book.php
+msgctxt "Pattern title"
+msgid "Hero book"
+msgstr "Hero book"
+
+#: patterns/cta-centered-heading.php
+msgctxt "Pattern description"
+msgid "A hero with a centered heading, paragraph and button."
+msgstr "Hero với tiêu đề, đoạn văn và nút ở giữa."
+
+#: theme.json
+msgctxt "Custom template name"
+msgid "Page No Title"
+msgstr "Trang không có tiêu đề"
+
+#: patterns/text-faqs.php:31
+msgctxt "Question in the FAQs pattern."
+msgid "What is The Stories Book about?"
+msgstr "Sách truyện nói về điều gì?"
+
+#: patterns/hero-book.php:38
+msgctxt "Heading of the hero section."
+msgid "The Stories Book"
+msgstr "Sách những câu chuyện"
+
+#: patterns/hero-overlapped-book-cover-with-links.php:28
+msgctxt "Hero - Overlapped book cover pattern headline text"
+msgid "The Stories Book"
+msgstr "Sách những câu chuyện"
+
+#: patterns/cta-book-links.php:17
+msgid "Buy your copy of The Stories Book"
+msgstr "Mua bản sao của Sách những câu chuyện"
+
+#: patterns/cta-book-locations.php:27
+msgid "The Stories Book will be available from these international retailers."
+msgstr "Sách những câu chuyện sẽ có sẵn từ các nhà bán lẻ quốc tế này."
+
+#: patterns/text-faqs.php:47
+msgctxt "Question in the FAQs pattern."
+msgid "How much does The Stories Book cost?"
+msgstr "Sách những câu chuyện giá bao nhiêu?"
+
+#: patterns/text-faqs.php:67
+msgctxt "Question in the FAQs pattern."
+msgid "When will The Stories Book be released?"
+msgstr "Khi nào Sách những câu chuyện sẽ được phát hành?"
+
+#: patterns/format-link.php:17
+msgid "The Stories Book, a fine collection of moments in time featuring photographs from Louis Fleckenstein, Paul Strand and Asahachi Kōno, is available for pre-order"
+msgstr "Sách những câu chuyện, một bộ sưu tập tinh tế về những khoảnh khắc thời gian với các bức ảnh của Louis Fleckenstein, Paul Strand và Asahachi Kōno, hiện có sẵn để đặt hàng trước"
 
 #: patterns/banner-about-book.php:26
 msgctxt "Pattern placeholder text."
 msgid "This exquisite compilation showcases a diverse array of photographs that capture the essence of different eras and cultures, reflecting the unique styles and perspectives of each artist. Fleckenstein’s evocative imagery, Strand’s groundbreaking modernist approach, and Kōno’s meticulous documentation of Japanese life come together in a harmonious blend that celebrates the art of photography. Each image in “The Stories Book” is accompanied by insightful commentary, providing historical context and revealing the stories behind the photographs. This collection is not only a visual feast but also a tribute to the power of photography to preserve and narrate the multifaceted experiences of humanity."
 msgstr "Tuyển tập tinh tế này trưng bày một loạt ảnh đa dạng, nắm bắt được bản chất của các thời đại và nền văn hóa khác nhau, phản ánh phong cách và quan điểm độc đáo của mỗi nghệ sĩ. Hình ảnh gợi cảm của Fleckenstein, cách tiếp cận hiện đại đột phá của Strand và tài liệu tỉ mỉ về cuộc sống Nhật Bản của Kōno kết hợp với nhau trong một sự pha trộn hài hòa, tôn vinh nghệ thuật nhiếp ảnh. Mỗi hình ảnh trong “Sách những câu chuyện” đều kèm theo lời bình luận sâu sắc, cung cấp bối cảnh lịch sử và tiết lộ những câu chuyện đằng sau các bức ảnh. Bộ sưu tập này không chỉ là một bữa tiệc thị giác mà còn là sự tôn vinh sức mạnh của nhiếp ảnh trong việc lưu giữ và kể lại những trải nghiệm đa diện của nhân loại."
 
-#: patterns/banner-about-book.php:22
-msgid "About the book"
-msgstr "Về cuốn sách"
-
-#: patterns/banner-about-book.php
-msgctxt "Pattern description"
-msgid "Banner with book description and accompanying image for promotion."
-msgstr "Biểu ngữ với mô tả sách và hình ảnh kèm theo để quảng cáo."
-
-#: patterns/banner-about-book.php
-msgctxt "Pattern title"
-msgid "Banner with book description"
-msgstr "Biểu ngữ với mô tả sách"
-
-#: functions.php:142
-msgctxt "Label for the block binding placeholder in the editor"
-msgid "Post format name"
-msgstr "Tên định dạng bài đăng"
-
-#: functions.php:122
-msgid "A collection of post format patterns."
-msgstr "Bộ sưu tập các mẫu định dạng bài đăng."
-
-#: functions.php:121
+#: functions.php:116
 msgid "Post formats"
 msgstr "Định dạng bài viết"
 
-#: functions.php:114
-msgid "A collection of full page layouts."
-msgstr "Bộ sưu tập bố cục trang đầy đủ."
+#: patterns/format-link.php
+msgctxt "Pattern description"
+msgid "A link post format with a description and an emphasized link for key content."
+msgstr "Định dạng bài viết liên kết với mô tả và liên kết được nhấn mạnh cho nội dung chính."
 
-#: functions.php:113
-msgid "Pages"
-msgstr "Trang"
+#: patterns/format-audio.php
+msgctxt "Pattern description"
+msgid "An audio post format with an image, title, audio player, and description."
+msgstr "Định dạng bài viết âm thanh với hình ảnh, tiêu đề, trình phát âm thanh và mô tả."
 
-#: functions.php:84
-msgid "Checkmark"
-msgstr "Dấu tích"
+#: theme.json
+msgctxt "Template part name"
+msgid "Vertical site header"
+msgstr "Đầu trang dọc"
+
+#: patterns/vertical-header.php
+msgctxt "Pattern description"
+msgid "Vertical site header with site title and navigation."
+msgstr "Đầu trang dọc với tiêu đề trang web và điều hướng."
+
+#: patterns/vertical-header.php
+msgctxt "Pattern title"
+msgid "Vertical site header"
+msgstr "Đầu trang dọc"
+
+#: patterns/template-single-text-blog.php
+msgctxt "Pattern title"
+msgid "Text blog single post"
+msgstr "Bài viết đơn blog văn bản"
+
+#: patterns/template-page-vertical-header-blog.php
+msgctxt "Pattern title"
+msgid "Right-aligned page"
+msgstr "Trang căn phải"
+
+#: patterns/template-home-text-blog.php
+msgctxt "Pattern title"
+msgid "Text blog home"
+msgstr "Trang chủ blog văn bản"
+
+#: patterns/template-archive-text-blog.php
+msgctxt "Pattern title"
+msgid "Text blog archive"
+msgstr "Lưu trữ blog văn bản"
+
+#: patterns/header.php
+msgctxt "Pattern description"
+msgid "Site header with site title and navigation."
+msgstr "Đầu trang với tiêu đề trang web và điều hướng."
+
+#: patterns/header-large-title.php
+msgctxt "Pattern description"
+msgid "Site header with large site title and right-aligned navigation."
+msgstr "Đầu trang với tiêu đề trang web lớn và điều hướng căn phải."
+
+#: patterns/header-columns.php
+msgctxt "Pattern description"
+msgid "Site header with site title and navigation in columns."
+msgstr "Đầu trang với tiêu đề trang web và điều hướng trong các cột."
+
+#: patterns/header-centered.php
+msgctxt "Pattern description"
+msgid "Site header with centered site title and navigation."
+msgstr "Đầu trang với tiêu đề trang web và điều hướng được căn giữa."
+
+#: patterns/header-centered.php
+msgctxt "Pattern title"
+msgid "Centered site header"
+msgstr "Đầu trang căn giữa"
 
 #. Author URI of the theme
 #: style.css patterns/footer-centered.php:34 patterns/footer-columns.php:74
@@ -2413,14 +2413,14 @@ msgstr "Dấu tích"
 msgid "https://wordpress.org"
 msgstr "https://wordpress.org"
 
-#. Author of the theme
-#: style.css
-#, gp-priority: low
-msgid "the WordPress team"
-msgstr "nhóm WordPress"
-
 #. Theme URI of the theme
 #: style.css
 #, gp-priority: low
 msgid "https://wordpress.org/themes/twentytwentyfive/"
 msgstr "https://wordpress.org/themes/twentytwentyfive/"
+
+#. Author of the theme
+#: style.css
+#, gp-priority: low
+msgid "the WordPress team"
+msgstr "nhóm WordPress"

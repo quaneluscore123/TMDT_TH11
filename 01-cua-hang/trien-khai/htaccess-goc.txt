@@ -1,0 +1,60 @@
+# Bút Chì Xanh - .htaccess cho hosting Apache/LiteSpeed (thay cho nginx.conf cua ban Docker)
+# Dat file nay vao thu muc goc WordPress tren hosting (htdocs/) va doi ten thanh .htaccess
+
+# 1. Bat buoc HTTPS
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# 2. Khong liet ke thu muc, khong lo phien ban may chu
+Options -Indexes
+ServerSignature Off
+
+# 3. Chan file nhay cam: cau hinh, file an, ban sao luu, nhat ky, XML-RPC, readme/license lo phien ban
+<FilesMatch "^(wp-config\.php|xmlrpc\.php|readme\.html|license\.txt|wp-config-them\.php)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+<FilesMatch "(^\.(?!well-known)|\.(sql|sql\.gz|gz|tgz|zip|log|bak|env|ini|sh)$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# 4. Tieu de bao mat (WordPress cung gui qua nhom25-security.php; day la lop cho file tinh)
+<IfModule mod_headers.c>
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Content-Security-Policy "frame-ancestors 'self'; base-uri 'self'; object-src 'none'"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header unset X-Powered-By
+  # Moi cookie: chi gui qua HTTPS va chong gia mao yeu cau tu trang khac
+  Header always edit Set-Cookie "^((?!.*;\s*[Ss]ame[Ss]ite=).*)$" "$1; SameSite=Lax"
+  Header always edit Set-Cookie "^((?!.*;\s*[Ss]ecure).*)$" "$1; Secure"
+</IfModule>
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

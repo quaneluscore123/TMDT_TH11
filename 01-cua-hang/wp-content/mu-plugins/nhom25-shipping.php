@@ -6,7 +6,8 @@
 
 if (!defined('ABSPATH')) exit;
 
-const NHOM25_FREE_SHIP_THRESHOLD = 320000;
+// Cao hon gia tri don trung binh (434.252d) khoang 15% - xem 06-buoi-13/nguong-mien-phi-van-chuyen.md
+const NHOM25_FREE_SHIP_THRESHOLD = 499000;
 
 add_action('woocommerce_shipping_init', function () {
     class Nhom25_Weight_Shipping extends WC_Shipping_Method {

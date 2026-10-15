@@ -52,7 +52,10 @@ if (!class_exists('Woo_VNPay_Payment_Gateway')) :
                 '{{orderid}}' => $order->get_id()
             );
             $order_desc = strtr($this->get_option('order_desc'), $array);
-            $vnp_TxnRef = $order->get_id();
+            // Nhom25: ma tham chieu rieng cho moi lan thanh toan (thu lai cung don khong bi VNPay tu choi trung)
+            $vnp_TxnRef = $order->get_id() . '-' . time();
+            $order->update_meta_data('_nhom25_vnp_txnref', $vnp_TxnRef);
+            $order->save();
             $vnp_OrderInfo = $order_desc;
             $vnp_OrderType = 'other';
             $vnp_Amount = number_format($order->get_total(), 2, '.', '') * 100;
@@ -64,7 +67,9 @@ if (!class_exists('Woo_VNPay_Payment_Gateway')) :
                 "vnp_TmnCode" => $vnp_TmnCode,
                 "vnp_Amount" => $vnp_Amount,
                 "vnp_Command" => "pay",
-                "vnp_CreateDate" => date('YmdHis'),
+                // Nhom25: VNPay dung gio Viet Nam (GMT+7); bat buoc co thoi han thanh toan
+                "vnp_CreateDate" => (new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh')))->format('YmdHis'),
+                "vnp_ExpireDate" => (new DateTime('+15 minutes', new DateTimeZone('Asia/Ho_Chi_Minh')))->format('YmdHis'),
                 "vnp_CurrCode" => "VND",
                 "vnp_IpAddr" => $vnp_IpAddr,
                 "vnp_Locale" => $vnp_Locale,
@@ -99,92 +104,46 @@ if (!class_exists('Woo_VNPay_Payment_Gateway')) :
             return $vnp_Url;
         }
 
+        /**
+         * Nhom25: trang "Da nhan don" chi HIEN THI ket qua.
+         * Trang thai don chi doi khi nhan thong bao IPN may chu toi may chu (Nhom25_VNPay_IPN),
+         * vi tham so tren trinh duyet do nguoi dung kiem soat (ly thuyet buoi 4, slide 17 va 24).
+         */
         public function vnpay_payment_results($order_id)
         {
-            $hashSecret = $this->get_option('vnp_HashSecret');
-            $inputData = array();
-            $data = $_REQUEST;
-            foreach ($data as $key => $value) {
-                if (substr($key, 0, 4) == "vnp_") {
-                    $inputData[$key] = $value;
-                }
+            $order = wc_get_order($order_id);
+            if (!$order) {
+                return;
             }
-            $vnp_SecureHash = $inputData['vnp_SecureHash'];
-            unset($inputData['vnp_SecureHashType']);
-            unset($inputData['vnp_SecureHash']);
-            ksort($inputData);
-            $i = 0;
-            $hashData = "";
-            foreach ($inputData as $key => $value) {
-                if ($i == 1) {
-                    $hashData = $hashData . '&' . urlencode($key) . "=" . urlencode($value);
-                } else {
-                    $hashData = $hashData . urlencode($key) . "=" . urlencode($value);
-                    $i = 1;
-                }
-            }
+            $hasParams = isset($_GET['vnp_SecureHash']);
+            $validSig = $hasParams && Nhom25_VNPay_IPN::verify(wp_unslash($_GET), $this->get_option('vnp_HashSecret'));
 
-            $secureHash = hash_hmac('sha512', $hashData, $hashSecret);
-            if ($secureHash == $vnp_SecureHash) {
-                $order = wc_get_order($order_id);
-                if ($_GET['vnp_ResponseCode'] == '00') {
-                    // Cap nhat trang thai don hang thanh cong
-                    if ($order && $order->get_status() !== 'completed' && $order->get_status() !== 'processing') {
-                        $order->payment_complete($inputData['vnp_TransactionNo']);
-                        $order->add_order_note(sprintf(
-                            __('VNPay thanh toán thành công. Transaction ID: %s', 'woo-vnpay'),
-                            $inputData['vnp_TransactionNo']
-                        ));
-                    }
-                    $amount = $inputData['vnp_Amount'] / 100;
-                    $array = array(
-                        '{{orderid}}' => $order_id,
-                        '{{amount}}' => number_format($amount, '0', '.', '.') . 'đ',
-                        '{{transaction}}' => $inputData['vnp_TransactionNo']
-                    );
-                    $payment_notice_successful = strtr($this->get_option('payment_notice_successful'), $array);
-                    ?>
-                    <section class="vnpay-payment-gateway-wrapper">
-                        <div class="vnpay-payment-gateway-notification">
-                            <img src="<?= WOO_VNPAY_PLUGIN_URL . 'assets/images/correct.svg'; ?>"
-                                 alt="Giao dịch thành công">
-                            <h2 class="notification-title">Thanh toán thành công</h2>
-                            <p class="notification-content"><?php echo wpautop($payment_notice_successful); ?></p>
-                        </div>
-                    </section>
-                    <?php
-                } else {
-                    // Thanh toan that bai - cap nhat trang thai failed
-                    if ($order && $order->get_status() !== 'completed' && $order->get_status() !== 'processing') {
-                        $order->update_status('failed', sprintf(
-                            __('VNPay thanh toán thất bại. Response Code: %s', 'woo-vnpay'),
-                            $_GET['vnp_ResponseCode']
-                        ));
-                    }
-                    ?>
-                    <section class="vnpay-payment-gateway-wrapper">
-                        <div class="vnpay-payment-gateway-notification">
-                            <img src="<?= WOO_VNPAY_PLUGIN_URL . 'assets/images/caution.svg'; ?>"
-                                 alt="Thanh toán không thành công">
-                            <h2 class="notification-title">Thanh toán không thành công</h2>
-                            <p class="notification-content">Đã có lỗi trong quá trình thanh toán, vui lòng thử
-                                lại!</p>
-                        </div>
-                    </section>
-                    <?php
-                }
+            if ($order->is_paid()) {
+                $title = 'Thanh toán thành công';
+                $icon = 'correct.svg';
+                $msg = sprintf('Đơn hàng #%s đã được thanh toán. Mã giao dịch VNPAY: %s.', $order->get_id(), esc_html($order->get_transaction_id()));
+            } elseif ($order->has_status('failed')) {
+                $title = 'Thanh toán không thành công';
+                $icon = 'caution.svg';
+                $msg = 'Ngân hàng chưa chấp nhận giao dịch. Giỏ hàng của bạn vẫn được giữ nguyên; bạn có thể thanh toán lại hoặc chọn Thanh toán khi nhận hàng.';
+            } elseif ($hasParams && !$validSig) {
+                $title = 'Cảnh báo';
+                $icon = 'caution.svg';
+                $msg = 'Chữ ký phản hồi không hợp lệ. Đơn hàng chưa được ghi nhận là đã thanh toán.';
             } else {
-                ?>
-                <section class="vnpay-payment-gateway-wrapper">
-                    <div class="vnpay-payment-gateway-notification">
-                        <img src="<?= WOO_VNPAY_PLUGIN_URL . 'assets/images/caution.svg'; ?>"
-                             alt="Cảnh báo">
-                        <h2 class="notification-title">Cảnh báo</h2>
-                        <p class="notification-content">Chữ ký không hợp lệ</p>
-                    </div>
-                </section>
-                <?php
+                $title = 'Đang chờ xác nhận từ VNPAY';
+                $icon = 'caution.svg';
+                $msg = 'Cửa hàng chỉ ghi nhận thanh toán khi nhận được thông báo trực tiếp từ VNPAY. Trang này sẽ cập nhật sau ít phút; bạn không cần thanh toán lại.';
             }
+            ?>
+            <section class="vnpay-payment-gateway-wrapper">
+                <div class="vnpay-payment-gateway-notification">
+                    <img src="<?= esc_url(WOO_VNPAY_PLUGIN_URL . 'assets/images/' . $icon); ?>" alt="">
+                    <h2 class="notification-title"><?php echo esc_html($title); ?></h2>
+                    <p class="notification-content"><?php echo wp_kses_post($msg); ?></p>
+                </div>
+            </section>
+            <?php
         }
 
         public function order_button_name($order_button_name)

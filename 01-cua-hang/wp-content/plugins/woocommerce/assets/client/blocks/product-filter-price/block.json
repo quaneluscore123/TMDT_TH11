@@ -1,9 +1,8 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"name": "woocommerce/product-filter-price",
-	"version": "1.0.0",
-	"title": "Price (Experimental)",
-	"description": "Let shoppers filter products by choosing a price range.",
+	"title": "Price Filter",
+	"description": "Let shoppers filter products by price.",
 	"category": "woocommerce",
 	"keywords": [ "WooCommerce" ],
 	"textdomain": "woocommerce",
@@ -14,10 +13,5 @@
 		"html": false
 	},
 	"usesContext": [ "query", "filterParams" ],
-	"attributes": {
-		"clearButton": {
-			"type": "boolean",
-			"default": true
-		}
-	}
+	"viewScriptModule": "woocommerce/product-filter-price"
 }

@@ -1,37 +1,25 @@
 <?php
+declare( strict_types=1 );
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
 
-use Automattic\WooCommerce\Blocks\Utils\BlockTemplateUtils;
 use Automattic\WooCommerce\Blocks\Utils\ProductGalleryUtils;
 use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
 use Automattic\WooCommerce\Enums\ProductType;
+use Automattic\WooCommerce\Internal\ProductGallery\ProductMediaGallery;
 
 /**
  * ProductGallery class.
  */
 class ProductGallery extends AbstractBlock {
+
+	use EnableBlockJsonAssetsTrait;
+
 	/**
 	 * Block name.
 	 *
 	 * @var string
 	 */
 	protected $block_name = 'product-gallery';
-
-	/**
-	 * Used to preserve the context for dialog rendering.
-	 *
-	 * @var array
-	 */
-	protected $dialog_context;
-
-	/**
-	 * Initialize the block and Hook into the `render_block_context` filter
-	 * to update the context for dialog rendering.
-	 */
-	protected function initialize() {
-		parent::initialize();
-		add_filter( 'render_block_context', [ $this, 'inject_dialog_context' ], 10, 3 );
-	}
 
 	/**
 	 *  Register the context
@@ -43,28 +31,62 @@ class ProductGallery extends AbstractBlock {
 	}
 
 	/**
-	 * Inject the single productcontext into the dialog blocks.
+	 * Return the dialog content.
 	 *
-	 * @param array $context The block context.
-	 * @param array $block The block.
-	 * @param array $parent_block The parent block.
-	 * @return array The updated block context.
+	 * @param array $media_items An array of all media items of the product.
+	 * @return string
 	 */
-	public function inject_dialog_context( $context, $block, $parent_block ) {
-		$expected_inner_blocks = [
-			'woocommerce/product-gallery',
-			'woocommerce/product-gallery-large-image',
-			'woocommerce/product-gallery-large-image-next-previous',
-			'woocommerce/product-gallery-pager',
-			'woocommerce/product-gallery-thumbnails',
-		];
-		$is_single_product     = $this->dialog_context['singleProduct'] ?? false;
+	protected function render_dialog( $media_items ) {
+		ob_start();
+		?>
+			<dialog
+				data-wp-bind--open="context.isDialogOpen"
+				data-wp-bind--inert="!context.isDialogOpen"
+				data-wp-on--close="actions.closeDialog"
+				data-wp-on--keydown="actions.onDialogKeyDown"
+				data-wp-watch="callbacks.dialogStateChange"
+				class="wc-block-product-gallery-dialog"
+				role="dialog"
+				aria-modal="true"
+				aria-label="Product Gallery">
+				<div class="wc-block-product-gallery-dialog__header">
+					<button class="wc-block-product-gallery-dialog__close-button" data-wp-on--click="actions.closeDialog" aria-label="<?php echo esc_attr__( 'Close dialog', 'woocommerce' ); ?>">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+							<path d="M13 11.8l6.1-6.3-1-1-6.1 6.2-6.1-6.2-1 1 6.1 6.3-6.5 6.7 1 1 6.5-6.6 6.5 6.6 1-1z"></path>
+						</svg>
+					</button>
+				</div>
+				<div class="wc-block-product-gallery-dialog__content">
+					<?php foreach ( $media_items as $index => $media ) : ?>
+						<?php if ( 'video' === ( $media['media_type'] ?? '' ) ) : ?>
+							<?php echo $this->get_dialog_video_html( $media ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php else : ?>
+							<img
+								data-image-id="<?php echo esc_attr( $media['id'] ); ?>"
+								data-wp-watch="callbacks.toggleImageVisibility"
+								src="<?php echo esc_url( $media['src'] ); ?>"
+								srcset="<?php echo esc_attr( $media['srcset'] ); ?>"
+								sizes="<?php echo esc_attr( $media['sizes'] ); ?>"
+								decoding="async"
+								alt="<?php echo esc_attr( $media['alt'] ); ?>" />
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</div>
+			</dialog>
+		<?php
+		return ob_get_clean();
+	}
 
-		if ( $is_single_product && in_array( $block['blockName'], $expected_inner_blocks, true ) ) {
-			return array_merge( $context, $this->dialog_context );
-		}
-
-		return $context;
+	/**
+	 * Get video HTML for the product gallery dialog.
+	 *
+	 * @param array $media Video media data.
+	 * @return string
+	 */
+	private function get_dialog_video_html( $media ) {
+		return ProductGalleryUtils::get_video_html(
+			ProductGalleryUtils::get_video_attributes( $media, 'dialog' )
+		);
 	}
 
 	/**
@@ -86,127 +108,232 @@ class ProductGallery extends AbstractBlock {
 
 			return $html;
 		}
+
+		return $gallery_html;
 	}
 
 	/**
-	 * Return the dialog content.
+	 * Find the Product Image block attributes used by the gallery.
 	 *
+	 * @param iterable<\WP_Block> $inner_blocks Inner blocks to search.
+	 * @return array|null
+	 */
+	private function get_product_image_attributes( $inner_blocks ) {
+		foreach ( $inner_blocks as $inner_block ) {
+			if ( 'woocommerce/product-image' === $inner_block->name ) {
+				return $inner_block->parsed_block['attrs'] ?? array();
+			}
+
+			$found_attributes = $this->get_product_image_attributes( $inner_block->inner_blocks );
+			if ( null !== $found_attributes ) {
+				return $found_attributes;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get the store thumbnail aspect ratio from WooCommerce Customizer settings.
+	 *
+	 * @return string|null CSS aspect ratio value, or null when uncropped.
+	 */
+	private function get_store_thumbnail_aspect_ratio() {
+		$cropping = get_option( 'woocommerce_thumbnail_cropping', '1:1' );
+
+		if ( 'uncropped' === $cropping ) {
+			return null;
+		}
+
+		if ( 'custom' === $cropping ) {
+			$width  = max( 1, (float) get_option( 'woocommerce_thumbnail_cropping_custom_width', '4' ) );
+			$height = max( 1, (float) get_option( 'woocommerce_thumbnail_cropping_custom_height', '3' ) );
+
+			return $width . '/' . $height;
+		}
+
+		return str_replace( ':', '/', $cropping );
+	}
+
+	/**
+	 * Resolve the gallery aspect ratio from the nested Product Image block.
+	 *
+	 * @param \WP_Block $block The Product Gallery block.
+	 * @return string|null CSS aspect ratio value, or null when no ratio should be applied.
+	 */
+	private function resolve_product_image_aspect_ratio( $block ) {
+		$attributes = $this->get_product_image_attributes( $block->inner_blocks );
+
+		if ( empty( $attributes ) ) {
+			return null;
+		}
+
+		if ( ! empty( $attributes['style']['dimensions']['aspectRatio'] ) ) {
+			return $attributes['style']['dimensions']['aspectRatio'];
+		}
+
+		if ( ! empty( $attributes['aspectRatio'] ) ) {
+			return $attributes['aspectRatio'];
+		}
+
+		$image_sizing = $attributes['imageSizing'] ?? 'single';
+
+		if ( 'thumbnail' === $image_sizing || 'cropped' === $image_sizing ) {
+			return $this->get_store_thumbnail_aspect_ratio();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Parse an aspect ratio into CSS variable values.
+	 *
+	 * @param string|null $aspect_ratio CSS aspect ratio value.
+	 * @return array
+	 */
+	private function parse_aspect_ratio( $aspect_ratio ) {
+		$default_aspect_ratio = array(
+			'width'  => '1',
+			'height' => '1',
+		);
+
+		if ( empty( $aspect_ratio ) || ! is_string( $aspect_ratio ) ) {
+			return $default_aspect_ratio;
+		}
+
+		$parts = array_map( 'trim', explode( '/', $aspect_ratio ) );
+		if ( count( $parts ) > 2 ) {
+			return $default_aspect_ratio;
+		}
+
+		$width  = (float) $parts[0];
+		$height = isset( $parts[1] ) ? (float) $parts[1] : $width;
+
+		if ( $width <= 0 || $height <= 0 ) {
+			return $default_aspect_ratio;
+		}
+
+		return array(
+			'width'  => (string) $width,
+			'height' => (string) $height,
+		);
+	}
+
+	/**
+	 * Get the gallery aspect ratio CSS variables.
+	 *
+	 * @param \WP_Block $block The Product Gallery block.
 	 * @return string
 	 */
-	protected function render_dialog() {
-		$template_part = BlockTemplateUtils::get_template_part( 'product-gallery' );
-
-		$parsed_template = parse_blocks(
-			$template_part
+	private function get_aspect_ratio_style( $block ) {
+		$aspect_ratio = $this->parse_aspect_ratio(
+			$this->resolve_product_image_aspect_ratio( $block )
 		);
 
-		$html = array_reduce(
-			$parsed_template,
-			function ( $carry, $item ) {
-				return $carry . render_block( $item );
-			},
-			''
+		return sprintf(
+			'--wc-block-product-gallery-large-image-ratio-width:%1$s;' .
+			'--wc-block-product-gallery-large-image-ratio-height:%2$s;',
+			$aspect_ratio['width'],
+			$aspect_ratio['height']
 		);
-
-		$html_processor = new \WP_HTML_Tag_Processor( $html );
-
-		$html_processor->next_tag(
-			array(
-				'class_name' => 'wp-block-woocommerce-product-gallery',
-			)
-		);
-
-		$html_processor->remove_attribute( 'data-wc-context' );
-
-		$gallery_dialog = strtr(
-			'
-			<dialog data-wc-bind--open="context.isDialogOpen" role="dialog" aria-modal="true" aria-label="{{dialog_aria_label}}" hidden data-wc-bind--hidden="!context.isDialogOpen" data-wc-watch="callbacks.keyboardAccess" data-wc-watch--dialog-focus-trap="callbacks.dialogFocusTrap" data-wc-class--wc-block-product-gallery--dialog-open="context.isDialogOpen">
-				<div class="wc-block-product-gallery-dialog__header">
-				<div class="wc-block-product-galler-dialog__header-right">
-					<button class="wc-block-product-gallery-dialog__close" data-wc-on--click="actions.closeDialog" aria-label="{{close_dialog_aria_label}}">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect width="24" height="24" rx="2"/>
-							<path d="M13 11.8L19.1 5.5L18.1 4.5L12 10.7L5.9 4.5L4.9 5.5L11 11.8L4.5 18.5L5.5 19.5L12 12.9L18.5 19.5L19.5 18.5L13 11.8Z" fill="black"/>
-						</svg>
-					</button>
-				</div>
-				</div>
-				<div class="wc-block-product-gallery-dialog__body">
-					{{html}}
-				</div>
-			</dialog>',
-			array(
-				'{{html}}'                    => $html_processor->get_updated_html(),
-				'{{dialog_aria_label}}'       => __( 'Product gallery', 'woocommerce' ),
-				'{{close_dialog_aria_label}}' => __( 'Close Product Gallery dialog', 'woocommerce' ),
-			)
-		);
-		remove_filter( 'render_block_context', [ $this, 'inject_dialog_context' ], 10 );
-		return $gallery_dialog;
 	}
 
 	/**
 	 * Include and render the block.
 	 *
-	 * @param array    $attributes Block attributes. Default empty array.
-	 * @param string   $content    Block content. Default empty string.
-	 * @param WP_Block $block      Block instance.
+	 * @param array     $attributes Block attributes. Default empty array.
+	 * @param string    $content    Block content. Default empty string.
+	 * @param \WP_Block $block     Block instance.
 	 * @return string Rendered block type output.
 	 */
 	protected function render( $attributes, $content, $block ) {
-		$this->dialog_context = $block->context;
-		$post_id              = $block->context['postId'] ?? '';
-		$product              = wc_get_product( $post_id );
+		$post_id = $block->context['postId'] ?? '';
+		$product = wc_get_product( $post_id );
 
 		if ( ! $product instanceof \WC_Product ) {
 			return '';
 		}
 
-		$product_gallery_images = ProductGalleryUtils::get_product_gallery_images( $post_id, 'thumbnail', array() );
-		$classname_single_image = '';
+		$media_items       = ProductGalleryUtils::get_all_media_items( $product );
+		$default_media_ids = ProductGalleryUtils::get_media_ids(
+			ProductMediaGallery::get_product_media_gallery_items_for_display( $product )
+		);
 
-		if ( count( $product_gallery_images ) < 2 ) {
-			// The gallery consists of a single image.
-			$classname_single_image = 'is-single-product-gallery-image';
-		}
-
-		$number_of_thumbnails           = $block->attributes['thumbnailsNumberOfThumbnails'] ?? 0;
-		$classname                      = StyleAttributesUtils::get_classes_by_attributes( $attributes, array( 'extra_classes' ) );
-		$dialog                         = isset( $attributes['mode'] ) && 'full' !== $attributes['mode'] ? $this->render_dialog() : '';
-		$product_gallery_first_image    = ProductGalleryUtils::get_product_gallery_image_ids( $product, 1 );
-		$product_gallery_first_image_id = reset( $product_gallery_first_image );
-		$product_id                     = strval( $product->get_id() );
-
-		$html = $this->inject_dialog( $content, $dialog );
-		$p    = new \WP_HTML_Tag_Processor( $html );
+		$number_of_media        = count( $default_media_ids );
+		$classname              = StyleAttributesUtils::get_classes_by_attributes( $attributes, array( 'extra_classes' ) );
+		$initial_media_id       = $number_of_media > 0 ? $default_media_ids[0] : -1;
+		$classname_single_image = $number_of_media < 2 ? 'is-single-product-gallery-image' : '';
+		$product_id             = strval( $product->get_id() );
+		$fullsize_media_data    = ProductGalleryUtils::get_media_src_data( $media_items, 'full', $product->get_title() );
+		$gallery_with_dialog    = $this->inject_dialog( $content, $this->render_dialog( $fullsize_media_data ) );
+		$p                      = new \WP_HTML_Tag_Processor( $gallery_with_dialog );
+		$html                   = $gallery_with_dialog;
 
 		if ( $p->next_tag() ) {
-			$p->set_attribute( 'data-wc-interactive', wp_json_encode( array( 'namespace' => 'woocommerce/product-gallery' ), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) );
+			$p->set_attribute( 'data-wp-interactive', $this->get_full_block_name() );
 			$p->set_attribute(
-				'data-wc-context',
+				'data-wp-context',
 				wp_json_encode(
 					array(
-						'selectedImage'                   => $product_gallery_first_image_id,
-						'firstMainImageId'                => $product_gallery_first_image_id,
-						'isDialogOpen'                    => false,
-						'visibleImagesIds'                => ProductGalleryUtils::get_product_gallery_image_ids( $product, $number_of_thumbnails, true ),
-						'dialogVisibleImagesIds'          => ProductGalleryUtils::get_product_gallery_image_ids( $product, null, false ),
-						'mouseIsOverPreviousOrNextButton' => false,
-						'productId'                       => $product_id,
-						'elementThatTriggeredDialogOpening' => null,
-						'disableLeft'                     => true,
-						'disableRight'                    => false,
+						'imageData'               => $default_media_ids,
+						'isDialogOpen'            => false,
+						'isDragging'              => false,
+						'touchStartX'             => 0,
+						'touchCurrentX'           => 0,
+						'productId'               => $product_id,
+						'selectedImageId'         => $initial_media_id,
+						'thumbnailsOverflow'      => [
+							'top'    => false,
+							'bottom' => false,
+							'left'   => false,
+							'right'  => false,
+						],
+						// Next/Previous Buttons block context.
+						'hideNextPreviousButtons' => $number_of_media <= 1,
+						'isDisabledPrevious'      => true,
+						'isDisabledNext'          => $number_of_media <= 1,
+						'ariaLabelPrevious'       => __( 'Previous image', 'woocommerce' ),
+						'ariaLabelNext'           => __( 'Next image', 'woocommerce' ),
 					),
 					JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
 				)
 			);
 
 			if ( $product->is_type( ProductType::VARIABLE ) ) {
-				$p->set_attribute( 'data-wc-init--watch-changes-on-add-to-cart-form', 'callbacks.watchForChangesOnAddToCartForm' );
+				$formatted_variations_data = ProductGalleryUtils::get_product_variation_gallery_data( $product );
+
+				if ( ! empty( $formatted_variations_data ) ) {
+					wp_interactivity_config(
+						'woocommerce',
+						array(
+							'products' => array(
+								$product->get_id() => array(
+									'image_id'   => $initial_media_id,
+									'image_ids'  => $default_media_ids,
+									'variations' => $formatted_variations_data,
+								),
+							),
+						)
+					);
+
+					// Support legacy Add to Cart with Options block.
+					$p->set_attribute( 'data-wp-init--watch-changes-on-add-to-cart-form', 'callbacks.watchForChangesOnAddToCartForm' );
+					// Support blockified Add to Cart + Options block.
+					$p->set_attribute( 'data-wp-watch', 'callbacks.listenToProductDataChanges' );
+				}
 			}
 
 			$p->add_class( $classname );
 			$p->add_class( $classname_single_image );
+
+			$style = $p->get_attribute( 'style' );
+			$style = is_string( $style ) ? trim( $style ) : '';
+
+			if ( '' !== $style && ';' !== substr( $style, -1 ) ) {
+				$style .= ';';
+			}
+
+			$p->set_attribute( 'style', $style . $this->get_aspect_ratio_style( $block ) );
 			$html = $p->get_updated_html();
 		}
 

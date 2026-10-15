@@ -4,6 +4,7 @@ namespace Automattic\WooCommerce\Admin\API\Reports;
 defined( 'ABSPATH' ) || exit;
 
 use Automattic\WooCommerce\Admin\API\Reports\GenericController;
+use WP_Error;
 
 /**
  * Generic base for all stats controllers.
@@ -20,7 +21,7 @@ use Automattic\WooCommerce\Admin\API\Reports\GenericController;
  * <pre><code class="language-php">class StatsController extends GenericStatsController {
  *     /** Route of your new REST endpoint. &ast;/
  *     protected $rest_base = 'reports/my-thing/stats';
- *     /** Define your proeprties schema. &ast;/
+ *     /** Define your properties schema. &ast;/
  *     protected function get_item_properties_schema() {
  *         return array(
  *             'my_property' => array(
@@ -116,7 +117,7 @@ abstract class GenericStatsController extends GenericController {
 					'type'       => 'object',
 					'properties' => array(
 						'segment_id' => array(
-							'description' => __( 'Segment identificator.', 'woocommerce' ),
+							'description' => __( 'Segment identifier.', 'woocommerce' ),
 							'type'        => 'integer',
 							'context'     => array( 'view', 'edit' ),
 							'readonly'    => true,

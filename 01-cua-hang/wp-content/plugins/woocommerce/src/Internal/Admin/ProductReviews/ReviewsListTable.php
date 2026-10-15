@@ -76,8 +76,9 @@ class ReviewsListTable extends WP_List_Table {
 		$this->set_review_product();
 
 		$args = [
-			'number'    => $this->get_per_page(),
-			'post_type' => 'product',
+			'number'                    => $this->get_per_page(),
+			'post_type'                 => 'product',
+			'update_comment_post_cache' => true,
 		];
 
 		// Include the order & orderby arguments.
@@ -103,11 +104,10 @@ class ReviewsListTable extends WP_List_Table {
 		 *
 		 * @param array $args Comment query args.
 		 */
-		$args     = (array) apply_filters( 'woocommerce_product_reviews_list_table_prepare_items_args', $args );
-		$comments = get_comments( $args );
+		$args = (array) apply_filters( 'woocommerce_product_reviews_list_table_prepare_items_args', $args );
 
-		update_comment_cache( $comments );
-
+		/** @var \WP_Comment[] $comments */ // phpcs:ignore Generic.Commenting.DocComment.MissingShort
+		$comments    = get_comments( $args );
 		$this->items = $comments;
 
 		$this->set_pagination_args(
@@ -568,6 +568,17 @@ class ReviewsListTable extends WP_List_Table {
 				esc_html__( 'Reply', 'woocommerce' )
 			);
 		}
+
+		/**
+		 * Filters the action links displayed for each review in the Reviews list table.
+		 *
+		 * @since 9.8.0
+		 * @param string[]   $actions An array of comment actions. Default actions include:
+		 *                            'Approve', 'Unapprove', 'Edit', 'Reply', 'Spam',
+		 *                            'Delete', and 'Trash'.
+		 * @param WP_Comment $item The comment object.
+		 * */
+		$actions = apply_filters( 'comment_row_actions', array_filter( $actions ), $item );
 
 		$always_visible = 'excerpt' === get_user_setting( 'posts_list_mode', 'list' );
 

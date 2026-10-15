@@ -6,7 +6,6 @@
 namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
 
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-use Automattic\WooCommerce\Admin\WCAdminHelper;
 
 
 /**
@@ -29,7 +28,11 @@ class TaskList {
 	const COMPLETED_OPTION = 'woocommerce_task_list_completed_lists';
 
 	/**
-	 * Option name of hidden reminder bar.
+	 * Option name of the dismissed reminder bar option.
+	 *
+	 * @deprecated 10.9.0 The reminder bar feature was removed; this option is no longer used.
+	 *                    Retained as a stub to avoid fatal errors in third-party code that
+	 *                    references the constant.
 	 */
 	const REMINDER_BAR_HIDDEN_OPTION = 'woocommerce_task_list_reminder_bar_hidden';
 
@@ -148,8 +151,6 @@ class TaskList {
 			$task  = new $class( $this );
 			$this->add_task( $task );
 		}
-
-		$this->possibly_remove_reminder_bar();
 	}
 
 	/**
@@ -168,10 +169,23 @@ class TaskList {
 	 * @return bool
 	 */
 	public function is_visible() {
-		if ( ! $this->visible || $this->is_hidden() || ! count( $this->get_viewable_tasks() ) > 0 ) {
+		// If the task list is explicitly set to not be visible, return false.
+		if ( ! $this->visible ) {
 			return false;
 		}
-		return ! $this->is_hidden();
+
+		// If the task list is hidden, return false.
+		if ( $this->is_hidden() ) {
+			return false;
+		}
+
+		// If the task list has no viewable tasks, return false.
+		$no_viewable_tasks = count( $this->get_viewable_tasks() ) === 0;
+		if ( $no_viewable_tasks ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -187,7 +201,7 @@ class TaskList {
 		$viewable_tasks  = $this->get_viewable_tasks();
 		$completed_count = array_reduce(
 			$viewable_tasks,
-			function( $total, $task ) {
+			function ( $total, $task ) {
 				return $task->is_complete() ? $total + 1 : $total;
 			},
 			0
@@ -285,7 +299,7 @@ class TaskList {
 		return current(
 			array_filter(
 				$this->tasks,
-				function( $task ) use ( $task_id ) {
+				function ( $task ) use ( $task_id ) {
 					return $task->get_id() === $task_id;
 				}
 			)
@@ -301,7 +315,7 @@ class TaskList {
 		return array_values(
 			array_filter(
 				$this->tasks,
-				function( $task ) {
+				function ( $task ) {
 					return $task->can_view();
 				}
 			)
@@ -341,7 +355,7 @@ class TaskList {
 
 		$completed_lists   = get_option( self::COMPLETED_OPTION, array() );
 		$completed_lists[] = $this->get_list_id();
-		update_option( self::COMPLETED_OPTION, $completed_lists );
+		update_option( self::COMPLETED_OPTION, $completed_lists, true );
 		$this->maybe_set_default_layout( $completed_lists );
 		$this->record_tracks_event(
 			'tasks_completed',
@@ -362,7 +376,7 @@ class TaskList {
 		if ( 0 !== count( $sort_by ) ) {
 			usort(
 				$this->tasks,
-				function( $a, $b ) use ( $sort_by ) {
+				function ( $a, $b ) use ( $sort_by ) {
 					return Task::sort( $a, $b, $sort_by );
 				}
 			);
@@ -393,20 +407,6 @@ class TaskList {
 	}
 
 	/**
-	 * Remove reminder bar four weeks after store creation.
-	 */
-	public static function possibly_remove_reminder_bar() {
-		$bar_hidden            = get_option( self::REMINDER_BAR_HIDDEN_OPTION, 'no' );
-		$active_for_four_weeks = WCAdminHelper::is_wc_admin_active_for( WEEK_IN_SECONDS * 4 );
-
-		if ( 'yes' === $bar_hidden || ! $active_for_four_weeks ) {
-			return;
-		}
-
-		update_option( self::REMINDER_BAR_HIDDEN_OPTION, 'yes' );
-	}
-
-	/**
 	 * Get the list for use in JSON.
 	 *
 	 * @return array
@@ -415,10 +415,11 @@ class TaskList {
 		$this->possibly_track_completion();
 		$tasks_json = array();
 
-		// We have no use for hidden lists, it's expensive to compute individual tasks completion.
-		// Exception: Secret tasklist is always hidden.
-		if ( $this->is_visible() || 'secret_tasklist' === $this->id ) {
-			foreach ( $this->tasks as $task ) {
+		foreach ( $this->tasks as $task ) {
+			// We have no use for hidden lists, it's expensive to compute individual tasks completion.
+			// Exception: Secret tasklist is always hidden, or a task is always accessible.
+			$list_is_visible = $this->is_visible() || 'secret_tasklist' === $this->id;
+			if ( $list_is_visible || ( method_exists( $task, 'is_always_accessible' ) && $task->is_always_accessible() ) ) {
 				$json = $task->get_json();
 				if ( $json['canView'] ) {
 					$tasks_json[] = $json;
@@ -437,5 +438,18 @@ class TaskList {
 			'displayProgressHeader' => $this->display_progress_header,
 			'keepCompletedTaskList' => $this->get_keep_completed_task_list(),
 		);
+	}
+
+	/**
+	 * Possibly remove the task list reminder bar.
+	 *
+	 * @deprecated 10.9.0 The reminder bar feature was removed; this method is now a no-op.
+	 *                    Retained as a stub to avoid fatal errors in third-party code that
+	 *                    references the method.
+	 *
+	 * @return void
+	 */
+	public static function possibly_remove_reminder_bar(): void {
+		wc_deprecated_function( __METHOD__, '10.9.0' );
 	}
 }

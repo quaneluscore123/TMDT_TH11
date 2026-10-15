@@ -1,10 +1,20 @@
 <?php
+
+declare( strict_types = 1 );
+
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
+
+use Automattic\WooCommerce\Blocks\Utils\BlocksSharedState;
+use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
+use Automattic\WooCommerce\Internal\Features\BlockEditorUnifiedAssets;
+use Automattic\WooCommerce\Internal\ProductFilters\Params;
+use WP_Block;
 
 /**
  * ProductFilters class.
  */
 class ProductFilters extends AbstractBlock {
+
 	/**
 	 * Block name.
 	 *
@@ -18,7 +28,7 @@ class ProductFilters extends AbstractBlock {
 	 * @return string[]
 	 */
 	protected function get_block_type_uses_context() {
-		return array( 'postId', 'query', 'queryId' );
+		return array( 'postId', 'query', 'queryId', 'forcePageReload' );
 	}
 
 	/**
@@ -29,13 +39,125 @@ class ProductFilters extends AbstractBlock {
 	 *                           not in the post content on editor load.
 	 */
 	protected function enqueue_data( array $attributes = array() ) {
-		global $pagenow;
 		parent::enqueue_data( $attributes );
 
-		$this->asset_data_registry->add( 'isBlockTheme', wc_current_theme_is_fse_theme() );
-		$this->asset_data_registry->add( 'isProductArchive', is_shop() || is_product_taxonomy() );
-		$this->asset_data_registry->add( 'isSiteEditor', 'site-editor.php' === $pagenow );
-		$this->asset_data_registry->add( 'isWidgetEditor', 'widgets.php' === $pagenow || 'customize.php' === $pagenow );
+		$inline_style_handle = BlockEditorUnifiedAssets::is_enabled() && is_admin()
+			? 'wc-block-library-style'
+			: generate_block_asset_handle( $this->get_full_block_name(), 'style' );
+
+		wp_add_inline_style(
+			$inline_style_handle,
+			$this->get_responsive_styles()
+		);
+
+		if ( is_admin() ) {
+			$this->asset_data_registry->add( 'globalStylesColors', wp_get_global_styles( array( 'color' ) ) );
+		}
+
+		BlocksSharedState::load_store_config( 'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce' );
+
+		// Classic themes do not support client-side navigation on product
+		// archive pages, so disable it globally for the Interactivity Router.
+		$is_product_archive = is_shop() || is_product_taxonomy() || ( is_search() && 'product' === get_post_type() );
+		if ( ! wp_is_block_theme() && $is_product_archive ) {
+			wp_interactivity_config( 'core/router', array( 'clientNavigationDisabled' => true ) );
+		}
+	}
+
+	/**
+	 * Resolve the responsive overlay breakpoint.
+	 *
+	 * @return string Responsive overlay breakpoint.
+	 */
+	private function get_overlay_breakpoint() {
+		if ( function_exists( 'gutenberg_get_global_settings' ) ) {
+			$viewport_settings = gutenberg_get_global_settings( array( 'viewport' ) );
+		} else {
+			$viewport_settings = wp_get_global_settings( array( 'viewport' ) );
+		}
+
+		if ( is_array( $viewport_settings ) ) {
+			foreach ( array( 'tablet', 'mobile' ) as $viewport ) {
+				if ( isset( $viewport_settings[ $viewport ] ) && is_string( $viewport_settings[ $viewport ] ) ) {
+					return $viewport_settings[ $viewport ];
+				}
+			}
+		}
+
+		return '782px';
+	}
+
+	/**
+	 * Generate viewport-aware Product Filters styles.
+	 *
+	 * @return string Responsive CSS.
+	 */
+	private function get_responsive_styles() {
+		$overlay_breakpoint = $this->get_overlay_breakpoint();
+
+		return <<<CSS
+@media (width > {$overlay_breakpoint}) {
+	:where(.wc-block-product-filters).is-mobile-overlay {
+		display: flex;
+	}
+
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__overlay-header,
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__overlay-footer,
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__open-overlay {
+		display: none;
+	}
+
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__overlay {
+		position: relative;
+		pointer-events: auto;
+		inset: 0;
+		z-index: auto;
+		background: inherit;
+		color: inherit;
+		transition: none;
+		flex-grow: 1;
+	}
+
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__overlay-wrapper {
+		width: auto;
+		height: auto;
+		background: inherit;
+		color: inherit;
+	}
+
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__overlay-dialog {
+		position: relative;
+		width: auto;
+		transform: none;
+		transition: none;
+		background: inherit;
+		color: inherit;
+	}
+
+	:where(.wc-block-product-filters).is-mobile-overlay .wc-block-product-filters__overlay-content {
+		padding: 0;
+		overflow: visible;
+		flex-grow: 1;
+		background: inherit;
+		color: inherit;
+	}
+}
+CSS;
+	}
+
+	/**
+	 * Resolve the canonical overlay mode with legacy drawer compatibility.
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string Overlay mode.
+	 */
+	private function get_overlay_mode( $attributes ) {
+		$overlay_mode = $attributes['overlayMode'] ?? null;
+		if ( in_array( $overlay_mode, array( 'off', 'mobile', 'always' ), true ) ) {
+			return $overlay_mode;
+		}
+
+		return isset( $attributes['showFilterDrawer'] ) && false === $attributes['showFilterDrawer'] ? 'off' : 'mobile';
 	}
 
 	/**
@@ -47,8 +169,17 @@ class ProductFilters extends AbstractBlock {
 	 * @return string Rendered block type output.
 	 */
 	protected function render( $attributes, $content, $block ) {
+		if ( ! $block instanceof WP_Block ) {
+			return $content;
+		}
+
+		wp_enqueue_script( 'wc-settings' );
+
 		$query_id      = $block->context['queryId'] ?? 0;
 		$filter_params = $this->get_filter_params( $query_id );
+
+		wp_interactivity_config( $this->get_full_block_name(), [ 'canonicalUrl' => $this->get_canonical_url_no_pagination( $filter_params ) ] );
+
 		/**
 		 * Filter hook to modify the selected filter items.
 		 *
@@ -59,7 +190,7 @@ class ProductFilters extends AbstractBlock {
 		usort(
 			$active_filters,
 			function ( $a, $b ) {
-				return strnatcmp( $a['label'], $b['label'] );
+				return strnatcmp( $a['activeLabel'], $b['activeLabel'] );
 			}
 		);
 
@@ -79,106 +210,133 @@ class ProductFilters extends AbstractBlock {
 			''
 		);
 		$interactivity_context = array(
-			'params'         => $filter_params,
-			'originalParams' => $filter_params,
-			'activeFilters'  => $active_filters,
+			'params'          => $filter_params,
+			'activeFilters'   => $active_filters,
+			// Null when not a descendant of a Product Collection block, so the
+			// frontend can fall back to the global interactivity config.
+			'forcePageReload' => isset( $block->context['forcePageReload'] ) ? (bool) $block->context['forcePageReload'] : null,
 		);
 
-		$classes = '';
-		$styles  = '';
-		$tags    = new \WP_HTML_Tag_Processor( $content );
-
-		if ( $tags->next_tag( array( 'class_name' => 'wc-block-product-filters' ) ) ) {
-			$classes = $tags->get_attribute( 'class' );
-			$styles  = $tags->get_attribute( 'style' );
+		$overlay_mode     = $this->get_overlay_mode( $attributes );
+		$has_overlay      = 'off' !== $overlay_mode;
+		$overlay_position = isset( $attributes['overlayPosition'] ) && 'right' === $attributes['overlayPosition'] ? 'right' : 'left';
+		$wrapper_classes  = array( 'wc-block-product-filters' );
+		if ( ! $has_overlay ) {
+			$wrapper_classes[] = 'is-filter-drawer-disabled';
+		}
+		if ( 'mobile' === $overlay_mode ) {
+			$wrapper_classes[] = 'is-mobile-overlay';
+		}
+		if ( $has_overlay && 'right' === $overlay_position ) {
+			$wrapper_classes[] = 'is-overlay-right';
 		}
 
 		$wrapper_attributes = array(
-			'class'                            => $classes,
-			'data-wc-interactive'              => wp_json_encode( array( 'namespace' => $this->get_full_block_name() ), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ),
-			'data-wc-watch--navigation'        => 'callbacks.maybeNavigate',
-			'data-wc-watch--scrolling'         => 'callbacks.scrollLimit',
-			'data-wc-on--keyup'                => 'actions.closeOverlayOnEscape',
-			'data-wc-navigation-id'            => $this->generate_navigation_id( $block ),
-			'data-wc-context'                  => wp_json_encode( $interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ),
-			'data-wc-class--is-overlay-opened' => 'context.isOverlayOpened',
-			'style'                            => $styles,
+			'class'                         => implode( ' ', $wrapper_classes ),
+			'data-wp-interactive'           => $this->get_full_block_name(),
+			'data-wp-init--colors'          => 'callbacks.initColors',
+			'data-wp-watch--active-filters' => 'callbacks.syncActiveFiltersWithServer',
+			'data-wp-context'               => (string) wp_json_encode( $interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ),
+			'style'                         => $this->get_css_variables( $attributes ),
 		);
+
+		if ( $has_overlay ) {
+			$wrapper_attributes['data-wp-watch--scrolling']         = 'callbacks.scrollLimit';
+			$wrapper_attributes['data-wp-on--keyup']                = 'actions.closeOverlayOnEscape';
+			$wrapper_attributes['data-wp-class--is-overlay-opened'] = 'context.isOverlayOpened';
+		}
+
+		// Remove this conditional once the fix is released in WP. https://github.com/woocommerce/gutenberg/pull/4.
+		if ( ! isset( $block->context['productCollectionLocation'] ) ) {
+			$wrapper_attributes['data-wp-router-region'] = $this->generate_navigation_id( $block );
+		}
 
 		ob_start();
 		?>
 		<div <?php echo get_block_wrapper_attributes( $wrapper_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<button
-				class="wc-block-product-filters__open-overlay"
-				data-wc-on--click="actions.openOverlay"
-			>
-				<?php if ( 'label-only' !== $attributes['overlayButtonType'] ) : ?>
-					<?php echo $this->get_svg_icon( $attributes['overlayIcon'] ?? 'filter-icon-2' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				<?php endif; ?>
-				<?php if ( 'icon-only' !== $attributes['overlayButtonType'] ) : ?>
+			<?php if ( $has_overlay ) : ?>
+				<button
+					type="button"
+					class="wc-block-product-filters__open-overlay"
+					data-wp-on--click="actions.openOverlay"
+				>
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M10 17.5H14V16H10V17.5ZM6 6V7.5H18V6H6ZM8 12.5H16V11H8V12.5Z" fill="currentColor"/>
+					</svg>
 					<span><?php echo esc_html__( 'Filter products', 'woocommerce' ); ?></span>
-				<?php endif; ?>
-			</button>
-			<div class="wc-block-product-filters__overlay">
-				<div class="wc-block-product-filters__overlay-wrapper">
-					<div
-						class="wc-block-product-filters__overlay-dialog"
-						role="dialog"
-					>
-						<header class="wc-block-product-filters__overlay-header">
-							<button
-								class="wc-block-product-filters__close-overlay"
-								data-wc-on--click="actions.closeOverlay"
-							>
-								<span><?php echo esc_html__( 'Close', 'woocommerce' ); ?></span>
-								<?php echo $this->get_svg_icon( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-							</button>
-						</header>
-						<div class="wc-block-product-filters__overlay-content">
-							<?php echo $inner_blocks; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-						</div>
-						<footer
-							class="wc-block-product-filters__overlay-footer"
+				</button>
+				<div class="wc-block-product-filters__overlay">
+					<div class="wc-block-product-filters__overlay-wrapper" data-wp-on--click="actions.closeOverlayOnBackdrop">
+						<div
+							class="wc-block-product-filters__overlay-dialog"
+							role="dialog"
+							aria-label="<?php echo esc_html__( 'Product Filters', 'woocommerce' ); ?>"
 						>
-							<button
-								class="wc-block-product-filters__apply wp-element-button"
-								data-wc-interactive="<?php echo esc_attr( wp_json_encode( array( 'namespace' => $this->get_full_block_name() ), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) ); ?>"
-								data-wc-on--click="actions.closeOverlay"
+							<header class="wc-block-product-filters__overlay-header">
+								<button
+									type="button"
+									class="wc-block-product-filters__close-overlay"
+									data-wp-on--click="actions.closeOverlay"
+									title="<?php echo esc_attr( __( 'Close', 'woocommerce' ) ); ?>"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+										<path d="M13 11.8l6.1-6.3-1-1-6.1 6.2-6.1-6.2-1 1 6.1 6.3-6.5 6.7 1 1 6.5-6.6 6.5 6.6 1-1z"></path>
+									</svg>
+								</button>
+							</header>
+							<div class="wc-block-product-filters__overlay-content">
+								<?php echo $inner_blocks; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							</div>
+							<footer
+								class="wc-block-product-filters__overlay-footer"
 							>
-								<span><?php echo esc_html__( 'Apply', 'woocommerce' ); ?></span>
-							</button>
-						</footer>
+								<button
+									type="button"
+									class="wc-block-product-filters__apply wp-element-button"
+									data-wp-interactive="<?php echo esc_attr( $this->get_full_block_name() ); ?>"
+									data-wp-on--click="actions.closeOverlay"
+								>
+									<span><?php echo esc_html__( 'Apply', 'woocommerce' ); ?></span>
+								</button>
+							</footer>
+						</div>
 					</div>
 				</div>
-			</div>
+			<?php else : ?>
+				<div class="wc-block-product-filters__content">
+					<?php echo $inner_blocks; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();
 	}
 
 	/**
-	 * Get SVG icon markup for a given icon name.
+	 * Get CSS custom properties from block attributes.
 	 *
-	 * @param string $name The name of the icon to retrieve.
-	 * @return string SVG markup for the icon, or empty string if icon not found.
+	 * @param array $attributes Block attributes.
+	 * @return string CSS custom properties string.
 	 */
-	private function get_svg_icon( string $name ) {
-		$icons = array(
-			'close'         => '<path d="M12 13.0607L15.7123 16.773L16.773 15.7123L13.0607 12L16.773 8.28772L15.7123 7.22706L12 10.9394L8.28771 7.22705L7.22705 8.28771L10.9394 12L7.22706 15.7123L8.28772 16.773L12 13.0607Z" fill="currentColor"/>',
-			'filter-icon-1' => '<path fill-rule="evenodd" clip-rule="evenodd" d="M10.541 4.20007H5.20245C4.27908 4.20007 3.84904 5.34461 4.54394 5.95265L10.541 11.2001V16.2001L10.541 17.9428C10.541 18.1042 10.619 18.2558 10.7504 18.3496L13.2504 20.1353C13.5813 20.3717 14.041 20.1352 14.041 19.7285V11.2001L19.3339 5.90718C19.9639 5.27722 19.5177 4.20007 18.6268 4.20007H13.041H10.541Z" fill="currentColor"/>',
-			'filter-icon-2' => '<path d="M10 17.5H14V16H10V17.5ZM6 6V7.5H18V6H6ZM8 12.5H16V11H8V12.5Z" fill="currentColor"/>',
-			'filter-icon-3' => '<path d="M5 5H19V6.5H5V5Z" fill="currentColor"/><path d="M5 11.25H19V12.75H5V11.25Z" fill="currentColor"/><path d="M19 17.5H5V19H19V17.5Z" fill="currentColor"/>',
-			'filter-icon-4' => '<path d="M19 7.5H11.372C11.0631 6.62611 10.2297 6 9.25 6C8.27034 6 7.43691 6.62611 7.12803 7.5H5V9H7.12803C7.43691 9.87389 8.27034 10.5 9.25 10.5C10.2297 10.5 11.0631 9.87389 11.372 9H19V7.5Z" fill="currentColor"/><path d="M19 15H16.872C16.5631 14.1261 15.7297 13.5 14.75 13.5C13.7703 13.5 12.9369 14.1261 12.628 15H5V16.5H12.628C12.9369 17.3739 13.7703 18 14.75 18C15.7297 18 16.5631 17.3739 16.872 16.5H19V15Z" fill="currentColor"/>',
-		);
+	private function get_css_variables( $attributes ) {
+		$styles = array();
 
-		if ( ! isset( $icons[ $name ] ) ) {
-			return '';
+		$bg = StyleAttributesUtils::get_background_color_class_and_style( $attributes );
+		if ( ! empty( $bg['value'] ) ) {
+			$styles[] = sprintf( '--wc-product-filters-background-color: %s', $bg['value'] );
 		}
 
-		return sprintf(
-			'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">%s</svg>',
-			$icons[ $name ]
-		);
+		$text = StyleAttributesUtils::get_text_color_class_and_style( $attributes );
+		if ( ! empty( $text['value'] ) ) {
+			$styles[] = sprintf( '--wc-product-filters-text-color: %s', $text['value'] );
+		}
+
+		$block_gap = $attributes['style']['spacing']['blockGap'] ?? '';
+		if ( is_string( $block_gap ) && '' !== $block_gap ) {
+			$styles[] = sprintf( '--wc-product-filter-block-spacing: %s', StyleAttributesUtils::get_spacing_value( $block_gap ) );
+		}
+
+		return $styles ? implode( ';', $styles ) . ';' : '';
 	}
 
 	/**
@@ -190,7 +348,14 @@ class ProductFilters extends AbstractBlock {
 	private function generate_navigation_id( $block ) {
 		return sprintf(
 			'wc-product-filters-%s',
-			md5( wp_json_encode( $block->parsed_block['innerBlocks'] ) )
+			md5(
+				wp_json_encode(
+					array(
+						'attrs'       => $block->parsed_block['attrs'] ?? array(),
+						'innerBlocks' => $block->parsed_block['innerBlocks'] ?? array(),
+					)
+				)
+			)
 		);
 	}
 
@@ -214,17 +379,7 @@ class ProductFilters extends AbstractBlock {
 
 		parse_str( $parsed_url['query'], $url_query_params );
 
-		/**
-		 * Filters the active filter data provided by filter blocks.
-		 *
-		 * @since 11.7.0
-		 *
-		 * @param array $filter_param_keys The active filters data
-		 * @param array $url_param_keys    The query param parsed from the URL.
-		 *
-		 * @return array Active filters params.
-		 */
-		$filter_param_keys = array_unique( apply_filters( 'woocommerce_blocks_product_filters_param_keys', array(), array_keys( $url_query_params ) ) );
+		$filter_param_keys = wc_get_container()->get( Params::class )->get_param_keys();
 
 		return array_filter(
 			$url_query_params,
@@ -233,5 +388,82 @@ class ProductFilters extends AbstractBlock {
 			},
 			ARRAY_FILTER_USE_KEY
 		);
+	}
+
+	/**
+	 * Disable the style handle for this block type. We use block.json to load the style.
+	 *
+	 * @return null
+	 */
+	protected function get_block_type_style() {
+		return null;
+	}
+
+	/**
+	 * Disable the editor style handle for this block type. We use block.json to load the style.
+	 *
+	 * @return null
+	 */
+	protected function get_block_type_editor_style() {
+		return null;
+	}
+
+	/**
+	 * Disable the script handle for this block type. We use block.json to load the script.
+	 *
+	 * @param string|null $key The key of the script to get.
+	 * @return null
+	 */
+	protected function get_block_type_script( $key = null ) {
+		return null;
+	}
+
+	/**
+	 * Get the canonical URL without pagination.
+	 *
+	 * @param array $filter_params Filter parameters.
+	 * @return string Canonical URL without pagination.
+	 */
+	private function get_canonical_url_no_pagination( $filter_params ) {
+		$canonical_url_no_pagination = is_singular() ? get_permalink() : get_pagenum_link( 1 );
+		$decoded_url                 = html_entity_decode( $canonical_url_no_pagination, ENT_QUOTES, get_bloginfo( 'charset' ) );
+		$parsed_url                  = wp_parse_url( $decoded_url );
+
+		// If there are active filters, $parsed_url['query'] is empty for page or post but not empty for archives.
+		if ( empty( $filter_params ) || empty( $parsed_url['query'] ) ) {
+			return $decoded_url;
+		}
+
+		foreach ( array_keys( $filter_params ) as $key ) {
+			$parsed_url['query'] = remove_query_arg( $key, $parsed_url['query'] );
+		}
+
+		$url = '';
+
+		if ( isset( $parsed_url['scheme'] ) ) {
+			$url .= $parsed_url['scheme'] . '://';
+		}
+
+		if ( isset( $parsed_url['host'] ) ) {
+			$url .= $parsed_url['host'];
+		}
+
+		if ( isset( $parsed_url['port'] ) ) {
+			$url .= ':' . $parsed_url['port'];
+		}
+
+		if ( isset( $parsed_url['path'] ) ) {
+			$url .= $parsed_url['path'];
+		}
+
+		if ( ! empty( $parsed_url['query'] ) ) {
+			$url .= '?' . $parsed_url['query'];
+		}
+
+		if ( isset( $parsed_url['fragment'] ) ) {
+			$url .= '#' . $parsed_url['fragment'];
+		}
+
+		return $url;
 	}
 }

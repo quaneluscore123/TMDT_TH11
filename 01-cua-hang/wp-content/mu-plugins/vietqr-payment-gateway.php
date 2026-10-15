@@ -75,26 +75,22 @@ function init_vietqr_gateway() {
             ];
         }
 
+        /** Anh QR theo chuan VietQR (NAPAS). Trinh duyet tai anh truc tiep, may chu khong goi API ben ngoai. */
         public function get_vietqr_image($amount, $message) {
             if (empty($this->account_number) || empty($this->bank_bin)) return '';
-            $url = "https://api.vietqr.io/v2/generate/{$this->bank_bin}/{$this->account_number}/{$amount}/" . urlencode($message);
-            $response = wp_remote_get($url, ['timeout' => 10]);
-            if (is_wp_error($response)) return '';
-            $body = json_decode(wp_remote_retrieve_body($response), true);
-            return $body['data']['qrDataURL'] ?? '';
+            return 'https://img.vietqr.io/image/' . rawurlencode($this->bank_bin) . '-' . rawurlencode($this->account_number) . '-compact2.png?'
+                . http_build_query(['amount' => (int) round($amount), 'addInfo' => $message, 'accountName' => $this->account_name]);
         }
 
+        // Nhom25: o trang thanh toan chi huong dan; ma QR kem noi dung DH<ma don> hien sau khi dat hang
         public function payment_fields() {
-            $total = WC()->cart->total;
-            $qr_url = $this->get_vietqr_image($total, 'Thanh toan');
             echo '<div class="vietqr-payment">';
-            echo '<p>' . esc_html($this->description) . '</p>';
-            if ($qr_url) {
-                echo '<img src="' . esc_url($qr_url) . '" alt="VietQR" style="max-width:250px;" />';
-            }
-            echo '<p><strong>Ngân hàng:</strong> ' . esc_html($this->bank_name) . '</p>';
-            echo '<p><strong>Số tài khoản:</strong> ' . esc_html($this->account_number) . '</p>';
-            echo '<p><strong>Tên tài khoản:</strong> ' . esc_html($this->account_name) . '</p>';
+            echo '<p>Quét mã QR bằng ứng dụng ngân hàng bất kỳ hoặc ví hỗ trợ VietQR. Không mất phí, tiền về cửa hàng ngay.</p>';
+            echo '<ol style="margin-left:1.2em">';
+            echo '<li>Bấm <strong>Đặt hàng</strong> — trang tiếp theo hiện mã QR đã điền sẵn số tiền và nội dung.</li>';
+            echo '<li>Giữ nguyên nội dung chuyển khoản <strong>DH&lt;mã đơn&gt;</strong> để cửa hàng đối chiếu đúng đơn.</li>';
+            echo '<li>Cửa hàng xác nhận trong giờ làm việc (8:00–21:00) sau khi kiểm tra sao kê ngân hàng, rồi mới giao hàng.</li>';
+            echo '</ol>';
             echo '</div>';
         }
 
@@ -105,13 +101,15 @@ function init_vietqr_gateway() {
             echo '<div class="vietqr-thankyou">';
             echo '<h2>Thông tin thanh toán VietQR</h2>';
             if ($qr_url) {
-                echo '<img src="' . esc_url($qr_url) . '" alt="VietQR" style="max-width:250px;" />';
+                echo '<img src="' . esc_url($qr_url) . '" alt="Mã VietQR cho đơn DH' . (int) $order_id . '" style="max-width:250px;" />';
+                echo '<p><strong>Ngân hàng:</strong> ' . esc_html($this->bank_name) . '</p>';
+                echo '<p><strong>Số tài khoản:</strong> ' . esc_html($this->account_number) . '</p>';
+                echo '<p><strong>Tên tài khoản:</strong> ' . esc_html($this->account_name) . '</p>';
+            } else {
+                echo '<p><strong>Bản thử nghiệm:</strong> cửa hàng chưa khai báo tài khoản nhận tiền nên chưa hiện mã QR. Đơn được giữ ở trạng thái "Tạm giữ"; nhân viên sẽ liên hệ qua số điện thoại bạn đã nhập.</p>';
             }
-            echo '<p><strong>Ngân hàng:</strong> ' . esc_html($this->bank_name) . '</p>';
-            echo '<p><strong>Số tài khoản:</strong> ' . esc_html($this->account_number) . '</p>';
-            echo '<p><strong>Tên tài khoản:</strong> ' . esc_html($this->account_name) . '</p>';
             echo '<p><strong>Số tiền:</strong> ' . wc_price($total) . '</p>';
-            echo '<p>Vui lòng chuyển khoản với nội dung: <strong>DH' . $order_id . '</strong></p>';
+            echo '<p>Nội dung chuyển khoản: <strong>DH' . (int) $order_id . '</strong></p>';
             echo '</div>';
         }
 
