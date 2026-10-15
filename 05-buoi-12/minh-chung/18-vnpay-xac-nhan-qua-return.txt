@@ -1,0 +1,11 @@
+### Thoi diem: 2026-10-15 20:22:48 · che do NHOM25_VNPAY_XAC_NHAN_QUA_RETURN=true (cho hosting chan IPN)
+San pham thu: #11 Bút bi gel 0.5mm, ton kho ban dau 97
+
+Ket qua    Truong hop                                   Trang thai   Ton kho
+DAT        1. Ke gian sua duong dan, ky bang khoa sai   pending      97
+DAT        2. Sai so tien                               pending      97
+DAT        3. Khach huy thanh toan (ma 24)              failed       97
+DAT        4. Thanh toan thanh cong                     processing   96
+DAT        5. Khach tai lai trang quay ve (lan 2)       processing   96
+
+Da xoa don thu, ton kho tra ve 97.

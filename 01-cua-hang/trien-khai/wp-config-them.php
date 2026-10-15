@@ -27,6 +27,8 @@ defined('WP_AUTO_UPDATE_CORE') || define('WP_AUTO_UPDATE_CORE', 'minor');
 // InfinityFree chan thong bao IPN cua VNPay nen KHONG nen dien khoa VNPay tren hosting nay.
 defined('VNP_TMN_CODE') || define('VNP_TMN_CODE', '');
 defined('VNP_HASH_SECRET') || define('VNP_HASH_SECRET', '');
+// InfinityFree chan IPN: dat true de xac nhan don khi khach quay ve tu VNPay (van kiem tra chu ky, so tien, chong trung).
+defined('NHOM25_VNPAY_XAC_NHAN_QUA_RETURN') || define('NHOM25_VNPAY_XAC_NHAN_QUA_RETURN', false);
 defined('VIETQR_BANK_BIN') || define('VIETQR_BANK_BIN', '970436');
 defined('VIETQR_ACCOUNT_NUMBER') || define('VIETQR_ACCOUNT_NUMBER', '');
 defined('VIETQR_ACCOUNT_NAME') || define('VIETQR_ACCOUNT_NAME', '');

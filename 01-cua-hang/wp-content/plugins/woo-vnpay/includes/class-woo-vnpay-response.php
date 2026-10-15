@@ -151,7 +151,16 @@ if (!class_exists('VNPAYResponse')) {
                 wp_safe_redirect(wc_get_checkout_url());
                 exit;
             }
-            $order->add_order_note(sprintf('Khách quay về từ VNPAY (mã %s, chữ ký %s). Trạng thái đơn chỉ đổi khi nhận IPN.', esc_html(isset($params['vnp_ResponseCode']) ? $params['vnp_ResponseCode'] : '?'), $valid ? 'hợp lệ' : 'KHÔNG hợp lệ'));
+            // Hosting chan IPN tu may chu VNPay (vi du InfinityFree): cho phep xac nhan qua ReturnUrl, nhung CHI qua
+            // cung ham kiem tra cua IPN (chu ky HMAC-SHA512 + so tien + chong xu ly trung). Tat mac dinh; bat bang hang so
+            // NHOM25_VNPAY_XAC_NHAN_QUA_RETURN = true trong wp-config.php cua rieng hosting do.
+            if ($valid && defined('NHOM25_VNPAY_XAC_NHAN_QUA_RETURN') && NHOM25_VNPAY_XAC_NHAN_QUA_RETURN) {
+                list($code, $message) = Nhom25_VNPay_IPN::process($params, $gateway->get_option('vnp_HashSecret'));
+                $order = wc_get_order($order->get_id());
+                $order->add_order_note(sprintf('Xác nhận qua ReturnUrl (hosting không nhận được IPN): %s %s.', esc_html($code), esc_html($message)));
+            } else {
+                $order->add_order_note(sprintf('Khách quay về từ VNPAY (mã %s, chữ ký %s). Trạng thái đơn chỉ đổi khi nhận IPN.', esc_html(isset($params['vnp_ResponseCode']) ? $params['vnp_ResponseCode'] : '?'), $valid ? 'hợp lệ' : 'KHÔNG hợp lệ'));
+            }
 
             if ($valid && isset($params['vnp_ResponseCode']) && $params['vnp_ResponseCode'] === '00') {
                 $url = add_query_arg($params, $order->get_checkout_order_received_url());
