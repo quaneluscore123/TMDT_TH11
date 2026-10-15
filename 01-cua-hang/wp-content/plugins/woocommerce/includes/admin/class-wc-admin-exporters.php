@@ -3,7 +3,7 @@
  * Init WooCommerce data exporters.
  *
  * @package     WooCommerce\Admin
- * @version     3.1.0
+ * @version     x.x.x
  */
 
 use Automattic\Jetpack\Constants;
@@ -35,6 +35,7 @@ class WC_Admin_Exporters {
 
 		add_action( 'admin_menu', array( $this, 'add_to_menus' ) );
 		add_action( 'admin_head', array( $this, 'hide_from_menus' ) );
+		add_action( 'admin_head', array( $this, 'menu_highlight_for_product_export' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_scripts' ) );
 		add_action( 'admin_init', array( $this, 'download_export_file' ) );
 		add_action( 'wp_ajax_woocommerce_do_ajax_product_export', array( $this, 'do_ajax_product_export' ) );
@@ -84,6 +85,19 @@ class WC_Admin_Exporters {
 	}
 
 	/**
+	 * Highlight Products > All Products submenu for Product Exporter.
+	 */
+	public function menu_highlight_for_product_export() {
+		global $submenu_file;
+
+		$screen = get_current_screen();
+
+		if ( $screen && 'product_page_product_exporter' === $screen->id ) {
+			$submenu_file = 'edit.php?post_type=product'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		}
+	}
+
+	/**
 	 * Enqueue scripts.
 	 */
 	public function admin_scripts() {
@@ -111,12 +125,12 @@ class WC_Admin_Exporters {
 	 * Serve the generated file.
 	 */
 	public function download_export_file() {
-		if ( isset( $_GET['action'], $_GET['nonce'] ) && wp_verify_nonce( wp_unslash( $_GET['nonce'] ), 'product-csv' ) && 'download_product_csv' === wp_unslash( $_GET['action'] ) ) { // WPCS: input var ok, sanitization ok.
+		if ( isset( $_GET['action'], $_GET['nonce'] ) && wp_verify_nonce( wp_unslash( $_GET['nonce'] ), 'product-csv' ) && 'download_product_csv' === wp_unslash( $_GET['action'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- AJAX verifies nonce/capability; exporter setters sanitize values.
 			include_once WC_ABSPATH . 'includes/export/class-wc-product-csv-exporter.php';
 			$exporter = new WC_Product_CSV_Exporter();
 
-			if ( ! empty( $_GET['filename'] ) ) { // WPCS: input var ok.
-				$exporter->set_filename( wp_unslash( $_GET['filename'] ) ); // WPCS: input var ok, sanitization ok.
+			if ( ! empty( $_GET['filename'] ) ) {
+				$exporter->set_filename( wp_unslash( $_GET['filename'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- AJAX verifies nonce/capability; exporter setters sanitize values.
 			}
 
 			$exporter->export();
@@ -135,31 +149,40 @@ class WC_Admin_Exporters {
 
 		include_once WC_ABSPATH . 'includes/export/class-wc-product-csv-exporter.php';
 
-		$step     = isset( $_POST['step'] ) ? absint( $_POST['step'] ) : 1; // WPCS: input var ok, sanitization ok.
+		$step     = isset( $_POST['step'] ) ? absint( $_POST['step'] ) : 1;
 		$exporter = new WC_Product_CSV_Exporter();
 
-		if ( ! empty( $_POST['columns'] ) ) { // WPCS: input var ok.
-			$exporter->set_column_names( wp_unslash( $_POST['columns'] ) ); // WPCS: input var ok, sanitization ok.
+		if ( ! empty( $_POST['columns'] ) ) {
+			$exporter->set_column_names( wp_unslash( $_POST['columns'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- AJAX verifies nonce/capability; exporter setters sanitize values.
 		}
 
-		if ( ! empty( $_POST['selected_columns'] ) ) { // WPCS: input var ok.
-			$exporter->set_columns_to_export( wp_unslash( $_POST['selected_columns'] ) ); // WPCS: input var ok, sanitization ok.
+		if ( ! empty( $_POST['selected_columns'] ) ) {
+			$exporter->set_columns_to_export( wp_unslash( $_POST['selected_columns'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- AJAX verifies nonce/capability; exporter setters sanitize values.
 		}
 
-		if ( ! empty( $_POST['export_meta'] ) ) { // WPCS: input var ok.
+		if ( ! empty( $_POST['export_meta'] ) ) {
 			$exporter->enable_meta_export( true );
 		}
 
-		if ( ! empty( $_POST['export_types'] ) ) { // WPCS: input var ok.
-			$exporter->set_product_types_to_export( wp_unslash( $_POST['export_types'] ) ); // WPCS: input var ok, sanitization ok.
+		if ( ! empty( $_POST['export_types'] ) ) {
+			$exporter->set_product_types_to_export( wp_unslash( $_POST['export_types'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- AJAX verifies nonce/capability; exporter setters sanitize values.
 		}
 
-		if ( ! empty( $_POST['export_category'] ) && is_array( $_POST['export_category'] ) ) {// WPCS: input var ok.
-			$exporter->set_product_category_to_export( wp_unslash( array_values( $_POST['export_category'] ) ) ); // WPCS: input var ok, sanitization ok.
+		if ( ! empty( $_POST['export_category'] ) && is_array( $_POST['export_category'] ) ) {
+			$exporter->set_product_category_to_export( wp_unslash( array_values( $_POST['export_category'] ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- AJAX verifies nonce/capability; exporter setters sanitize values.
 		}
 
-		if ( ! empty( $_POST['filename'] ) ) { // WPCS: input var ok.
-			$exporter->set_filename( wp_unslash( $_POST['filename'] ) ); // WPCS: input var ok, sanitization ok.
+		// Set specific product IDs if provided.
+		if ( ! empty( $_POST['export_product_ids'] ) ) {
+			$ids_raw = explode( ',', sanitize_text_field( wp_unslash( $_POST['export_product_ids'] ) ) );
+
+			if ( ! empty( $ids_raw ) ) {
+				$exporter->set_product_ids_to_export( $ids_raw );
+			}
+		}
+
+		if ( ! empty( $_POST['filename'] ) ) {
+			$exporter->set_filename( wp_unslash( $_POST['filename'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- AJAX verifies nonce/capability; exporter setters sanitize values.
 		}
 
 		$exporter->set_page( $step );

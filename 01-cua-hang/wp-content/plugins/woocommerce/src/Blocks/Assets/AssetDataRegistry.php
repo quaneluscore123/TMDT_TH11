@@ -1,9 +1,12 @@
 <?php
 namespace Automattic\WooCommerce\Blocks\Assets;
 
+use Automattic\WooCommerce\Admin\Features\Features;
 use Automattic\WooCommerce\Blocks\Package;
+use Automattic\WooCommerce\Utilities\FeaturesUtil;
 use Automattic\WooCommerce\Blocks\Domain\Services\Hydration;
 use Automattic\WooCommerce\Internal\Logging\RemoteLogger;
+use Automattic\WooCommerce\Internal\Utilities\PriceSeparators;
 use Exception;
 use InvalidArgumentException;
 
@@ -81,27 +84,28 @@ class AssetDataRegistry {
 	 */
 	protected function get_core_data() {
 		return [
-			'adminUrl'                 => admin_url(),
-			'countries'                => WC()->countries->get_countries(),
-			'currency'                 => $this->get_currency_data(),
-			'currentUserId'            => get_current_user_id(),
-			'currentUserIsAdmin'       => current_user_can( 'manage_woocommerce' ),
-			'currentThemeIsFSETheme'   => wc_current_theme_is_fse_theme(),
-			'dateFormat'               => wc_date_format(),
-			'homeUrl'                  => esc_url( home_url( '/' ) ),
-			'locale'                   => $this->get_locale_data(),
-			'isRemoteLoggingEnabled'   => wc_get_container()->get( RemoteLogger::class )->is_remote_logging_allowed(),
-			'dashboardUrl'             => wc_get_account_endpoint_url( 'dashboard' ),
-			'orderStatuses'            => $this->get_order_statuses(),
-			'placeholderImgSrc'        => wc_placeholder_img_src(),
-			'productsSettings'         => $this->get_products_settings(),
-			'siteTitle'                => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
-			'storePages'               => $this->get_store_pages(),
-			'wcAssetUrl'               => plugins_url( 'assets/', WC_PLUGIN_FILE ),
-			'wcVersion'                => defined( 'WC_VERSION' ) ? WC_VERSION : '',
-			'wpLoginUrl'               => wp_login_url(),
-			'wpVersion'                => get_bloginfo( 'version' ),
-			'__experimentalUseReact18' => defined( 'WC_EXPERIMENTAL_USE_REACT_18' ) && WC_EXPERIMENTAL_USE_REACT_18,
+			'adminUrl'               => admin_url(),
+			'countries'              => WC()->countries->get_countries(),
+			'currency'               => $this->get_currency_data(),
+			'currentSiteId'          => get_current_blog_id(),
+			'currentUserId'          => get_current_user_id(),
+			'currentUserIsAdmin'     => current_user_can( 'manage_woocommerce' ),
+			'currentThemeIsFSETheme' => wp_is_block_theme(),
+			'dateFormat'             => wc_date_format(),
+			'homeUrl'                => esc_url( home_url( '/' ) ),
+			'isMultisite'            => is_multisite(),
+			'locale'                 => $this->get_locale_data(),
+			'isRemoteLoggingEnabled' => wc_get_container()->get( RemoteLogger::class )->is_remote_logging_allowed(),
+			'dashboardUrl'           => wc_get_account_endpoint_url( 'dashboard' ),
+			'orderStatuses'          => $this->get_order_statuses(),
+			'placeholderImgSrc'      => wc_placeholder_img_src(),
+			'productsSettings'       => $this->get_products_settings(),
+			'siteTitle'              => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+			'storePages'             => $this->get_store_pages(),
+			'wcAssetUrl'             => plugins_url( 'assets/', WC_PLUGIN_FILE ),
+			'wcVersion'              => defined( 'WC_VERSION' ) ? WC_VERSION : '',
+			'wpLoginUrl'             => wp_login_url(),
+			'wpVersion'              => get_bloginfo( 'version' ),
 		];
 	}
 
@@ -118,8 +122,8 @@ class AssetDataRegistry {
 			'precision'         => wc_get_price_decimals(),
 			'symbol'            => html_entity_decode( get_woocommerce_currency_symbol( $currency ) ),
 			'symbolPosition'    => get_option( 'woocommerce_currency_pos' ),
-			'decimalSeparator'  => wc_get_price_decimal_separator(),
-			'thousandSeparator' => wc_get_price_thousand_separator(),
+			'decimalSeparator'  => PriceSeparators::get_decimal(),
+			'thousandSeparator' => PriceSeparators::get_thousand(),
 			'priceFormat'       => html_entity_decode( get_woocommerce_price_format() ),
 		];
 	}
@@ -154,9 +158,7 @@ class AssetDataRegistry {
 			'terms'     => wc_terms_and_conditions_page_id(),
 		];
 
-		if ( is_callable( '_prime_post_caches' ) ) {
-			_prime_post_caches( array_values( $store_pages ), false, false );
-		}
+		_prime_post_caches( array_values( $store_pages ), false, false );
 
 		return array_map(
 			[ $this, 'format_page_resource' ],
@@ -254,8 +256,11 @@ class AssetDataRegistry {
 			);
 		}
 
+		$core_data                                 = $this->get_core_data();
+		$core_data['experimentalWcRestApiV4']      = Features::is_enabled( 'rest-api-v4' );
+		$core_data['experimentalCartSaveForLater'] = FeaturesUtil::feature_is_enabled( 'cart_save_for_later' );
 		// note this WILL wipe any data already registered to these keys because they are protected.
-		$this->data = array_replace_recursive( $settings, $this->get_core_data() );
+		$this->data = array_replace_recursive( $settings, $core_data );
 	}
 
 	/**
@@ -301,12 +306,15 @@ class AssetDataRegistry {
 	 * @param string  $key              The key used to reference the data being registered. This should use camelCase.
 	 * @param mixed   $data             If not a function, registered to the registry as is. If a function, then the
 	 *                                  callback is invoked right before output to the screen.
-	 * @param boolean $check_key_exists Deprecated. If set to true, duplicate data will be ignored if the key exists.
-	 *                                  If false, duplicate data will cause an exception.
+	 * @param boolean $check_key_exists Deprecated. Duplicate data will be ignored if the key exists.
 	 */
-	public function add( $key, $data, $check_key_exists = false ) {
-		if ( $check_key_exists ) {
-			wc_deprecated_argument( 'Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry::add()', '8.9', 'The $check_key_exists parameter is no longer used: all duplicate data will be ignored if the key exists by default' );
+	public function add( $key, $data, $check_key_exists = false ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Deprecated parameter kept for backwards compatibility.
+		if ( 3 <= func_num_args() ) {
+			wc_deprecated_argument(
+				__METHOD__ . '()',
+				'8.9',
+				'The $check_key_exists parameter is no longer used: all duplicate data will be ignored if the key exists by default'
+			);
 		}
 
 		$this->add_data( $key, $data );
@@ -328,12 +336,19 @@ class AssetDataRegistry {
 	 *
 	 * @param string  $key  The key used to reference the data being registered.
 	 * @param string  $path REST API path to preload.
-	 * @param boolean $check_key_exists If set to true, duplicate data will be ignored if the key exists.
-	 *                                  If false, duplicate data will cause an exception.
+	 * @param boolean $check_key_exists Deprecated. Duplicate data will be ignored if the key exists.
 	 *
 	 * @throws InvalidArgumentException  Only throws when site is in debug mode. Always logs the error.
 	 */
-	public function hydrate_data_from_api_request( $key, $path, $check_key_exists = false ) {
+	public function hydrate_data_from_api_request( $key, $path, $check_key_exists = false ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Deprecated parameter kept for backwards compatibility.
+		if ( 3 <= func_num_args() ) {
+			wc_deprecated_argument(
+				__METHOD__ . '()',
+				'8.9',
+				'The $check_key_exists parameter is no longer used: all duplicate data will be ignored if the key exists by default'
+			);
+		}
+
 		$this->add(
 			$key,
 			function () use ( $path ) {
@@ -342,8 +357,7 @@ class AssetDataRegistry {
 				}
 				$response = Package::container()->get( Hydration::class )->get_rest_api_response_data( $path );
 				return $response['body'] ?? '';
-			},
-			$check_key_exists
+			}
 		);
 	}
 
@@ -388,7 +402,7 @@ class AssetDataRegistry {
 			$this->execute_lazy_data();
 
 			$data                          = rawurlencode( wp_json_encode( $this->data ) );
-			$wc_settings_script            = "var wcSettings = wcSettings || JSON.parse( decodeURIComponent( '" . esc_js( $data ) . "' ) );";
+			$wc_settings_script            = "var wcSettings = JSON.parse( decodeURIComponent( '" . esc_js( $data ) . "' ) );";
 			$preloaded_api_requests_script = '';
 
 			if ( count( $this->preloaded_api_requests ) > 0 ) {

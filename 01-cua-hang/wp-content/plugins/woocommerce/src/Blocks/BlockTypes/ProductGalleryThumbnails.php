@@ -1,4 +1,6 @@
 <?php
+declare( strict_types=1 );
+
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
 
 use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
@@ -8,6 +10,9 @@ use Automattic\WooCommerce\Blocks\Utils\ProductGalleryUtils;
  * ProductGalleryThumbnails class.
  */
 class ProductGalleryThumbnails extends AbstractBlock {
+
+	use EnableBlockJsonAssetsTrait;
+
 	/**
 	 * Block name.
 	 *
@@ -16,98 +21,12 @@ class ProductGalleryThumbnails extends AbstractBlock {
 	protected $block_name = 'product-gallery-thumbnails';
 
 	/**
-	 * It isn't necessary register block assets because it is a server side block.
-	 */
-	protected function register_block_type_assets() {
-		return null;
-	}
-
-	/**
-	 * Get the frontend style handle for this block type.
-	 *
-	 * @return null
-	 */
-	protected function get_block_type_style() {
-		return null;
-	}
-
-	/**
 	 *  Register the context
 	 *
 	 * @return string[]
 	 */
 	protected function get_block_type_uses_context() {
-		return [ 'productGalleryClientId', 'postId', 'thumbnailsNumberOfThumbnails', 'thumbnailsPosition', 'mode', 'cropImages' ];
-	}
-
-	/**
-	 * Generate the View All markup.
-	 *
-	 * @param int $remaining_thumbnails_count The number of thumbnails that are not displayed.
-	 *
-	 * @return string
-	 */
-	protected function generate_view_all_html( $remaining_thumbnails_count ) {
-		$view_all_html = '<div class="wc-block-product-gallery-thumbnails__thumbnail__overlay" data-wc-on--click="actions.openDialog" data-wc-on--keydown="actions.onViewAllImagesKeyDown" tabindex="0">
-			<span class="wc-block-product-gallery-thumbnails__thumbnail__remaining-thumbnails-count">+%1$s</span>
-			<span class="wc-block-product-gallery-thumbnails__thumbnail__view-all">%2$s</span>
-			</div>';
-
-		return sprintf(
-			$view_all_html,
-			esc_html( $remaining_thumbnails_count ),
-			esc_html__( 'View all', 'woocommerce' )
-		);
-	}
-
-	/**
-	 * Inject View All markup into the product thumbnail HTML.
-	 *
-	 * @param string $thumbnail_html The thumbnail HTML.
-	 * @param string $view_all_html  The view all HTML.
-	 *
-	 * @return string
-	 */
-	protected function inject_view_all( $thumbnail_html, $view_all_html ) {
-
-		// Find the position of the last </div>.
-		$pos = strrpos( $thumbnail_html, '</div>' );
-
-		if ( false !== $pos ) {
-			// Inject the view_all_html at the correct position.
-			$html = substr_replace( $thumbnail_html, $view_all_html, $pos, 0 );
-
-			return $html;
-		}
-	}
-
-	/**
-	 * Check if the thumbnails should be limited.
-	 *
-	 * @param string $mode                 Mode of the gallery. Expected values: 'standard'.
-	 * @param int    $thumbnails_count     Current count of processed thumbnails.
-	 * @param int    $number_of_thumbnails Number of thumbnails configured to display.
-	 *
-	 * @return bool
-	 */
-	protected function should_limit_thumbnails( $mode, $thumbnails_count, $number_of_thumbnails ) {
-		return 'standard' === $mode && $thumbnails_count > $number_of_thumbnails;
-	}
-
-	/**
-	 * Check if View All markup should be displayed.
-	 *
-	 * @param string $mode                   Mode of the gallery. Expected values: 'standard'.
-	 * @param int    $thumbnails_count       Current count of processed thumbnails.
-	 * @param array  $product_gallery_images Array of product gallery image HTML strings.
-	 * @param int    $number_of_thumbnails   Number of thumbnails configured to display.
-	 *
-	 * @return bool
-	 */
-	protected function should_display_view_all( $mode, $thumbnails_count, $product_gallery_images, $number_of_thumbnails ) {
-		return 'standard' === $mode &&
-		$thumbnails_count === $number_of_thumbnails &&
-		count( $product_gallery_images ) > $number_of_thumbnails;
+		return array( 'postId' );
 	}
 
 	/**
@@ -119,70 +38,108 @@ class ProductGalleryThumbnails extends AbstractBlock {
 	 * @return string Rendered block type output.
 	 */
 	protected function render( $attributes, $content, $block ) {
-		if ( isset( $block->context['thumbnailsPosition'] ) && '' !== $block->context['thumbnailsPosition'] && 'off' !== $block->context['thumbnailsPosition'] ) {
-			if ( ! empty( $content ) ) {
-				parent::register_block_type_assets();
-				$this->register_chunk_translations( [ $this->block_name ] );
-				return $content;
-			}
+		if ( ! isset( $block->context ) ) {
+			return '';
+		}
 
-			$classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes( $attributes );
+		$classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes( $attributes );
+		$post_id            = $block->context['postId'];
 
-			$post_id = $block->context['postId'] ?? '';
-			$product = wc_get_product( $post_id );
+		if ( ! $post_id ) {
+			return '';
+		}
 
-			if ( $product ) {
-				$crop_images            = $block->context['cropImages'] ?? false;
-				$product_gallery_images = ProductGalleryUtils::get_product_gallery_images( $post_id, 'full', array(), 'wc-block-product-gallery-thumbnails__thumbnail', $crop_images );
+		$product = wc_get_product( $post_id );
 
-				if ( $product_gallery_images && count( $product_gallery_images ) > 1 ) {
-					$html                 = '';
-					$number_of_thumbnails = isset( $block->context['thumbnailsNumberOfThumbnails'] ) ? $block->context['thumbnailsNumberOfThumbnails'] : 3;
-					$mode                 = $block->context['mode'] ?? '';
-					$thumbnails_count     = 1;
+		if ( ! $product instanceof \WC_Product ) {
+			return '';
+		}
 
-					foreach ( $product_gallery_images as $product_gallery_image_html ) {
-						// Limit the number of thumbnails only in the standard mode (and not in dialog).
-						if ( $this->should_limit_thumbnails( $mode, $thumbnails_count, $number_of_thumbnails ) ) {
-							break;
-						}
+		// We crop the images to square only if the aspect ratio is 1:1.
+		// Otherwise, we show the uncropped and use object-fit to crop them.
+		$image_size            = '1' === $attributes['aspectRatio'] ? 'woocommerce_thumbnail' : 'woocommerce_single';
+		$product_gallery_media = ProductGalleryUtils::get_product_gallery_media_data( $product, $image_size );
 
-						// If not in dialog and it's the last thumbnail and the number of product gallery images is greater than the number of thumbnails settings output the View All markup.
-						if ( $this->should_display_view_all( $mode, $thumbnails_count, $product_gallery_images, $number_of_thumbnails ) ) {
-							$remaining_thumbnails_count = count( $product_gallery_images ) - $number_of_thumbnails;
-							$product_gallery_image_html = $this->inject_view_all( $product_gallery_image_html, $this->generate_view_all_html( $remaining_thumbnails_count ) );
-							$html                      .= $product_gallery_image_html;
-						} else {
-							$processor = new \WP_HTML_Tag_Processor( $product_gallery_image_html );
+		// Don't show the thumbnails block if there is only one media item.
+		if ( count( $product_gallery_media ) <= 1 ) {
+			return '';
+		}
 
-							if ( $processor->next_tag( 'img' ) ) {
+		$thumbnail_size         = str_replace( '%', '', $attributes['thumbnailSize'] ?? '25%' );
+		$active_thumbnail_style = $attributes['activeThumbnailStyle'] ?? 'overlay';
 
-								$processor->set_attribute( 'data-wc-on--keydown', 'actions.onThumbnailKeyDown' );
-								$processor->set_attribute( 'tabindex', '0' );
-								$processor->set_attribute(
-									'data-wc-on--click',
-									'actions.selectImage'
-								);
+		$img_class = 'wc-block-product-gallery-thumbnails__thumbnail__image';
 
-								$html .= $processor->get_updated_html();
-							}
-						}
+		ob_start();
+		?>
+		<div
+			class="wc-block-product-gallery-thumbnails wc-block-product-gallery-thumbnails--active-<?php echo esc_attr( $active_thumbnail_style ); ?> <?php echo esc_attr( $classes_and_styles['classes'] ); ?>"
+			style="<?php echo '--wc-block-product-gallery-thumbnails-size:' . absint( $thumbnail_size ) . ';' . esc_attr( $classes_and_styles['styles'] ); ?>"
+			data-wp-interactive="woocommerce/product-gallery"
+			data-wp-bind--hidden="context.hideNextPreviousButtons"
+			data-wp-class--wc-block-product-gallery-thumbnails--overflow-top="context.thumbnailsOverflow.top"
+			data-wp-class--wc-block-product-gallery-thumbnails--overflow-bottom="context.thumbnailsOverflow.bottom"
+			data-wp-class--wc-block-product-gallery-thumbnails--overflow-left="context.thumbnailsOverflow.left"
+			data-wp-class--wc-block-product-gallery-thumbnails--overflow-right="context.thumbnailsOverflow.right">
+			<div
+				class="wc-block-product-gallery-thumbnails__scrollable"
+				data-wp-init--init-resize-observer="callbacks.initResizeObserver"
+				data-wp-init--hide-ghost-overflow="callbacks.hideGhostOverflow"
+				data-wp-on--scroll="actions.onScroll"
+				aria-label="<?php esc_attr_e( 'Image thumbnails', 'woocommerce' ); ?>"
+				role="listbox">
+				<?php foreach ( $product_gallery_media as $index => $media ) : ?>
+					<?php
+					$media_type             = isset( $media['media_type'] ) && is_string( $media['media_type'] ) ? sanitize_key( $media['media_type'] ) : 'image';
+					$thumbnail_classes      = 'wc-block-product-gallery-thumbnails__thumbnail';
+					$thumbnail_image_class  = 0 === $index ? $img_class . ' wc-block-product-gallery-thumbnails__thumbnail__image--is-active' : $img_class;
+					$thumbnail_aspect_ratio = $attributes['aspectRatio'] ?? '1';
+					$thumbnail_aspect_ratio = is_string( $thumbnail_aspect_ratio ) ? $thumbnail_aspect_ratio : '1';
 
-						++$thumbnails_count;
+					if ( 'video' === $media_type ) {
+						$thumbnail_classes .= ' wc-block-product-gallery-thumbnails__thumbnail--video';
 					}
 
-					return sprintf(
-						'<div class="wc-block-product-gallery-thumbnails wp-block-woocommerce-product-gallery-thumbnails %1$s" style="%2$s" data-wc-interactive=\'%4$s\'>
-							%3$s
-						</div>',
-						esc_attr( $classes_and_styles['classes'] ),
-						esc_attr( $classes_and_styles['styles'] ),
-						$html,
-						wp_json_encode( array( 'namespace' => 'woocommerce/product-gallery' ), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP )
+					$thumbnail_attributes = array(
+						'class'               => $thumbnail_image_class,
+						'data-image-id'       => isset( $media['id'] ) ? absint( $media['id'] ) : 0,
+						'data-media-type'     => $media_type,
+						'data-wp-on--click'   => 'actions.selectCurrentImage',
+						'data-wp-on--keydown' => 'actions.onThumbnailsArrowsKeyDown',
+						'data-wp-watch'       => 'callbacks.syncThumbnailState',
+						'draggable'           => 'false',
+						'role'                => 'option',
+						'style'               => 'aspect-ratio: ' . $thumbnail_aspect_ratio,
+						'tabindex'            => 0 === $index ? '0' : '-1',
 					);
-				}
-			}
-			return;
-		}
+					$show_video_preview   = 'video' === $media_type && empty( $media['poster_id'] ) && ! empty( $media['video_src'] );
+					?>
+					<div class="<?php echo esc_attr( $thumbnail_classes ); ?>">
+						<?php if ( $show_video_preview ) : ?>
+							<video
+								<?php echo wc_implode_html_attributes( $thumbnail_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+								src="<?php echo esc_url( $media['video_src'] ); ?>"
+								aria-label="<?php echo esc_attr( $media['alt'] ); ?>"
+								preload="metadata"
+								muted="muted"
+								playsinline="playsinline"></video>
+						<?php else : ?>
+							<img
+								<?php echo wc_implode_html_attributes( $thumbnail_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+								src="<?php echo esc_attr( $media['src'] ); ?>"
+								srcset="<?php echo esc_attr( $media['srcset'] ); ?>"
+								sizes="<?php echo esc_attr( $media['sizes'] ); ?>"
+								alt="<?php echo esc_attr( $media['alt'] ); ?>"
+								decoding="async"
+								loading="lazy" />
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<?php
+		$template = ob_get_clean();
+
+		return $template;
 	}
 }

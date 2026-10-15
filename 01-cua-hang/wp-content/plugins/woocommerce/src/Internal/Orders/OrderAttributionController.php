@@ -58,11 +58,17 @@ class OrderAttributionController implements RegisterHooksInterface {
 	private $proxy;
 
 	/**
-	 *  Whether the `stamp_checkout_html_element` method has been called.
+	 * Tracks whether stamp_html_element() has been called in single-output mode during the current request.
+	 *
+	 * When wc_order_attribution_allow_multiple_elements filter returns false,
+	 * this flag prevents duplicate outputs across multiple action hooks within a single request.
+	 *
+	 * Note: This flag is reset at the start of each request in on_init() to ensure
+	 * proper behavior in persistent PHP environments (PHP-FPM, OpCache).
 	 *
 	 * @var bool
 	 */
-	private static $is_stamp_checkout_html_called = false;
+	private static $is_stamp_html_called = false;
 
 	/**
 	 * Initialization method.
@@ -106,6 +112,9 @@ class OrderAttributionController implements RegisterHooksInterface {
 			return;
 		}
 
+		// Reset the static flag at the start of each request to prevent issues in persistent PHP environments.
+		self::$is_stamp_html_called = false;
+
 		// Register WPConsentAPI integration.
 		$this->consent->register();
 
@@ -124,11 +133,11 @@ class OrderAttributionController implements RegisterHooksInterface {
 		);
 
 		/**
-		 * Filter set of actions used to stamp the unique checkout order attribution HTML container element.
+		 * Filter set of actions used to stamp the checkout order attribution HTML container element.
 		 *
 		 * @since 9.0.0
 		 *
-		 * @param array $stamp_checkout_html_actions The set of actions used to stamp the unique checkout order attribution HTML container element.
+		 * @param array $stamp_checkout_html_actions The set of actions used to stamp the checkout order attribution HTML container element.
 		 */
 		$stamp_checkout_html_actions = apply_filters(
 			'wc_order_attribution_stamp_checkout_html_actions',
@@ -141,7 +150,7 @@ class OrderAttributionController implements RegisterHooksInterface {
 			)
 		);
 		foreach ( $stamp_checkout_html_actions as $action ) {
-			add_action( $action, array( $this, 'stamp_checkout_html_element_once' ) );
+			add_action( $action, array( $this, 'stamp_html_element' ) );
 		}
 
 		add_action( 'woocommerce_register_form', array( $this, 'stamp_html_element' ) );
@@ -150,6 +159,12 @@ class OrderAttributionController implements RegisterHooksInterface {
 		add_action(
 			'woocommerce_checkout_order_created',
 			function ( $order ) {
+
+				// Check if this order already has any attribution data to prevent duplicates attribution data.
+				if ( $this->has_attribution( $order ) ) {
+					return;
+				}
+
 				// Nonce check is handled by WooCommerce before woocommerce_checkout_order_created hook.
 				// phpcs:ignore WordPress.Security.NonceVerification
 				$params = $this->get_unprefixed_field_values( $_POST );
@@ -381,28 +396,49 @@ class OrderAttributionController implements RegisterHooksInterface {
 	}
 
 	/**
-	 * Handles the `<wc-order-attribution-inputs>` element for checkout forms, ensuring that the field is only output once.
+	 * Handles the `<wc-order-attribution-inputs>` element for checkout forms.
 	 *
 	 * @since 9.0.0
+	 * @deprecated 10.5.0 Use stamp_html_element() instead.
 	 *
 	 * @return void
 	 */
 	public function stamp_checkout_html_element_once() {
-		if ( self::$is_stamp_checkout_html_called ) {
-			return;
-		}
+		wc_deprecated_function( __METHOD__, '10.5.0', 'stamp_html_element' );
 		$this->stamp_html_element();
-		self::$is_stamp_checkout_html_called = true;
 	}
 
 	/**
 	 * Output `<wc-order-attribution-inputs>` element that contributes the order attribution values to the enclosing form.
-	 * Used customer register forms, and for checkout forms through `stamp_checkout_html_element()`.
+	 *
+	 * Used for customer register forms and checkout forms.
+	 *
+	 * Note: By default, this method may output multiple instances of the element when called
+	 * multiple times (e.g., during checkout form pre-generation and actual rendering).
+	 * The JavaScript layer will remove duplicate elements and ensure only one set of data is submitted.
 	 *
 	 * @return void
 	 */
 	public function stamp_html_element() {
+		/**
+		 * Filter to allow sites to opt back into single-output behavior.
+		 *
+		 * @since 10.5.0
+		 *
+		 * @param bool $allow_multiple_elements True to allow multiple elements (new behavior), false for single element (old behavior).
+		 */
+		$allow_multiple = apply_filters( 'wc_order_attribution_allow_multiple_elements', true );
+
+		// If single-output mode is enabled, use the static flag to prevent multiple outputs.
+		if ( ! $allow_multiple && self::$is_stamp_html_called ) {
+			return;
+		}
+
 		printf( '<wc-order-attribution-inputs></wc-order-attribution-inputs>' );
+
+		if ( ! $allow_multiple ) {
+			self::$is_stamp_html_called = true;
+		}
 	}
 
 	/**
@@ -538,5 +574,22 @@ class OrderAttributionController implements RegisterHooksInterface {
 		// HPOS and non-HPOS use different hooks.
 		add_action( "manage_{$screen_id}_custom_column", $display_column, 10, 2 );
 		add_action( "manage_{$screen_id}_posts_custom_column", $display_column, 10, 2 );
+	}
+
+	/**
+	 * Check if this order already has any attribution data
+	 *
+	 * @param WC_Order $order The order object.
+	 *
+	 * @return bool
+	 * @since 9.8.0
+	 */
+	public function has_attribution( $order ) {
+		foreach ( $this->field_names as $field ) {
+			if ( $order->meta_exists( $this->get_meta_prefixed_field_name( $field ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

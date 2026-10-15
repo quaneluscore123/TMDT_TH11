@@ -77,11 +77,21 @@ class PluginsHelper {
 	const DISMISS_DISCONNECT_NOTICE = 'woo_disconnect_notice_dismiss';
 
 	/**
+	 * Meta key for dismissing connected notice
+	 */
+	const DISMISS_CONNECT_NOTICE = 'woo_connect_notice_dismiss';
+
+	/**
+	 * Meta key for dismissing the connected account notice on My Subscriptions
+	 */
+	const DISMISS_CONNECTED_ACCOUNT_NOTICE = 'woo_connected_account_notice_dismiss';
+
+	/**
 	 * Initialize hooks.
 	 */
 	public static function init() {
 		add_action( 'woocommerce_plugins_install_callback', array( __CLASS__, 'install_plugins' ), 10, 2 );
-		add_action( 'woocommerce_plugins_install_and_activate_async_callback', array( __CLASS__, 'install_and_activate_plugins_async_callback' ), 10, 2 );
+		add_action( 'woocommerce_plugins_install_and_activate_async_callback', array( __CLASS__, 'install_and_activate_plugins_async_callback' ), 10, 3 );
 		add_action( 'woocommerce_plugins_activate_callback', array( __CLASS__, 'activate_plugins' ), 10, 2 );
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_connect_notice_in_plugin_list' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_scripts_for_connect_notice' ) );
@@ -215,14 +225,161 @@ class PluginsHelper {
 	}
 
 	/**
+	 * Error codes whose WP_Error data is machine output rather than a readable detail.
+	 *
+	 * `activate_plugin()` puts the plugin's whole captured output buffer in the error data,
+	 * which is never something a merchant can act on.
+	 */
+	private const OPAQUE_ERROR_DATA_CODES = array( 'unexpected_output' );
+
+	/**
+	 * Longest reason we pass on.
+	 *
+	 * Reasons reach a notice, the persisted install log option and a Tracks property, so an
+	 * upgrader payload of unknown size must never travel untrimmed.
+	 */
+	private const MAX_ERROR_REASON_LENGTH = 300;
+
+	/**
+	 * Make a reason safe to show, store and transmit.
+	 *
+	 * Reasons come from WordPress and from values that reach us through filters, so they can
+	 * carry markup or be arbitrarily long. WordPress also writes some messages as multiple
+	 * paragraphs, so block boundaries become spaces first: stripping the tags would otherwise
+	 * run the last word of one paragraph into the first word of the next.
+	 *
+	 * @since 11.2.0
+	 *
+	 * @param string $text The raw reason.
+	 * @return string The reason, HTML-stripped, whitespace-collapsed and length-capped.
+	 */
+	private static function normalize_reason( string $text ): string {
+		$spaced = preg_replace( '#<(?:/p|/div|/li|/h[1-6]|br\s*/?)>#i', ' ', $text ) ?? $text;
+		$reason = trim( wp_strip_all_tags( $spaced, true ) );
+
+		if ( mb_strlen( $reason ) > self::MAX_ERROR_REASON_LENGTH ) {
+			$reason = trim( mb_substr( $reason, 0, self::MAX_ERROR_REASON_LENGTH ) ) . "\u{2026}";
+		}
+
+		return $reason;
+	}
+
+	/**
+	 * Read a version requirement from plugin header data.
+	 *
+	 * The headers come from `get_plugin_data()` on the unpacked package, whose values pass
+	 * through filters, so the value is not guaranteed to be a string.
+	 *
+	 * @since 11.2.0
+	 *
+	 * @param mixed $value The raw `RequiresPHP` or `RequiresWP` value.
+	 * @return string The version, or an empty string when the value is not one.
+	 */
+	private static function get_required_version( $value ): string {
+		if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
+			return '';
+		}
+
+		return trim( (string) $value );
+	}
+
+	/**
+	 * Build a merchant-readable reason from the first WP_Error among the given candidates.
+	 *
+	 * WordPress's upgrader reports the real failure (unmet PHP/WP version, filesystem, download)
+	 * as a WP_Error whose message is a short sentence and whose data is often the detail sentence.
+	 * Non-error candidates (false, null, true) are skipped.
+	 *
+	 * The data is only appended when it reads as a detail: codes listed in
+	 * OPAQUE_ERROR_DATA_CODES carry raw plugin output instead, and the result is capped at
+	 * MAX_ERROR_REASON_LENGTH because callers persist and transmit it.
+	 *
+	 * @since 11.2.0
+	 *
+	 * @param mixed ...$candidates Values that may be WP_Error instances, in order of preference.
+	 * @return string The reason, HTML-stripped, trimmed and length-capped, or an empty string when none is available.
+	 */
+	public static function get_error_reason( ...$candidates ): string {
+		foreach ( $candidates as $candidate ) {
+			if ( ! is_wp_error( $candidate ) ) {
+				continue;
+			}
+
+			// Both come from WP_Error::add(), which stores whatever a filter callback passed in.
+			$message = $candidate->get_error_message();
+			$data    = $candidate->get_error_data();
+
+			$parts = is_string( $message ) ? array( $message ) : array();
+			if ( is_string( $data ) && ! in_array( $candidate->get_error_code(), self::OPAQUE_ERROR_DATA_CODES, true ) ) {
+				$parts[] = $data;
+			}
+
+			return self::normalize_reason( implode( ' ', array_map( 'trim', $parts ) ) );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Compose a reason for an install that failed an unmet PHP or WordPress version requirement.
+	 *
+	 * WordPress reports these with copy written for the zip-upload flow ("the uploaded plugin requires"),
+	 * so build our own sentence from the versions it actually checked: the package headers it read
+	 * in `Plugin_Upgrader::check_package()`, which can differ from the wp.org listing metadata.
+	 *
+	 * @since 11.2.0
+	 *
+	 * @param mixed $error       The WP_Error from the upgrader skin, or any non-error value.
+	 * @param mixed $plugin_data The headers of the package that failed, as `Plugin_Upgrader::$new_plugin_data` holds them.
+	 * @return string The reason, or an empty string when the error is not a requirement failure.
+	 */
+	public static function get_requirements_error_reason( $error, $plugin_data ): string {
+		if ( ! is_wp_error( $error ) || ! is_array( $plugin_data ) ) {
+			return '';
+		}
+
+		switch ( $error->get_error_code() ) {
+			case 'incompatible_php_required_version':
+				$required_php = self::get_required_version( $plugin_data['RequiresPHP'] ?? null );
+				if ( '' === $required_php ) {
+					return '';
+				}
+				return self::normalize_reason(
+					sprintf(
+						/* translators: 1: PHP version the plugin requires, 2: PHP version this site runs. */
+						__( 'It requires PHP %1$s or newer, but this site runs PHP %2$s.', 'woocommerce' ),
+						$required_php,
+						PHP_VERSION
+					)
+				);
+			case 'incompatible_wp_required_version':
+				$required_wp = self::get_required_version( $plugin_data['RequiresWP'] ?? null );
+				if ( '' === $required_wp ) {
+					return '';
+				}
+				return self::normalize_reason(
+					sprintf(
+						/* translators: 1: WordPress version the plugin requires, 2: WordPress version this site runs. */
+						__( 'It requires WordPress %1$s or newer, but this site runs WordPress %2$s.', 'woocommerce' ),
+						$required_wp,
+						get_bloginfo( 'version' )
+					)
+				);
+		}
+
+		return '';
+	}
+
+	/**
 	 * Install an array of plugins.
 	 *
 	 * @param array                     $plugins Plugins to install.
 	 * @param PluginsInstallLogger|null $logger an optional logger.
+	 * @param string|null               $source place where the request is coming from.
 	 *
 	 * @return array
 	 */
-	public static function install_plugins( $plugins, ?PluginsInstallLogger $logger = null ) {
+	public static function install_plugins( $plugins, ?PluginsInstallLogger $logger = null, ?string $source = null ) {
 		/**
 		 * Filter the list of plugins to install.
 		 *
@@ -280,7 +437,7 @@ class PluginsHelper {
 					'error_message'     => sprintf(
 						// translators: %s: plugin slug (example: woocommerce-services).
 						__(
-							'The requested plugin `%s` could not be installed. Plugin API call failed.',
+							'We couldn\'t install `%s`. Try again in a few minutes, or install it later from the Extensions page.',
 							'woocommerce'
 						),
 						$slug
@@ -300,11 +457,7 @@ class PluginsHelper {
 				 */
 				do_action( 'woocommerce_plugins_install_api_error', $slug, $api );
 
-				$error_message = sprintf(
-				/* translators: %s: plugin slug (example: woocommerce-services) */
-					__( 'The requested plugin `%s` could not be installed. Plugin API call failed.', 'woocommerce' ),
-					$slug
-				);
+				$error_message = __( 'Try again in a few minutes, or install it later from the Extensions page.', 'woocommerce' );
 
 				$errors->add( $plugin, $error_message );
 				$logger && $logger->add_error( $plugin, $error_message );
@@ -312,7 +465,38 @@ class PluginsHelper {
 				continue;
 			}
 
-			$upgrader = new Plugin_Upgrader( new Automatic_Upgrader_Skin() );
+			/**
+			 * Action triggered before a plugin is installed.
+			 *
+			 * @since 9.8
+			 */
+			do_action( 'woocommerce_plugins_install_before', $slug, $source );
+
+			// Plugin_Upgrader::install() only returns errors raised once the package is unpacked.
+			// A failed filesystem connection, download or unpack is only reported to the skin, so
+			// keep it there for the reason below.
+			$skin = new class() extends Automatic_Upgrader_Skin {
+				/**
+				 * The last error the upgrader reported.
+				 *
+				 * @var WP_Error|null
+				 */
+				public $last_error = null;
+
+				/**
+				 * Record the error before passing it on.
+				 *
+				 * @param string|WP_Error $errors The error the upgrader reports.
+				 */
+				public function error( $errors ): void {
+					if ( is_wp_error( $errors ) ) {
+						$this->last_error = $errors;
+					}
+					parent::error( $errors );
+				}
+			};
+
+			$upgrader = new Plugin_Upgrader( $skin );
 			$result   = $upgrader->install( $api->download_link );
 			// result can be false or WP_Error.
 			$results[ $plugin ] = $result;
@@ -348,11 +532,13 @@ class PluginsHelper {
 				 */
 				do_action( 'woocommerce_plugins_install_error', $slug, $api, $result, $upgrader );
 
-				$install_error_message = sprintf(
-				/* translators: %s: plugin slug (example: woocommerce-services) */
-					__( 'The requested plugin `%s` could not be installed. Upgrader install failed.', 'woocommerce' ),
-					$slug
-				);
+				$install_error_message = self::get_requirements_error_reason( $skin->result, $upgrader->new_plugin_data );
+				if ( '' === $install_error_message ) {
+					$install_error_message = self::get_error_reason( $skin->result, $result, $skin->last_error );
+				}
+				if ( '' === $install_error_message ) {
+					$install_error_message = __( 'Try again, or install it manually. If it keeps failing, contact your host.', 'woocommerce' );
+				}
 				$errors->add(
 					$plugin,
 					$install_error_message
@@ -364,6 +550,13 @@ class PluginsHelper {
 
 			$installed_plugins[] = $plugin;
 			$logger && $logger->installed( $plugin, $time[ $plugin ] );
+
+			/**
+			 * Action triggered after a plugin is installed.
+			 *
+			 * @since 9.8
+			 */
+			do_action( 'woocommerce_plugins_install_after', $slug, $source );
 		}
 
 		$data = array(
@@ -383,14 +576,16 @@ class PluginsHelper {
 	 *
 	 * It is used to call install_plugins and activate_plugins with a custom logger.
 	 *
-	 * @param array  $plugins A list of plugins to install.
-	 * @param string $job_id An unique job I.D.
+	 * @param array       $plugins A list of plugins to install.
+	 * @param string      $job_id An unique job I.D.
+	 * @param string|null $source The source of the request.
+	 *
 	 * @return bool
 	 */
-	public static function install_and_activate_plugins_async_callback( array $plugins, string $job_id ) {
+	public static function install_and_activate_plugins_async_callback( array $plugins, string $job_id, ?string $source = null ) {
 		$option_name = 'woocommerce_onboarding_plugins_install_and_activate_async_' . $job_id;
 		$logger      = new AsyncPluginsInstallLogger( $option_name );
-		self::install_plugins( $plugins, $logger );
+		self::install_plugins( $plugins, $logger, $source );
 		self::activate_plugins( $plugins, $logger );
 		return true;
 	}
@@ -457,8 +652,7 @@ class PluginsHelper {
 			$path = isset( $plugin_paths[ $slug ] ) ? $plugin_paths[ $slug ] : false;
 
 			if ( ! $path ) {
-				/* translators: %s: plugin slug (example: woocommerce-services) */
-				$message = sprintf( __( 'The requested plugin `%s`. is not yet installed.', 'woocommerce' ), $slug );
+				$message = __( 'The plugin is not installed yet.', 'woocommerce' );
 				$errors->add(
 					$plugin,
 					$message
@@ -479,8 +673,10 @@ class PluginsHelper {
 				 */
 				do_action( 'woocommerce_plugins_activate_error', $slug, $result );
 
-				/* translators: %s: plugin slug (example: woocommerce-services) */
-				$message = sprintf( __( 'The requested plugin `%s` could not be activated.', 'woocommerce' ), $slug );
+				$message = self::get_error_reason( $result );
+				if ( '' === $message ) {
+					$message = __( 'The plugin could not be activated.', 'woocommerce' );
+				}
 				$errors->add(
 					$plugin,
 					$message
@@ -604,15 +800,9 @@ class PluginsHelper {
 
 		$notice_type = WC_Helper_Updater::get_woo_connect_notice_type();
 
-		if ( 'none' === $notice_type ) {
+		// The outdated plugin risk state is reported in Site Health.
+		if ( in_array( $notice_type, array( 'none', 'long' ), true ) ) {
 			return;
-		}
-
-		$notice_string = '';
-
-		if ( 'long' === $notice_type ) {
-			$notice_string .= __( 'Your store might be at risk as you are running old versions of WooCommerce plugins.', 'woocommerce' );
-			$notice_string .= ' ';
 		}
 
 		$connect_page_url = add_query_arg(
@@ -626,7 +816,7 @@ class PluginsHelper {
 			admin_url( 'admin.php' )
 		);
 
-		$notice_string .= sprintf(
+		$notice_string = sprintf(
 			/* translators: %s: Connect page URL */
 			__( '<a id="woo-connect-notice-url" href="%s">Connect your store</a> to WooCommerce.com to get updates and streamlined support for your subscriptions.', 'woocommerce' ),
 			esc_url( $connect_page_url )
@@ -649,7 +839,7 @@ class PluginsHelper {
 
 		$notice_type = WC_Helper_Updater::get_woo_connect_notice_type();
 
-		if ( 'none' === $notice_type ) {
+		if ( in_array( $notice_type, array( 'none', 'long' ), true ) ) {
 			return;
 		}
 
@@ -670,6 +860,7 @@ class PluginsHelper {
 		WCAdminAssets::register_script( 'wp-admin-scripts', 'woo-plugin-update-connect-notice' );
 		WCAdminAssets::register_script( 'wp-admin-scripts', 'woo-enable-autorenew' );
 		WCAdminAssets::register_script( 'wp-admin-scripts', 'woo-renew-subscription' );
+		WCAdminAssets::register_script( 'wp-admin-scripts', 'woo-purchase-subscription' );
 		wp_enqueue_script( 'woo-plugin-update-connect-notice' );
 		wp_enqueue_script( 'woo-enable-autorenew' );
 		wp_enqueue_script( 'woo-renew-subscription' );
@@ -745,7 +936,7 @@ class PluginsHelper {
 	 * @param int    $total total subscription count.
 	 * @param array  $messages message.
 	 * @param string $type type of notice, whether it is for expiring or expired subscription.
-	 * @return array notice data to return. Contains type, parsed_message and product_id.
+	 * @return array notice data to return. Contains type, parsed_message and product_id (can be a single value or an array).
 	 */
 	public static function get_subscriptions_notice_data( array $all_subs, array $subs_to_show, int $total, array $messages, string $type ) {
 		$utm_campaign = 'expired' === $type ?
@@ -780,7 +971,7 @@ class PluginsHelper {
 			return array(
 				'type'           => 'different_subscriptions',
 				'parsed_message' => $parsed_message,
-				'product_ids'    => $product_ids,
+				'product_id'     => $product_ids,
 			);
 		}
 
@@ -796,14 +987,25 @@ class PluginsHelper {
 			)
 		);
 
-		$message_key      = $has_multiple_subs_for_product ? 'multiple_manage' : 'single_manage';
+		$message_key = $has_multiple_subs_for_product ? 'multiple_manage' : 'single_manage';
+
+		/**
+		 * Even if there are multiple subscriptions for this product, if the store is covered by an active subscription,
+		 * show the 'site covered' message instead of the 'manage' message.
+		 */
+		if ( 'expired' === $type && $has_multiple_subs_for_product ) {
+			if ( self::has_active_usable_product_subscription( $product_id, $all_subs ) ) {
+				$message_key = 'multiple_manage_site_covered';
+			}
+		}
+
 		$renew_string     = __( 'Renew', 'woocommerce' );
 		$subscribe_string = __( 'Subscribe', 'woocommerce' );
 		if ( isset( $subscription['product_regular_price'] ) ) {
 			/* translators: 1: Product price */
 			$renew_string = sprintf( __( 'Renew for %1$s', 'woocommerce' ), $subscription['product_regular_price'] );
 		}
-		$expiry_date   = date_i18n( 'F jS', $subscription['expires'] );
+		$expiry_date   = (string) wp_date( get_option( 'date_format' ), (int) $subscription['expires'] );
 		$hyperlink_url = add_query_arg(
 			array(
 				'product_id'   => $product_id,
@@ -842,6 +1044,39 @@ class PluginsHelper {
 			'parsed_message' => '',
 			'product_id'     => '',
 		);
+	}
+
+	/**
+	 * Check whether the current store has an active usable subscription for a product.
+	 *
+	 * @param int   $product_id Product id.
+	 * @param array $subscriptions Subscription list data.
+	 * @return bool
+	 */
+	private static function has_active_usable_product_subscription( int $product_id, array $subscriptions ): bool {
+		$auth    = \WC_Helper_Options::get( 'auth' );
+		$site_id = isset( $auth['site_id'] ) ? absint( $auth['site_id'] ) : 0;
+
+		if ( 0 === $site_id ) {
+			return false;
+		}
+
+		foreach ( $subscriptions as $subscription ) {
+			if ( absint( $subscription['product_id'] ?? 0 ) !== $product_id ) {
+				continue;
+			}
+
+			$connections = isset( $subscription['connections'] ) && is_array( $subscription['connections'] ) ? $subscription['connections'] : array();
+			if ( ! in_array( $site_id, $connections, true ) ) {
+				continue;
+			}
+
+			if ( empty( $subscription['expired'] ) || ! empty( $subscription['lifetime'] ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -968,25 +1203,39 @@ class PluginsHelper {
 			$total_expired_subscriptions,
 			array(
 				/* translators: 1) product name 3) URL to My Subscriptions page 4) Renew product price string */
-				'single_manage'           => __( 'Your subscription for <strong>%1$s</strong> expired. <a href="%3$s">%4$s</a> to continue receiving updates and streamlined support.', 'woocommerce' ),
+				'single_manage'                => __( 'Your subscription for <strong>%1$s</strong> expired. <a href="%3$s">%4$s</a> to continue receiving updates and streamlined support.', 'woocommerce' ),
 				/* translators: 1) product name 3) URL to My Subscriptions page 4) Renew product price string */
-				'multiple_manage'         => __( 'One of your subscriptions for <strong>%1$s</strong> has expired. <a href="%3$s">%4$s</a> to continue receiving updates and streamlined support.', 'woocommerce' ),
+				'multiple_manage'              => __( 'One of your subscriptions for <strong>%1$s</strong> has expired. <a href="%3$s">%4$s</a> to continue receiving updates and streamlined support.', 'woocommerce' ),
+				/* translators: 1) product name 3) URL to My Subscriptions page */
+				'multiple_manage_site_covered' => __( 'One of your subscriptions for <strong>%1$s</strong> has expired. This store is still covered by another active subscription.', 'woocommerce' ),
 				/* translators: 1) total expired subscriptions 2) URL to My Subscriptions page */
-				'different_subscriptions' => __( 'You have <strong>%1$s Woo extension subscriptions</strong> that expired. <a href="%2$s">Renew</a> to continue receiving updates and streamlined support.', 'woocommerce' ),
+				'different_subscriptions'      => __( 'You have <strong>%1$s Woo extension subscriptions</strong> that expired. <a href="%2$s">Renew</a> to continue receiving updates and streamlined support.', 'woocommerce' ),
 			),
 			'expired',
 		);
 
+		$button_text = __( 'Renew', 'woocommerce' );
 		$button_link = add_query_arg(
 			array(
-				'add-to-cart'  => $notice_data['product_ids'],
+				'add-to-cart'  => $notice_data['product_id'],
 				'utm_source'   => 'pu',
 				'utm_campaign' => $allowed_link ? 'pu_settings_screen_renew' : 'pu_in_apps_screen_renew',
 			),
 			self::WOO_CART_PAGE_URL
 		);
 
-		if ( in_array( $notice_data['type'], array( 'single_manage', 'multiple_manage' ), true ) ) {
+		if ( 'multiple_manage_site_covered' === $notice_data['type'] ) {
+			$button_text = __( 'Review subscriptions', 'woocommerce' );
+			$button_link = add_query_arg(
+				array(
+					'product_id'   => $notice_data['product_id'],
+					'type'         => 'expired',
+					'utm_source'   => 'pu',
+					'utm_campaign' => $allowed_link ? 'pu_settings_screen_review_subscriptions' : 'pu_in_apps_screen_review_subscriptions',
+				),
+				self::WOO_SUBSCRIPTION_PAGE_URL
+			);
+		} elseif ( in_array( $notice_data['type'], array( 'single_manage', 'multiple_manage' ), true ) ) {
 			$button_link = add_query_arg(
 				array(
 					'add-to-cart' => $notice_data['product_id'],
@@ -997,7 +1246,7 @@ class PluginsHelper {
 
 		return array(
 			'description' => $allowed_link ? $notice_data['parsed_message'] : preg_replace( '#<a.*?>(.*?)</a>#i', '\1', $notice_data['parsed_message'] ),
-			'button_text' => __( 'Renew', 'woocommerce' ),
+			'button_text' => $button_text,
 			'button_link' => $button_link,
 		);
 	}
@@ -1057,7 +1306,7 @@ class PluginsHelper {
 
 		$button_link = add_query_arg(
 			array(
-				'add-to-cart'  => $notice_data['product_ids'],
+				'add-to-cart'  => $notice_data['product_id'],
 				'utm_source'   => 'pu',
 				'utm_campaign' => 'pu_in_apps_screen_purchase',
 			),
@@ -1104,6 +1353,33 @@ class PluginsHelper {
 		return sprintf(
 			/* translators: 1: Disconnected user email */
 			__( 'Successfully disconnected from <b>%1$s</b>.', 'woocommerce' ),
+			$user_email
+		);
+	}
+
+	/**
+	 * Get the connected status notice message.
+	 *
+	 * @param string $user_email the user email.
+	 *
+	 * @return string the connected notice message.
+	 */
+	public static function get_wccom_connected_notice( $user_email ) {
+		if ( ! WC_Helper::is_site_connected() ) {
+			return '';
+		}
+
+		if ( ! self::should_show_notice( self::DISMISS_CONNECT_NOTICE, false ) ) {
+			return '';
+		}
+
+		if ( ! $user_email ) {
+			return '';
+		}
+
+		return sprintf(
+		/* translators: 1: Disconnected user email */
+			__( 'Successfully connected to <b>%s</b>.', 'woocommerce' ),
 			$user_email
 		);
 	}

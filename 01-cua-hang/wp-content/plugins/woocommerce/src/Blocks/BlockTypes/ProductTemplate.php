@@ -9,6 +9,7 @@ use WP_Block;
  * ProductTemplate class.
  */
 class ProductTemplate extends AbstractBlock {
+	use EnableBlockJsonAssetsTrait;
 
 	/**
 	 * Block name.
@@ -77,7 +78,13 @@ class ProductTemplate extends AbstractBlock {
 
 		$classnames .= ' wc-block-product-template';
 
-		$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => trim( $classnames ) ) );
+		$wrapper_attributes = get_block_wrapper_attributes(
+			array(
+				'class'              => trim( $classnames ),
+				'data-wp-on--scroll' => 'actions.watchScroll',
+				'data-wp-init'       => 'callbacks.initResizeObserver',
+			)
+		);
 
 		$content = '';
 		while ( $query->have_posts() ) {
@@ -85,36 +92,48 @@ class ProductTemplate extends AbstractBlock {
 
 			// Get an instance of the current Post Template block.
 			$block_instance = $block->parsed_block;
-			$product_id     = get_the_ID();
+			$product_id     = (int) get_the_ID();
+			$post_type      = get_post_type();
 
 			// Set the block name to one that does not correspond to an existing registered block.
 			// This ensures that for the inner instances of the Post Template block, we do not render any block supports.
 			$block_instance['blockName'] = 'core/null';
 
+			$filter_block_context = static function ( $context ) use ( $product_id, $post_type ) {
+				$context['postType'] = $post_type;
+				$context['postId']   = $product_id;
+				return $context;
+			};
+
+			// Use an early priority so that other 'render_block_context' filters have access to the values.
+			add_filter( 'render_block_context', $filter_block_context, 1 );
 			// Render the inner blocks of the Post Template block with `dynamic` set to `false` to prevent calling
 			// `render_callback` and ensure that no wrapper markup is included.
 			$block_content = (
 				new WP_Block(
 					$block_instance,
-					array(
-						'postType' => get_post_type(),
-						'postId'   => $product_id,
-					)
+					$block->context
 				)
 			)->render( array( 'dynamic' => false ) );
+			remove_filter( 'render_block_context', $filter_block_context, 1 );
 
-			$interactive = array(
-				'namespace' => 'woocommerce/product-collection',
+			// Load product into the shared products store.
+			wc_interactivity_api_load_product(
+				'I acknowledge that using experimental APIs means my theme or plugin will inevitably break in the next version of WooCommerce',
+				$product_id
 			);
-
-			$context = array(
-				'productId' => $product_id,
+			$product_context_directive = wp_interactivity_data_wp_context(
+				array(
+					'productId'   => $product_id,
+					'variationId' => null,
+				),
+				'woocommerce/products'
 			);
 
 			$li_directives = '
-				data-wc-interactive=\'' . wp_json_encode( $interactive, JSON_NUMERIC_CHECK | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) . '\'
-				data-wc-context=\'' . wp_json_encode( $context, JSON_NUMERIC_CHECK | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) . '\'
-				data-wc-key="product-item-' . $product_id . '"
+				data-wp-interactive="woocommerce/product-collection"
+				' . $product_context_directive . '
+				data-wp-key="product-item-' . $product_id . '"
 			';
 
 			// Wrap the render inner blocks in a `li` element with the appropriate post classes.
@@ -185,6 +204,6 @@ class ProductTemplate extends AbstractBlock {
 		if ( ! empty( $metadata['name'] ) && 'woocommerce/product-template' === $metadata['name'] ) {
 			$settings['skip_inner_blocks'] = true;
 		}
-			return $settings;
+		return $settings;
 	}
 }

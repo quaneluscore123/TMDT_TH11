@@ -3,9 +3,9 @@
 namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
 
 use Automattic\Jetpack\Connection\Manager;
-use Automattic\WooCommerce\Admin\Features\Features;
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
 use Automattic\WooCommerce\Admin\PluginsHelper;
+use Automattic\WooCommerce\Internal\Jetpack\JetpackConnection;
 
 /**
  * Shipping Task
@@ -62,9 +62,7 @@ class ExperimentalShippingRecommendation extends Task {
 	 * @return bool
 	 */
 	public function can_view() {
-		return Features::is_enabled( 'shipping-smart-defaults' ) &&
-			! PluginsHelper::is_plugin_active( 'woocommerce-shipping' ) &&
-			! PluginsHelper::is_plugin_active( 'woocommerce-tax' );
+		return true;
 	}
 
 	/**
@@ -82,7 +80,7 @@ class ExperimentalShippingRecommendation extends Task {
 	 * @return bool
 	 */
 	public static function has_plugins_active() {
-		return PluginsHelper::is_plugin_active( 'woocommerce-services' );
+		return PluginsHelper::is_plugin_active( 'woocommerce-shipping' );
 	}
 
 	/**
@@ -91,7 +89,7 @@ class ExperimentalShippingRecommendation extends Task {
 	 * @return bool
 	 */
 	public static function has_jetpack_connected() {
-		$jetpack_connection_manager = new Manager( 'woocommerce' );
+		$jetpack_connection_manager = JetpackConnection::get_manager();
 
 		return $jetpack_connection_manager->is_connected() && $jetpack_connection_manager->has_connected_owner();
 	}

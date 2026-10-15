@@ -9,12 +9,11 @@ use Automattic\WooCommerce\Blocks\BlockPatterns;
 use Automattic\WooCommerce\Blocks\BlockTemplatesRegistry;
 use Automattic\WooCommerce\Blocks\BlockTemplatesController;
 use Automattic\WooCommerce\Blocks\BlockTypesController;
-use Automattic\WooCommerce\Blocks\Patterns\AIPatterns;
+use Automattic\WooCommerce\Blocks\CoreBreadcrumbsCompatibility;
+use Automattic\WooCommerce\Blocks\DependencyDetection;
 use Automattic\WooCommerce\Blocks\Patterns\PatternRegistry;
 use Automattic\WooCommerce\Blocks\Patterns\PTKClient;
 use Automattic\WooCommerce\Blocks\Patterns\PTKPatternsStore;
-use Automattic\WooCommerce\Blocks\QueryFilters;
-use Automattic\WooCommerce\Blocks\Domain\Services\CreateAccount;
 use Automattic\WooCommerce\Blocks\Domain\Services\Notices;
 use Automattic\WooCommerce\Blocks\Domain\Services\DraftOrders;
 use Automattic\WooCommerce\Blocks\Domain\Services\GoogleAnalytics;
@@ -22,9 +21,8 @@ use Automattic\WooCommerce\Blocks\Domain\Services\Hydration;
 use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFields;
 use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFieldsAdmin;
 use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFieldsFrontend;
-use Automattic\WooCommerce\Blocks\InboxNotifications;
+use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutLink;
 use Automattic\WooCommerce\Blocks\Installer;
-use Automattic\WooCommerce\Blocks\Migration;
 use Automattic\WooCommerce\Blocks\Payments\Api as PaymentsApi;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\BankTransfer;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\CashOnDelivery;
@@ -37,10 +35,8 @@ use Automattic\WooCommerce\StoreApi\RoutesController;
 use Automattic\WooCommerce\StoreApi\SchemaController;
 use Automattic\WooCommerce\StoreApi\StoreApi;
 use Automattic\WooCommerce\Blocks\Shipping\ShippingController;
-use Automattic\WooCommerce\Blocks\Templates\SingleProductTemplateCompatibility;
-use Automattic\WooCommerce\Blocks\Templates\ArchiveProductTemplatesCompatibility;
-use Automattic\WooCommerce\Blocks\Domain\Services\OnboardingTasks\TasksController;
 use Automattic\WooCommerce\Blocks\TemplateOptions;
+use Automattic\WooCommerce\Internal\Features\BlockEditorUnifiedAssets;
 
 
 /**
@@ -64,14 +60,6 @@ class Bootstrap {
 	 */
 	private $package;
 
-
-	/**
-	 * Holds the Migration instance
-	 *
-	 * @var Migration
-	 */
-	private $migration;
-
 	/**
 	 * Constructor
 	 *
@@ -80,7 +68,6 @@ class Bootstrap {
 	public function __construct( Container $container ) {
 		$this->container = $container;
 		$this->package   = $container->get( Package::class );
-		$this->migration = $container->get( Migration::class );
 
 		$this->init();
 		/**
@@ -104,24 +91,6 @@ class Bootstrap {
 	protected function init() {
 		$this->register_dependencies();
 		$this->register_payment_methods();
-		$this->load_interactivity_api();
-
-		// This is just a temporary solution to make sure the migrations are run. We have to refactor this. More details: https://github.com/woocommerce/woocommerce-blocks/issues/10196.
-		if ( $this->package->get_version() !== $this->package->get_version_stored_on_db() ) {
-			$this->migration->run_migrations();
-			$this->package->set_version_stored_on_db();
-		}
-
-		add_action(
-			'admin_init',
-			function () {
-				// Delete this notification because the blocks are included in WC Core now. This will handle any sites
-				// with lingering notices.
-				InboxNotifications::delete_surface_cart_checkout_blocks_notification();
-			},
-			10,
-			0
-		);
 
 		// We need to initialize BlockTemplatesController and BlockTemplatesRegistry at the end of `after_setup_theme`
 		// so themes had the opportunity to declare support for template parts.
@@ -130,7 +99,7 @@ class Bootstrap {
 			function () {
 				$is_store_api_request = wc()->is_store_api_request();
 
-				if ( ! $is_store_api_request && ( wc_current_theme_is_fse_theme() || current_theme_supports( 'block-template-parts' ) ) ) {
+				if ( ! $is_store_api_request && ( wp_is_block_theme() || current_theme_supports( 'block-template-parts' ) ) ) {
 					$this->container->get( BlockTemplatesRegistry::class )->init();
 					$this->container->get( BlockTemplatesController::class )->init();
 				}
@@ -141,39 +110,91 @@ class Bootstrap {
 		$is_rest              = wc()->is_rest_api_request();
 		$is_store_api_request = wc()->is_store_api_request();
 
+		// Initialize Store API in non-admin context.
+		if ( ! is_admin() ) {
+			$this->container->get( StoreApi::class )->init();
+		}
+
 		// Load and init assets.
-		$this->container->get( StoreApi::class )->init();
 		$this->container->get( PaymentsApi::class )->init();
 		$this->container->get( DraftOrders::class )->init();
-		$this->container->get( CreateAccount::class )->init();
 		$this->container->get( ShippingController::class )->init();
-		$this->container->get( TasksController::class )->init();
 		$this->container->get( CheckoutFields::class )->init();
+		$this->container->get( CheckoutLink::class )->init();
+		$this->container->get( AssetDataRegistry::class );
+		$this->container->get( AssetsController::class );
+		$this->container->get( DependencyDetection::class );
 
 		// Load assets in admin and on the frontend.
 		if ( ! $is_rest ) {
 			$this->add_build_notice();
-			$this->container->get( AssetDataRegistry::class );
-			$this->container->get( AssetsController::class );
 			$this->container->get( Installer::class )->init();
 			$this->container->get( GoogleAnalytics::class )->init();
 			$this->container->get( is_admin() ? CheckoutFieldsAdmin::class : CheckoutFieldsFrontend::class )->init();
 		}
 
+		// Register block types on demand (priority 8, before do_blocks at 9) so blocks in a description are not empty.
+		add_filter( 'woocommerce_short_description', array( $this, 'maybe_register_blocks_from_content' ), 8 );
+		add_action( 'woocommerce_email_editor_render_start', array( $this, 'handle_woocommerce_email_editor_render_start' ) );
+
 		// Load assets unless this is a request specifically for the store API.
 		if ( ! $is_store_api_request ) {
-			// Template related functionality. These won't be loaded for store API requests, but may be loaded for
-			// regular rest requests to maintain compatibility with the store editor.
-			$this->container->get( AIPatterns::class );
-			$this->container->get( BlockPatterns::class );
-			$this->container->get( BlockTypesController::class );
+			// Skip eager block/pattern/asset registration on non-rendering requests; the block types needed for
+			// a description or an email are still registered on demand (see the hooks above). See BlockRegistrationContext.
+			if ( ( new BlockRegistrationContext() )->should_register() ) {
+				$this->container->get( BlockPatterns::class );
+				$this->container->get( BlockTypesController::class );
+			}
 			$this->container->get( ClassicTemplatesCompatibility::class );
 			$this->container->get( Notices::class )->init();
-			$this->container->get( PTKPatternsStore::class );
-			$this->container->get( TemplateOptions::class )->init();
+
+			if ( is_admin() || $is_rest ) {
+				$this->container->get( PTKPatternsStore::class );
+			}
+
+			if ( is_admin() ) {
+				$this->container->get( TemplateOptions::class )->init();
+			}
+		}
+	}
+
+	/**
+	 * Register WooCommerce block types on demand when a description containing one is rendered.
+	 *
+	 * Eager block registration is skipped on non-rendering requests (Store API, REST, AJAX, webhooks), but
+	 * product and variation descriptions still run through do_blocks there, so a WooCommerce block in a
+	 * description would render empty. Hooked to woocommerce_short_description just before do_blocks.
+	 *
+	 * The detection also fires on a synced pattern reference (core/block, `wp:block`): the referenced pattern's
+	 * content is not available here without fetching it, so registration happens defensively in case it
+	 * contains a WooCommerce block; registering covers nested blocks at any depth.
+	 *
+	 * @since 11.1.0
+	 *
+	 * @param string $content The description content passed through the filter.
+	 * @return string The unchanged content.
+	 */
+	public function maybe_register_blocks_from_content( $content ) {
+		if ( is_string( $content ) && preg_match( '/<!--\s+wp:(woocommerce\/|block\s)/', $content ) ) {
+			$block_types_controller = $this->container->get( BlockTypesController::class );
+			if ( ! $block_types_controller->register_blocks_has_run() ) {
+				$block_types_controller->register_blocks();
+			}
 		}
 
-		$this->container->get( QueryFilters::class )->init();
+		return $content;
+	}
+
+	/**
+	 * Register WooCommerce block types on demand before an email is rendered by the email editor package.
+	 *
+	 * Emails are often sent from requests where eager block registration is skipped (cron, AJAX, Store API),
+	 * and unregistered WooCommerce blocks, such as Product Collection, would render empty in the email.
+	 *
+	 * @internal
+	 */
+	public function handle_woocommerce_email_editor_render_start(): void {
+		$this->container->get( BlockTypesController::class )->register_blocks_for_email();
 	}
 
 	/**
@@ -182,9 +203,23 @@ class Bootstrap {
 	 * @return bool
 	 */
 	protected function is_built() {
+		$editor_asset = $this->is_block_editor_unified_assets_enabled_during_bootstrap() ? 'wc-block-library.js' : 'featured-product.js';
+
 		return file_exists(
-			$this->package->get_path( 'assets/client/blocks/featured-product.js' )
+			$this->package->get_path( 'assets/client/blocks/' . $editor_asset )
 		);
+	}
+
+	/**
+	 * Check whether unified block editor assets are enabled during plugin bootstrap.
+	 *
+	 * Feature definitions contain translated presentation strings and are not safe to use before init.
+	 *
+	 * @return bool
+	 */
+	private function is_block_editor_unified_assets_enabled_during_bootstrap(): bool {
+		// Keep this fallback aligned with `enabled_by_default` for unified block editor assets in FeaturesController.
+		return 'yes' === get_option( BlockEditorUnifiedAssets::OPTION_NAME, 'no' );
 	}
 
 	/**
@@ -199,9 +234,8 @@ class Bootstrap {
 			function () {
 				echo '<div class="error"><p>';
 				printf(
-					/* translators: %1$s is the node install command, %2$s is the install command, %3$s is the build command, %4$s is the watch command. */
-					esc_html__( 'WooCommerce Blocks development mode requires files to be built. From the root directory, run %1$s to ensure your node version is aligned, run %2$s to install dependencies, %3$s to build the files or %4$s to build the files and watch for changes.', 'woocommerce' ),
-					'<code>nvm use</code>',
+					/* translators: %1$s is the install command, %2$s is the build command, %3$s is the watch command. */
+					esc_html__( 'WooCommerce Blocks development mode requires files to be built. From the root directory, run %1$s to install dependencies, %2$s to build the files or %3$s to build the files and watch for changes.', 'woocommerce' ),
 					'<code>pnpm install</code>',
 					'<code>pnpm --filter="@woocommerce/plugin-woocommerce" build</code>',
 					'<code>pnpm --filter="@woocommerce/plugin-woocommerce" watch:build</code>'
@@ -209,13 +243,6 @@ class Bootstrap {
 				echo '</p></div>';
 			}
 		);
-	}
-
-	/**
-	 * Load and set up the Interactivity API if enabled.
-	 */
-	protected function load_interactivity_api() {
-			require_once __DIR__ . '/../Interactivity/load.php';
 	}
 
 	/**
@@ -241,6 +268,12 @@ class Bootstrap {
 			}
 		);
 		$this->container->register(
+			DependencyDetection::class,
+			function () {
+				return new DependencyDetection();
+			}
+		);
+		$this->container->register(
 			PaymentMethodRegistry::class,
 			function () {
 				return new PaymentMethodRegistry();
@@ -261,6 +294,12 @@ class Bootstrap {
 			}
 		);
 		$this->container->register(
+			CoreBreadcrumbsCompatibility::class,
+			function () {
+				return new CoreBreadcrumbsCompatibility();
+			}
+		);
+		$this->container->register(
 			ClassicTemplatesCompatibility::class,
 			function ( Container $container ) {
 				$asset_data_registry = $container->get( AssetDataRegistry::class );
@@ -271,12 +310,6 @@ class Bootstrap {
 			DraftOrders::class,
 			function ( Container $container ) {
 				return new DraftOrders( $container->get( Package::class ) );
-			}
-		);
-		$this->container->register(
-			CreateAccount::class,
-			function ( Container $container ) {
-				return new CreateAccount( $container->get( Package::class ) );
 			}
 		);
 		$this->container->register(
@@ -324,6 +357,12 @@ class Bootstrap {
 				$payment_method_registry = $container->get( PaymentMethodRegistry::class );
 				$asset_data_registry     = $container->get( AssetDataRegistry::class );
 				return new PaymentsApi( $payment_method_registry, $asset_data_registry );
+			}
+		);
+		$this->container->register(
+			CheckoutLink::class,
+			function () {
+				return new CheckoutLink();
 			}
 		);
 		$this->container->register(
@@ -390,29 +429,11 @@ class Bootstrap {
 			}
 		);
 		$this->container->register(
-			AIPatterns::class,
-			function () {
-				return new AIPatterns();
-			}
-		);
-		$this->container->register(
 			ShippingController::class,
 			function ( $container ) {
 				$asset_api           = $container->get( AssetApi::class );
 				$asset_data_registry = $container->get( AssetDataRegistry::class );
 				return new ShippingController( $asset_api, $asset_data_registry );
-			}
-		);
-		$this->container->register(
-			TasksController::class,
-			function () {
-				return new TasksController();
-			}
-		);
-		$this->container->register(
-			QueryFilters::class,
-			function () {
-				return new QueryFilters();
 			}
 		);
 		$this->container->register(

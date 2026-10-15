@@ -8,11 +8,26 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Doc khoa: uu tien bien moi truong (.env cua ban Docker), neu khong co thi doc hang so cung ten
+ * trong wp-config.php (hosting chia se nhu InfinityFree khong co bien moi truong).
+ */
 function nhom25_env($name)
 {
     $v = getenv($name);
-    return ($v === false) ? '' : trim($v);
+    if ($v === false || $v === '') {
+        $v = defined($name) ? constant($name) : '';
+    }
+    return trim((string) $v);
 }
+
+// Chua co khoa VNPay (vi du ban public chua cau hinh) thi an cong VNPay de khong co don treo o "Cho thanh toan"
+add_filter('woocommerce_available_payment_gateways', function ($gateways) {
+    if (isset($gateways['woo_vnpay']) && (nhom25_env('VNP_TMN_CODE') === '' || nhom25_env('VNP_HASH_SECRET') === '')) {
+        unset($gateways['woo_vnpay']);
+    }
+    return $gateways;
+});
 
 // VNPay: ghi de ma TmnCode va HashSecret khi doc cau hinh
 add_filter('option_woocommerce_woo_vnpay_settings', function ($s) {

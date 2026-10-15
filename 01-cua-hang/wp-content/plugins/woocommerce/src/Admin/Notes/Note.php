@@ -61,7 +61,7 @@ class Note extends \WC_Data {
 			'status'        => self::E_WC_ADMIN_NOTE_UNACTIONED,
 			'source'        => 'woocommerce',
 			'date_created'  => '0000-00-00 00:00:00',
-			'date_reminder' => '',
+			'date_reminder' => null,
 			'is_snoozable'  => false,
 			'actions'       => array(),
 			'layout'        => 'plain',
@@ -79,6 +79,8 @@ class Note extends \WC_Data {
 		} elseif ( is_object( $data ) && ! empty( $data->note_id ) ) {
 			$this->set_id( $data->note_id );
 			unset( $data->icon ); // Icons are deprecated.
+			// `image` and `layout` are deprecated — skip them so set_props doesn't dispatch to the deprecated setters.
+			unset( $data->image, $data->layout );
 			$this->set_props( (array) $data );
 			$this->set_object_read( true );
 		} else {
@@ -118,6 +120,17 @@ class Note extends \WC_Data {
 	*/
 
 	/**
+	 * Get deprecated types.
+	 *
+	 * @return array
+	 */
+	public static function get_deprecated_types() {
+		return array(
+			self::E_WC_ADMIN_NOTE_EMAIL,
+		);
+	}
+
+	/**
 	 * Get allowed types.
 	 *
 	 * @return array
@@ -130,7 +143,6 @@ class Note extends \WC_Data {
 			self::E_WC_ADMIN_NOTE_INFORMATIONAL,
 			self::E_WC_ADMIN_NOTE_MARKETING,
 			self::E_WC_ADMIN_NOTE_SURVEY,
-			self::E_WC_ADMIN_NOTE_EMAIL,
 		);
 
 		return apply_filters( 'woocommerce_note_types', $allowed_types );
@@ -316,22 +328,28 @@ class Note extends \WC_Data {
 	}
 
 	/**
-	 * Get note layout (the old notes won't have one).
+	 * Get note layout.
+	 *
+	 * @deprecated 10.8.0 Inbox notes no longer support layout variants; only 'plain' is valid and the field will be removed in a future release.
 	 *
 	 * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
-	 * @return array
+	 * @return string
 	 */
 	public function get_layout( $context = 'view' ) {
+		wc_deprecated_function( __METHOD__, '10.8.0' );
 		return $this->get_prop( 'layout', $context );
 	}
 
 	/**
-	 * Get note image (if any).
+	 * Get note image.
+	 *
+	 * @deprecated 10.8.0 Inbox notes no longer render images; the field will be removed in a future release.
 	 *
 	 * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
-	 * @return array
+	 * @return string
 	 */
 	public function get_image( $context = 'view' ) {
+		wc_deprecated_function( __METHOD__, '10.8.0' );
 		return $this->get_prop( 'image', $context );
 	}
 
@@ -388,6 +406,13 @@ class Note extends \WC_Data {
 	public function set_type( $type ) {
 		if ( empty( $type ) ) {
 			$this->error( 'admin_note_invalid_data', __( 'The admin note type prop cannot be empty.', 'woocommerce' ) );
+		}
+
+		if ( in_array( $type, self::get_deprecated_types(), true ) ) {
+			$this->error(
+				'admin_note_invalid_data',
+				__( 'The admin note type prop is deprecated.', 'woocommerce' )
+			);
 		}
 
 		if ( ! in_array( $type, self::get_allowed_types(), true ) ) {
@@ -571,16 +596,25 @@ class Note extends \WC_Data {
 	/**
 	 * Set note layout.
 	 *
+	 * @deprecated 10.8.0 Inbox notes no longer support layout variants; only 'plain' is valid and the field will be removed in a future release.
+	 *
 	 * @param string $layout Note layout.
 	 */
 	public function set_layout( $layout ) {
-		// If we don't receive a layout we will set it by default as "plain".
+		wc_deprecated_function( __METHOD__, '10.8.0' );
+
+		// 'thumbnail' was previously a valid value but is no longer rendered. Coerce it to 'plain'
+		// so existing callers don't break, and surface a deprecation warning so they update.
+		if ( 'thumbnail' === $layout ) {
+			wc_deprecated_argument( __METHOD__, '10.8.0', "The 'thumbnail' layout is no longer supported; coerced to 'plain'." );
+			$layout = 'plain';
+		}
+
 		if ( empty( $layout ) ) {
 			$layout = 'plain';
 		}
-		$valid_layouts = array( 'plain', 'thumbnail' );
 
-		if ( in_array( $layout, $valid_layouts, true ) ) {
+		if ( 'plain' === $layout ) {
 			$this->set_prop( 'layout', $layout );
 		} else {
 			$this->error( 'admin_note_invalid_data', __( 'The admin note layout has a wrong prop value.', 'woocommerce' ) );
@@ -590,9 +624,12 @@ class Note extends \WC_Data {
 	/**
 	 * Set note image.
 	 *
+	 * @deprecated 10.8.0 Inbox notes no longer render images; the field will be removed in a future release.
+	 *
 	 * @param string $image Note image.
 	 */
 	public function set_image( $image ) {
+		wc_deprecated_function( __METHOD__, '10.8.0' );
 		$this->set_prop( 'image', $image );
 	}
 

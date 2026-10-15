@@ -5,6 +5,7 @@
  * @package WooCommerce\Admin\Importers
  */
 
+use Automattic\WooCommerce\Internal\CostOfGoodsSold\CostOfGoodsSoldController;
 use Automattic\WooCommerce\Internal\Utilities\FilesystemUtil;
 use Automattic\WooCommerce\Internal\Utilities\URL;
 use Automattic\WooCommerce\Utilities\I18nUtil;
@@ -24,6 +25,26 @@ if ( ! class_exists( 'WP_Importer' ) ) {
  * @version     3.1.0
  */
 class WC_Product_CSV_Importer_Controller {
+
+	/**
+	 * Number of temporary products deleted per query when cleaning up after an import.
+	 */
+	private const CLEANUP_BATCH_SIZE = 100;
+
+	/**
+	 * Status the importer gives the temporary products it creates for unresolved references.
+	 */
+	private const CLEANUP_PLACEHOLDER_STATUS = 'importing';
+
+	/**
+	 * Status a temporary product is moved to once cleanup has claimed it for deletion.
+	 */
+	private const CLEANUP_CLAIMED_STATUS = 'importing-cleanup';
+
+	/**
+	 * Prefix of the AJAX position that runs, and resumes, the cleanup phase.
+	 */
+	private const CLEANUP_POSITION_PREFIX = 'cleanup:';
 
 	/**
 	 * The path to the current file.
@@ -114,41 +135,16 @@ class WC_Product_CSV_Importer_Controller {
 	 *
 	 * @throws \Exception When file validation fails.
 	 */
-	protected static function check_file_path( string $path ): void {
-		$wp_filesystem = FilesystemUtil::get_wp_filesystem();
-
-		// File must exist and be readable.
-		$is_valid_file = $wp_filesystem->is_readable( $path );
-
-		// Check that file is within an allowed location.
-		if ( $is_valid_file ) {
-			$is_valid_file = self::file_is_in_directory( $path, $wp_filesystem->abspath() );
-			if ( ! $is_valid_file ) {
-				$upload_dir    = wp_get_upload_dir();
-				$is_valid_file = false === $upload_dir['error'] && self::file_is_in_directory( $path, $upload_dir['basedir'] );
-			}
-		}
-
-		if ( ! $is_valid_file ) {
+	protected static function validate_file_path( string $path ): void {
+		try {
+			FilesystemUtil::validate_upload_file_path( $path );
+		} catch ( \Exception $e ) {
 			throw new \Exception( esc_html__( 'File path provided for import is invalid.', 'woocommerce' ) );
 		}
 
 		if ( ! self::is_file_valid_csv( $path ) ) {
 			throw new \Exception( esc_html__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'woocommerce' ) );
 		}
-	}
-
-	/**
-	 * Check if a given file is inside a given directory.
-	 *
-	 * @param string $file_path The full path of the file to check.
-	 * @param string $directory The path of the directory to check.
-	 * @return bool True if the file is inside the directory.
-	 */
-	private static function file_is_in_directory( string $file_path, string $directory ): bool {
-		$file_path = (string) new URL( $file_path ); // This resolves '/../' sequences.
-		$file_path = preg_replace( '/^file:\\/\\//', '', $file_path );
-		return 0 === stripos( wp_normalize_path( $file_path ), trailingslashit( wp_normalize_path( $directory ) ) );
 	}
 
 	/**
@@ -205,7 +201,7 @@ class WC_Product_CSV_Importer_Controller {
 		// phpcs:enable
 
 		// Import mappings for CSV data.
-		include_once dirname( __FILE__ ) . '/mappings/mappings.php';
+		include_once __DIR__ . '/mappings/mappings.php';
 
 		if ( $this->map_preferences ) {
 			add_filter( 'woocommerce_csv_product_import_mapped_columns', array( $this, 'auto_map_user_preferences' ), 9999 );
@@ -237,13 +233,14 @@ class WC_Product_CSV_Importer_Controller {
 			return '';
 		}
 
+		// add_query_arg() does not encode values, so characters like '+' in request-derived strings would be decoded as a space on the next request.
 		$params = array(
 			'step'               => $keys[ $step_index + 1 ],
-			'file'               => str_replace( DIRECTORY_SEPARATOR, '/', $this->file ),
-			'delimiter'          => $this->delimiter,
+			'file'               => rawurlencode( str_replace( DIRECTORY_SEPARATOR, '/', $this->file ) ),
+			'delimiter'          => rawurlencode( $this->delimiter ),
 			'update_existing'    => $this->update_existing,
 			'map_preferences'    => $this->map_preferences,
-			'character_encoding' => $this->character_encoding,
+			'character_encoding' => rawurlencode( $this->character_encoding ),
 			'_wpnonce'           => wp_create_nonce( 'woocommerce-csv-importer' ), // wp_nonce_url() escapes & to &amp; breaking redirects.
 		);
 
@@ -254,21 +251,21 @@ class WC_Product_CSV_Importer_Controller {
 	 * Output header view.
 	 */
 	protected function output_header() {
-		include dirname( __FILE__ ) . '/views/html-csv-import-header.php';
+		include __DIR__ . '/views/html-csv-import-header.php';
 	}
 
 	/**
 	 * Output steps view.
 	 */
 	protected function output_steps() {
-		include dirname( __FILE__ ) . '/views/html-csv-import-steps.php';
+		include __DIR__ . '/views/html-csv-import-steps.php';
 	}
 
 	/**
 	 * Output footer view.
 	 */
 	protected function output_footer() {
-		include dirname( __FILE__ ) . '/views/html-csv-import-footer.php';
+		include __DIR__ . '/views/html-csv-import-footer.php';
 	}
 
 	/**
@@ -340,22 +337,209 @@ class WC_Product_CSV_Importer_Controller {
 	}
 
 	/**
+	 * Remove temporary products and mapping data left by the importer.
+	 *
+	 * @param int $cursor Highest placeholder ID earlier cleanup requests have examined.
+	 * @return int|null ID to resume from, or null once no placeholders are left.
+	 */
+	private static function cleanup_after_import( int $cursor = 0 ): ?int {
+		global $wpdb;
+
+		if ( 0 === $cursor ) {
+			self::delete_original_id_markers();
+		}
+
+		/** This filter is documented in includes/import/abstract-wc-product-importer.php */
+		$time_limit = (int) apply_filters( 'woocommerce_product_importer_default_time_limit', 20 ); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingSinceComment
+		$deadline   = time() + $time_limit;
+
+		// Page by ID so a placeholder that cannot be deleted is passed over instead of being read again.
+		while ( true ) {
+			// The claimed status is also selected so a request that died mid-batch does not strand its placeholders.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$post_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_type IN ( 'product', 'product_variation' ) AND post_status IN ( %s, %s ) AND ID > %d ORDER BY ID ASC LIMIT %d",
+					self::CLEANUP_PLACEHOLDER_STATUS,
+					self::CLEANUP_CLAIMED_STATUS,
+					$cursor,
+					self::CLEANUP_BATCH_SIZE
+				)
+			);
+
+			if ( ! $post_ids ) {
+				return null;
+			}
+
+			$post_ids = array_map( 'absint', $post_ids );
+			$cursor   = (int) end( $post_ids );
+
+			// Ascending IDs delete a placeholder parent before its variations, so WooCommerce removes them through the normal lifecycle.
+			foreach ( $post_ids as $post_id ) {
+				self::delete_claimed_placeholder( $post_id );
+
+				// One delete lifecycle can take seconds, so check the budget per placeholder rather than per batch.
+				if ( time() >= $deadline ) {
+					return $post_id;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Run one bounded pass of the post-import cleanup and tell the client where to resume.
+	 *
+	 * The cursor only ever skips placeholders forward, and the queries it feeds match nothing
+	 * but the importer's own temporary products, so it needs no server-side state of its own.
+	 *
+	 * @param int $cursor Highest placeholder ID earlier cleanup requests have examined.
+	 */
+	private static function dispatch_ajax_cleanup( int $cursor ): void {
+		$next_cursor = self::cleanup_after_import( $cursor );
+
+		$response = array(
+			'position'            => null === $next_cursor ? 'done' : self::CLEANUP_POSITION_PREFIX . $next_cursor,
+			'percentage'          => 100,
+			'imported'            => 0,
+			'imported_variations' => 0,
+			'failed'              => 0,
+			'updated'             => 0,
+			'skipped'             => 0,
+		);
+
+		if ( null === $next_cursor ) {
+			$response['url'] = add_query_arg( array( '_wpnonce' => wp_create_nonce( 'woocommerce-csv-importer' ) ), admin_url( 'edit.php?post_type=product&page=product_importer&step=done' ) );
+		}
+
+		wp_send_json_success( $response );
+	}
+
+	/**
+	 * Release temporary products a cleanup request claimed but did not live to delete.
+	 *
+	 * A fatal inside the delete lifecycle leaves the claimed status behind, and the importer only
+	 * recognises a placeholder by the status it was created with, so the CSV row owning that SKU
+	 * would be skipped as an existing product. Healing at the start of a run keeps that contained.
+	 */
+	private static function release_stranded_cleanup_claims(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$post_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_type IN ( 'product', 'product_variation' ) AND post_status = %s",
+				self::CLEANUP_CLAIMED_STATUS
+			)
+		);
+
+		if ( ! $post_ids ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} SET post_status = %s WHERE post_type IN ( 'product', 'product_variation' ) AND post_status = %s",
+				self::CLEANUP_PLACEHOLDER_STATUS,
+				self::CLEANUP_CLAIMED_STATUS
+			)
+		);
+
+		wp_cache_delete_multiple( array_map( 'absint', $post_ids ), 'posts' );
+	}
+
+	/**
+	 * Remove temporary mappings between CSV IDs and imported products.
+	 *
+	 * The last import batch clears them so a run abandoned during cleanup leaves none behind.
+	 * Markers from a run abandoned earlier are kept so a retry of the same file skips rows already imported.
+	 * Concurrent imports are unsupported: markers and placeholder cleanup are shared site-wide.
+	 */
+	private static function delete_original_id_markers(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- The importer requires one uncached cleanup of its temporary mapping markers.
+		$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_original_id' ) );
+	}
+
+	/**
+	 * Claim one importer placeholder and delete it only if the claim succeeded.
+	 *
+	 * Reading the status from the object cache cannot decide this: a process that completes a
+	 * placeholder does not invalidate this process's cache, so a published product would still
+	 * look like a placeholder and be force deleted. The guarded UPDATE makes the status check
+	 * atomic instead, the way ActionScheduler_DBStore::claim_actions() claims actions, and runs
+	 * per post so a placeholder completed while the batch is being deleted is still protected.
+	 *
+	 * @param int $post_id Candidate post ID.
+	 */
+	private static function delete_claimed_placeholder( int $post_id ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} SET post_status = %s WHERE ID = %d AND post_type IN ( 'product', 'product_variation' ) AND post_status IN ( %s, %s )",
+				self::CLEANUP_CLAIMED_STATUS,
+				$post_id,
+				self::CLEANUP_PLACEHOLDER_STATUS,
+				self::CLEANUP_CLAIMED_STATUS
+			)
+		);
+
+		// The claim wrote the row behind the object cache's back, so read it back from the database.
+		wp_cache_delete( $post_id, 'posts' );
+
+		$post = get_post( $post_id );
+
+		if ( ! $post || self::CLEANUP_CLAIMED_STATUS !== $post->post_status ) {
+			return;
+		}
+
+		try {
+			wp_delete_post( $post_id, true );
+		} finally {
+			// Release the claim if the post outlived the delete lifecycle, so it stays a placeholder for the next run.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$released = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->posts} SET post_status = %s WHERE ID = %d AND post_status = %s",
+					self::CLEANUP_PLACEHOLDER_STATUS,
+					$post_id,
+					self::CLEANUP_CLAIMED_STATUS
+				)
+			);
+
+			if ( $released ) {
+				wp_cache_delete( $post_id, 'posts' );
+			}
+		}
+	}
+
+	/**
 	 * Processes AJAX requests related to a product CSV import.
 	 *
 	 * @since 9.3.0
 	 */
 	public static function dispatch_ajax() {
-		global $wpdb;
-
 		check_ajax_referer( 'wc-product-import', 'security' );
 
 		try {
+			$position = wc_clean( wp_unslash( $_POST['position'] ?? '' ) );
+
+			// Cleanup runs in requests of its own so it cannot time out behind the last import batch.
+			if ( is_string( $position ) && preg_match( '/^' . preg_quote( self::CLEANUP_POSITION_PREFIX, '/' ) . '(\\d+)$/', $position, $matches ) ) {
+				self::dispatch_ajax_cleanup( (int) $matches[1] );
+
+				return;
+			}
+
 			$file = wc_clean( wp_unslash( $_POST['file'] ?? '' ) ); // PHPCS: input var ok.
-			self::check_file_path( $file );
+			self::validate_file_path( $file );
 
 			$params = array(
 				'delimiter'          => ! empty( $_POST['delimiter'] ) ? wc_clean( wp_unslash( $_POST['delimiter'] ) ) : ',', // PHPCS: input var ok.
-				'start_pos'          => isset( $_POST['position'] ) ? absint( $_POST['position'] ) : 0, // PHPCS: input var ok.
+				'start_pos'          => absint( $position ),
 				'mapping'            => isset( $_POST['mapping'] ) ? (array) wc_clean( wp_unslash( $_POST['mapping'] ) ) : array(), // PHPCS: input var ok.
 				'update_existing'    => isset( $_POST['update_existing'] ) ? (bool) $_POST['update_existing'] : false, // PHPCS: input var ok.
 				'character_encoding' => isset( $_POST['character_encoding'] ) ? wc_clean( wp_unslash( $_POST['character_encoding'] ) ) : '',
@@ -378,6 +562,10 @@ class WC_Product_CSV_Importer_Controller {
 				$error_log = array();
 			}
 
+			if ( 0 === $params['start_pos'] ) {
+				self::release_stranded_cleanup_claims();
+			}
+
 			include_once WC_ABSPATH . 'includes/import/class-wc-product-csv-importer.php';
 
 			$importer         = self::get_importer( $file, $params );
@@ -385,72 +573,26 @@ class WC_Product_CSV_Importer_Controller {
 			$percent_complete = $importer->get_percent_complete();
 			$error_log        = array_merge( $error_log, $results['failed'], $results['skipped'] );
 
+			if ( 100 === $percent_complete ) {
+				self::delete_original_id_markers();
+			}
+
 			update_user_option( get_current_user_id(), 'product_import_error_log', $error_log );
 
-			if ( 100 === $percent_complete ) {
-				// @codingStandardsIgnoreStart.
-				$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_original_id' ) );
-				$wpdb->delete( $wpdb->posts, array(
-					'post_type'   => 'product',
-					'post_status' => 'importing',
-				) );
-				$wpdb->delete( $wpdb->posts, array(
-					'post_type'   => 'product_variation',
-					'post_status' => 'importing',
-				) );
-				// @codingStandardsIgnoreEnd.
+			// The last row hands over to the cleanup phase rather than running it in this request.
+			$next_position = 100 === $percent_complete ? self::CLEANUP_POSITION_PREFIX . '0' : $importer->get_file_position();
 
-				// Clean up orphaned data.
-				$wpdb->query(
-					"
-					DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
-					LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
-					WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
-				"
-				);
-				$wpdb->query(
-					"
-					DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
-					LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
-					WHERE wp.ID IS NULL
-				"
-				);
-				// @codingStandardsIgnoreStart.
-				$wpdb->query( "
-					DELETE tr.* FROM {$wpdb->term_relationships} tr
-					LEFT JOIN {$wpdb->posts} wp ON wp.ID = tr.object_id
-					LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-					WHERE wp.ID IS NULL
-					AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
-				" );
-				// @codingStandardsIgnoreEnd.
-
-				// Send success.
-				wp_send_json_success(
-					array(
-						'position'            => 'done',
-						'percentage'          => 100,
-						'url'                 => add_query_arg( array( '_wpnonce' => wp_create_nonce( 'woocommerce-csv-importer' ) ), admin_url( 'edit.php?post_type=product&page=product_importer&step=done' ) ),
-						'imported'            => is_countable( $results['imported'] ) ? count( $results['imported'] ) : 0,
-						'imported_variations' => is_countable( $results['imported_variations'] ) ? count( $results['imported_variations'] ) : 0,
-						'failed'              => is_countable( $results['failed'] ) ? count( $results['failed'] ) : 0,
-						'updated'             => is_countable( $results['updated'] ) ? count( $results['updated'] ) : 0,
-						'skipped'             => is_countable( $results['skipped'] ) ? count( $results['skipped'] ) : 0,
-					)
-				);
-			} else {
-				wp_send_json_success(
-					array(
-						'position'            => $importer->get_file_position(),
-						'percentage'          => $percent_complete,
-						'imported'            => is_countable( $results['imported'] ) ? count( $results['imported'] ) : 0,
-						'imported_variations' => is_countable( $results['imported_variations'] ) ? count( $results['imported_variations'] ) : 0,
-						'failed'              => is_countable( $results['failed'] ) ? count( $results['failed'] ) : 0,
-						'updated'             => is_countable( $results['updated'] ) ? count( $results['updated'] ) : 0,
-						'skipped'             => is_countable( $results['skipped'] ) ? count( $results['skipped'] ) : 0,
-					)
-				);
-			}
+			wp_send_json_success(
+				array(
+					'position'            => $next_position,
+					'percentage'          => $percent_complete,
+					'imported'            => is_countable( $results['imported'] ) ? count( $results['imported'] ) : 0,
+					'imported_variations' => is_countable( $results['imported_variations'] ) ? count( $results['imported_variations'] ) : 0,
+					'failed'              => is_countable( $results['failed'] ) ? count( $results['failed'] ) : 0,
+					'updated'             => is_countable( $results['updated'] ) ? count( $results['updated'] ) : 0,
+					'skipped'             => is_countable( $results['skipped'] ) ? count( $results['skipped'] ) : 0,
+				)
+			);
 		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
@@ -464,7 +606,7 @@ class WC_Product_CSV_Importer_Controller {
 		$size       = size_format( $bytes );
 		$upload_dir = wp_upload_dir();
 
-		include dirname( __FILE__ ) . '/views/html-product-csv-import-form.php';
+		include __DIR__ . '/views/html-product-csv-import-form.php';
 	}
 
 	/**
@@ -499,7 +641,7 @@ class WC_Product_CSV_Importer_Controller {
 		try {
 			if ( ! empty( $file_url ) ) {
 				$path = ABSPATH . $file_url;
-				self::check_file_path( $path );
+				self::validate_file_path( $path );
 			} else {
 				$csv_import_util = wc_get_container()->get( Automattic\WooCommerce\Internal\Admin\ImportExport\CSVUploadHelper::class );
 				$upload          = $csv_import_util->handle_csv_upload( 'product', 'import', self::get_valid_csv_filetypes() );
@@ -517,7 +659,7 @@ class WC_Product_CSV_Importer_Controller {
 	 */
 	protected function mapping_form() {
 		check_admin_referer( 'woocommerce-csv-importer' );
-		self::check_file_path( $this->file );
+		self::validate_file_path( $this->file );
 
 		$args = array(
 			'lines'              => 1,
@@ -546,7 +688,7 @@ class WC_Product_CSV_Importer_Controller {
 			return;
 		}
 
-		include_once dirname( __FILE__ ) . '/views/html-csv-import-mapping.php';
+		include_once __DIR__ . '/views/html-csv-import-mapping.php';
 	}
 
 	/**
@@ -556,7 +698,7 @@ class WC_Product_CSV_Importer_Controller {
 		// Displaying this page triggers Ajax action to run the import with a valid nonce,
 		// therefore this page needs to be nonce protected as well.
 		check_admin_referer( 'woocommerce-csv-importer' );
-		self::check_file_path( $this->file );
+		self::validate_file_path( $this->file );
 
 		if ( ! empty( $_POST['map_from'] ) && ! empty( $_POST['map_to'] ) ) {
 			$mapping_from = wc_clean( wp_unslash( $_POST['map_from'] ) );
@@ -586,7 +728,7 @@ class WC_Product_CSV_Importer_Controller {
 		);
 		wp_enqueue_script( 'wc-product-import' );
 
-		include_once dirname( __FILE__ ) . '/views/html-csv-import-progress.php';
+		include_once __DIR__ . '/views/html-csv-import-progress.php';
 	}
 
 	/**
@@ -602,7 +744,7 @@ class WC_Product_CSV_Importer_Controller {
 		$file_name           = isset( $_GET['file-name'] ) ? sanitize_text_field( wp_unslash( $_GET['file-name'] ) ) : '';
 		$errors              = array_filter( (array) get_user_option( 'product_import_error_log' ) );
 
-		include_once dirname( __FILE__ ) . '/views/html-csv-import-done.php';
+		include_once __DIR__ . '/views/html-csv-import-done.php';
 	}
 
 	/**
@@ -632,6 +774,56 @@ class WC_Product_CSV_Importer_Controller {
 		$weight_unit_label    = I18nUtil::get_weight_unit_label( get_option( 'woocommerce_weight_unit', 'kg' ) );
 		$dimension_unit_label = I18nUtil::get_dimensions_unit_label( get_option( 'woocommerce_dimension_unit', 'cm' ) );
 
+		$default_columns = array(
+			__( 'ID', 'woocommerce' )                      => 'id',
+			__( 'Type', 'woocommerce' )                    => 'type',
+			__( 'SKU', 'woocommerce' )                     => 'sku',
+			__( 'Name', 'woocommerce' )                    => 'name',
+			__( 'Published', 'woocommerce' )               => 'published',
+			__( 'Is featured?', 'woocommerce' )            => 'featured',
+			__( 'Visibility in catalog', 'woocommerce' )   => 'catalog_visibility',
+			__( 'Short description', 'woocommerce' )       => 'short_description',
+			__( 'Description', 'woocommerce' )             => 'description',
+			__( 'Date sale price starts', 'woocommerce' )  => 'date_on_sale_from',
+			__( 'Date sale price ends', 'woocommerce' )    => 'date_on_sale_to',
+			__( 'Tax status', 'woocommerce' )              => 'tax_status',
+			__( 'Tax class', 'woocommerce' )               => 'tax_class',
+			__( 'In stock?', 'woocommerce' )               => 'stock_status',
+			__( 'Stock', 'woocommerce' )                   => 'stock_quantity',
+			__( 'Backorders allowed?', 'woocommerce' )     => 'backorders',
+			__( 'Low stock amount', 'woocommerce' )        => 'low_stock_amount',
+			__( 'Sold individually?', 'woocommerce' )      => 'sold_individually',
+			/* translators: %s: Weight unit */
+			sprintf( __( 'Weight (%s)', 'woocommerce' ), $weight_unit_label ) => 'weight',
+			/* translators: %s: Length unit */
+			sprintf( __( 'Length (%s)', 'woocommerce' ), $dimension_unit_label ) => 'length',
+			/* translators: %s: Width unit */
+			sprintf( __( 'Width (%s)', 'woocommerce' ), $dimension_unit_label ) => 'width',
+			/* translators: %s: Height unit */
+			sprintf( __( 'Height (%s)', 'woocommerce' ), $dimension_unit_label ) => 'height',
+			__( 'Allow customer reviews?', 'woocommerce' ) => 'reviews_allowed',
+			__( 'Purchase note', 'woocommerce' )           => 'purchase_note',
+			__( 'Sale price', 'woocommerce' )              => 'sale_price',
+			__( 'Regular price', 'woocommerce' )           => 'regular_price',
+			__( 'Categories', 'woocommerce' )              => 'category_ids',
+			__( 'Tags', 'woocommerce' )                    => 'tag_ids',
+			__( 'Shipping class', 'woocommerce' )          => 'shipping_class_id',
+			__( 'Images', 'woocommerce' )                  => 'images',
+			__( 'Download limit', 'woocommerce' )          => 'download_limit',
+			__( 'Download expiry days', 'woocommerce' )    => 'download_expiry',
+			__( 'Parent', 'woocommerce' )                  => 'parent_id',
+			__( 'Upsells', 'woocommerce' )                 => 'upsell_ids',
+			__( 'Cross-sells', 'woocommerce' )             => 'cross_sell_ids',
+			__( 'Grouped products', 'woocommerce' )        => 'grouped_products',
+			__( 'External URL', 'woocommerce' )            => 'product_url',
+			__( 'Button text', 'woocommerce' )             => 'button_text',
+			__( 'Position', 'woocommerce' )                => 'menu_order',
+		);
+
+		if ( wc_get_container()->get( CostOfGoodsSoldController::class )->feature_is_enabled() ) {
+			$default_columns[ __( 'Cost of goods', 'woocommerce' ) ] = 'cogs_value';
+		}
+
 		/*
 		 * @hooked wc_importer_generic_mappings - 10
 		 * @hooked wc_importer_wordpress_mappings - 10
@@ -640,51 +832,7 @@ class WC_Product_CSV_Importer_Controller {
 		$default_columns = $this->normalize_columns_names(
 			apply_filters(
 				'woocommerce_csv_product_import_mapping_default_columns',
-				array(
-					__( 'ID', 'woocommerce' )             => 'id',
-					__( 'Type', 'woocommerce' )           => 'type',
-					__( 'SKU', 'woocommerce' )            => 'sku',
-					__( 'Name', 'woocommerce' )           => 'name',
-					__( 'Published', 'woocommerce' )      => 'published',
-					__( 'Is featured?', 'woocommerce' )   => 'featured',
-					__( 'Visibility in catalog', 'woocommerce' ) => 'catalog_visibility',
-					__( 'Short description', 'woocommerce' ) => 'short_description',
-					__( 'Description', 'woocommerce' )    => 'description',
-					__( 'Date sale price starts', 'woocommerce' ) => 'date_on_sale_from',
-					__( 'Date sale price ends', 'woocommerce' ) => 'date_on_sale_to',
-					__( 'Tax status', 'woocommerce' )     => 'tax_status',
-					__( 'Tax class', 'woocommerce' )      => 'tax_class',
-					__( 'In stock?', 'woocommerce' )      => 'stock_status',
-					__( 'Stock', 'woocommerce' )          => 'stock_quantity',
-					__( 'Backorders allowed?', 'woocommerce' ) => 'backorders',
-					__( 'Low stock amount', 'woocommerce' ) => 'low_stock_amount',
-					__( 'Sold individually?', 'woocommerce' ) => 'sold_individually',
-					/* translators: %s: Weight unit */
-					sprintf( __( 'Weight (%s)', 'woocommerce' ), $weight_unit_label ) => 'weight',
-					/* translators: %s: Length unit */
-					sprintf( __( 'Length (%s)', 'woocommerce' ), $dimension_unit_label ) => 'length',
-					/* translators: %s: Width unit */
-					sprintf( __( 'Width (%s)', 'woocommerce' ), $dimension_unit_label ) => 'width',
-					/* translators: %s: Height unit */
-					sprintf( __( 'Height (%s)', 'woocommerce' ), $dimension_unit_label ) => 'height',
-					__( 'Allow customer reviews?', 'woocommerce' ) => 'reviews_allowed',
-					__( 'Purchase note', 'woocommerce' )  => 'purchase_note',
-					__( 'Sale price', 'woocommerce' )     => 'sale_price',
-					__( 'Regular price', 'woocommerce' )  => 'regular_price',
-					__( 'Categories', 'woocommerce' )     => 'category_ids',
-					__( 'Tags', 'woocommerce' )           => 'tag_ids',
-					__( 'Shipping class', 'woocommerce' ) => 'shipping_class_id',
-					__( 'Images', 'woocommerce' )         => 'images',
-					__( 'Download limit', 'woocommerce' ) => 'download_limit',
-					__( 'Download expiry days', 'woocommerce' ) => 'download_expiry',
-					__( 'Parent', 'woocommerce' )         => 'parent_id',
-					__( 'Upsells', 'woocommerce' )        => 'upsell_ids',
-					__( 'Cross-sells', 'woocommerce' )    => 'cross_sell_ids',
-					__( 'Grouped products', 'woocommerce' ) => 'grouped_products',
-					__( 'External URL', 'woocommerce' )   => 'product_url',
-					__( 'Button text', 'woocommerce' )    => 'button_text',
-					__( 'Position', 'woocommerce' )       => 'menu_order',
-				),
+				$default_columns,
 				$raw_headers
 			)
 		);
@@ -885,6 +1033,10 @@ class WC_Product_CSV_Importer_Controller {
 			'meta:' . $meta      => __( 'Import as meta data', 'woocommerce' ),
 			'menu_order'         => __( 'Position', 'woocommerce' ),
 		);
+
+		if ( wc_get_container()->get( CostOfGoodsSoldController::class )->feature_is_enabled() ) {
+			$options['cogs_value'] = __( 'Cost of goods', 'woocommerce' );
+		}
 
 		return apply_filters( 'woocommerce_csv_product_import_mapping_options', $options, $item );
 	}

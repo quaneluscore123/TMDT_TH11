@@ -11,7 +11,10 @@
  */
 
 use Automattic\WooCommerce\Enums\ProductStatus;
+use Automattic\WooCommerce\Enums\ProductStockStatus;
+use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductType;
+use Automattic\WooCommerce\Enums\CatalogVisibility;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -284,6 +287,11 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 		// Add gallery images.
 		$attachment_ids = array_merge( $attachment_ids, $product->get_gallery_image_ids() );
 
+		if ( ! empty( $attachment_ids ) ) {
+			// Prime caches to reduce future queries.
+			_prime_post_caches( $attachment_ids );
+		}
+
 		// Build image data.
 		foreach ( $attachment_ids as $position => $attachment_id ) {
 			$attachment_post = get_post( $attachment_id );
@@ -330,7 +338,10 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 	 * @return string
 	 */
 	protected function get_attribute_taxonomy_label( $name ) {
-		$tax    = get_taxonomy( $name );
+		$tax = get_taxonomy( $name );
+		if ( ! $tax ) {
+			return wc_attribute_taxonomy_slug( $name );
+		}
 		$labels = get_taxonomy_labels( $tax );
 
 		return $labels->singular_name;
@@ -1222,7 +1233,7 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 
 		// Stock status.
 		if ( isset( $request['in_stock'] ) ) {
-			$stock_status = true === $request['in_stock'] ? 'instock' : 'outofstock';
+			$stock_status = true === $request['in_stock'] ? ProductStockStatus::IN_STOCK : ProductStockStatus::OUT_OF_STOCK;
 		} else {
 			$stock_status = $product->get_stock_status();
 		}
@@ -1248,7 +1259,7 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 				$product->set_manage_stock( 'no' );
 				$product->set_backorders( 'no' );
 				$product->set_stock_quantity( '' );
-				$product->set_stock_status( 'instock' );
+				$product->set_stock_status( ProductStockStatus::IN_STOCK );
 			} elseif ( $product->get_manage_stock() ) {
 				// Stock status is always determined by children so sync later.
 				if ( ! $product->is_type( ProductType::VARIABLE ) ) {
@@ -1346,7 +1357,7 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 			}
 
 			if ( isset( $request['button_text'] ) ) {
-				$product->set_button_text( $request['button_text'] );
+				$product->set_button_text( sanitize_text_field( $request['button_text'] ) );
 			}
 		}
 
@@ -1441,7 +1452,7 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 			}
 
 			if ( isset( $data['in_stock'] ) ) {
-				$variation->set_stock_status( true === $data['in_stock'] ? 'instock' : 'outofstock' );
+				$variation->set_stock_status( true === $data['in_stock'] ? ProductStockStatus::IN_STOCK : ProductStockStatus::OUT_OF_STOCK );
 			}
 
 			if ( isset( $data['backorders'] ) ) {
@@ -1797,8 +1808,8 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 				'catalog_visibility' => array(
 					'description' => __( 'Catalog visibility.', 'woocommerce' ),
 					'type'        => 'string',
-					'default'     => 'visible',
-					'enum'        => array( 'visible', 'catalog', 'search', 'hidden' ),
+					'default'     => CatalogVisibility::VISIBLE,
+					'enum'        => array( CatalogVisibility::VISIBLE, CatalogVisibility::CATALOG, CatalogVisibility::SEARCH, CatalogVisibility::HIDDEN ),
 					'context'     => array( 'view', 'edit' ),
 				),
 				'description' => array(
@@ -1936,8 +1947,8 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 				'tax_status' => array(
 					'description' => __( 'Tax status.', 'woocommerce' ),
 					'type'        => 'string',
-					'default'     => 'taxable',
-					'enum'        => array( 'taxable', 'shipping', 'none' ),
+					'default'     => ProductTaxStatus::TAXABLE,
+					'enum'        => array( ProductTaxStatus::TAXABLE, ProductTaxStatus::SHIPPING, ProductTaxStatus::NONE ),
 					'context'     => array( 'view', 'edit' ),
 				),
 				'tax_class' => array(
@@ -1953,7 +1964,7 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 				),
 				'stock_quantity' => array(
 					'description' => __( 'Stock quantity.', 'woocommerce' ),
-					'type'        => has_filter( 'woocommerce_stock_amount', 'intval' ) ? 'integer' : 'number',
+					'type'        => wc_is_stock_amount_integer() ? 'integer' : 'number',
 					'context'     => array( 'view', 'edit' ),
 				),
 				'in_stock' => array(
@@ -2395,8 +2406,8 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 							'tax_status' => array(
 								'description' => __( 'Tax status.', 'woocommerce' ),
 								'type'        => 'string',
-								'default'     => 'taxable',
-								'enum'        => array( 'taxable', 'shipping', 'none' ),
+								'default'     => ProductTaxStatus::TAXABLE,
+								'enum'        => array( ProductTaxStatus::TAXABLE, ProductTaxStatus::SHIPPING, ProductTaxStatus::NONE ),
 								'context'     => array( 'view', 'edit' ),
 							),
 							'tax_class' => array(
@@ -2406,7 +2417,7 @@ class WC_REST_Products_V1_Controller extends WC_REST_Posts_Controller {
 							),
 							'manage_stock' => array(
 								'description' => __( 'Stock management at variation level.', 'woocommerce' ),
-								'type'        => 'boolean',
+								'type'        => array( 'boolean', 'string' ),
 								'default'     => false,
 								'context'     => array( 'view', 'edit' ),
 							),

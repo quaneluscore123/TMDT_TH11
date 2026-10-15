@@ -3,6 +3,8 @@
  * Loads WooCommerce packages from the /packages directory. These are packages developed outside of core.
  */
 
+declare( strict_types=1 );
+
 namespace Automattic\WooCommerce;
 
 use Automattic\Jetpack\Constants;
@@ -27,12 +29,14 @@ class Packages {
 	 *
 	 * @var array Key is the package name/directory, value is the main package class which handles init.
 	 */
-	protected static $packages = array();
+	protected static $packages = array(
+		'email-editor' => '\\Automattic\\WooCommerce\\Internal\\EmailEditor\\Package',
+	);
 
 	/**
 	 * Array of package names and their main package classes.
 	 *
-	 * One a package has been merged into WooCommerce Core it should be moved from the package list and placed in
+	 * Once a package has been merged into WooCommerce Core it should be moved from the package list and placed in
 	 * this list. This will ensure that the feature plugin is disabled as well as provide the class to handle
 	 * initialization for the now-merged feature plugin.
 	 *
@@ -56,7 +60,8 @@ class Packages {
 	 * @var array Key is the package name/directory, value is the main package class which handles init.
 	 */
 	protected static $merged_packages = array(
-		'woocommerce-brands' => '\\Automattic\\WooCommerce\\Internal\\Brands',
+		'woocommerce-brands'                      => '\\Automattic\\WooCommerce\\Internal\\Brands',
+		'woocommerce-additional-variation-images' => '\\Automattic\\WooCommerce\\Internal\\VariationGallery\\Package',
 	);
 
 
@@ -86,7 +91,7 @@ class Packages {
 	}
 
 	/**
-	 * Checks a package exists by looking for it's directory.
+	 * Checks a package exists by looking for its directory.
 	 *
 	 * @param string $package Package name.
 	 * @return boolean
@@ -96,7 +101,7 @@ class Packages {
 	}
 
 	/**
-	 * Checks a package exists by looking for it's directory.
+	 * Checks if a class name corresponds to a merged package and should be loaded.
 	 *
 	 * @param string $class_name Class name.
 	 * @return boolean
@@ -188,7 +193,16 @@ class Packages {
 		}
 
 		// Scroll through all of the active plugins and disable them if they're merged packages.
-		$active_plugins = get_option( 'active_plugins', array() );
+		$active_plugins = (array) get_option( 'active_plugins', array() );
+		if ( is_multisite() ) {
+			$active_plugins = array_unique(
+				array_merge(
+					$active_plugins,
+					array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) )
+				)
+			);
+		}
+
 		// Deactivate the plugin if possible so that there are no conflicts.
 		foreach ( $active_plugins as $active_plugin_path ) {
 			$plugin_file = basename( plugin_basename( $active_plugin_path ), '.php' );
@@ -204,7 +218,7 @@ class Packages {
 			deactivate_plugins( $active_plugin_path );
 			add_action(
 				'admin_notices',
-				function() use ( $plugin_data ) {
+				function () use ( $plugin_data ) {
 					echo '<div class="error"><p>';
 					printf(
 					/* translators: %s: is referring to the plugin's name. */
@@ -326,7 +340,7 @@ class Packages {
 					/* Translators: %s package name. */
 					esc_html__( 'Missing the WooCommerce %s package', 'woocommerce' ),
 					'<code>' . esc_html( $package ) . '</code>'
-				) . ' - ' . esc_html__( 'Your installation of WooCommerce is incomplete. If you installed WooCommerce from GitHub, please refer to this document to set up your development environment: https://github.com/woocommerce/woocommerce/wiki/How-to-set-up-WooCommerce-development-environment', 'woocommerce' )
+				) . ' - ' . esc_html__( 'Your installation of WooCommerce is incomplete. If you installed WooCommerce from GitHub, please refer to this document to set up your development environment: https://developer.woocommerce.com/docs/contribution/contributing/#setting-up-your-development-environment', 'woocommerce' )
 			);
 		}
 		add_action(
@@ -349,7 +363,7 @@ class Packages {
 						printf(
 							/* translators: 1: is a link to a support document. 2: closing link */
 							esc_html__( 'Your installation of WooCommerce is incomplete. If you installed WooCommerce from GitHub, %1$splease refer to this document%2$s to set up your development environment.', 'woocommerce' ),
-							'<a href="' . esc_url( 'https://github.com/woocommerce/woocommerce/wiki/How-to-set-up-WooCommerce-development-environment' ) . '" target="_blank" rel="noopener noreferrer">',
+							'<a href="' . esc_url( 'https://developer.woocommerce.com/docs/contribution/contributing/#setting-up-your-development-environment' ) . '" target="_blank" rel="noopener noreferrer">',
 							'</a>'
 						);
 						?>

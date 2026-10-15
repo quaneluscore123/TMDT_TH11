@@ -26,6 +26,7 @@ class PickupLocation extends WC_Shipping_Method {
 	 * Constructor.
 	 */
 	public function __construct() {
+		parent::__construct();
 		$this->id                 = 'pickup_location';
 		$this->method_title       = __( 'Local pickup', 'woocommerce' );
 		$this->method_description = __( 'Allow customers to choose a local pickup location during checkout.', 'woocommerce' );
@@ -37,7 +38,7 @@ class PickupLocation extends WC_Shipping_Method {
 	 */
 	public function init() {
 		$this->enabled          = $this->get_option( 'enabled' );
-		$this->title            = $this->get_option( 'title' );
+		$this->title            = $this->get_option( 'title', __( 'Pickup', 'woocommerce' ) );
 		$this->tax_status       = $this->get_option( 'tax_status' );
 		$this->cost             = $this->get_option( 'cost' );
 		$this->supports         = [ 'settings', 'local-pickup' ];
@@ -98,6 +99,7 @@ class PickupLocation extends WC_Shipping_Method {
 				if ( ! $location['enabled'] ) {
 					continue;
 				}
+				$has_valid_address = $this->has_valid_pickup_location( $location['address'] );
 				$this->add_rate(
 					array(
 						'id'        => $this->id . ':' . $index,
@@ -105,10 +107,13 @@ class PickupLocation extends WC_Shipping_Method {
 						'label'     => wp_kses_post( $this->title . ' (' . $location['name'] . ')' ),
 						'package'   => $package,
 						'cost'      => $this->cost,
+						// `_pickup_location_address` is hidden (underscore-prefixed) structured address data, captured at
+						// purchase time, used to derive the order tax location. See ShippingController::filter_order_tax_location().
 						'meta_data' => array(
-							'pickup_location' => wp_kses_post( $location['name'] ),
-							'pickup_address'  => $this->has_valid_pickup_location( $location['address'] ) ? wc()->countries->get_formatted_address( $location['address'], ', ' ) : '',
-							'pickup_details'  => wp_kses_post( $location['details'] ),
+							'pickup_location'          => wp_kses_post( $location['name'] ),
+							'pickup_address'           => $has_valid_address ? wc()->countries->get_formatted_address( $location['address'], ', ' ) : '',
+							'pickup_details'           => wp_kses_post( $location['details'] ),
+							'_pickup_location_address' => $has_valid_address ? $location['address'] : array(),
 						),
 					)
 				);
@@ -144,6 +149,8 @@ class PickupLocation extends WC_Shipping_Method {
 				return __( 'Pickup location', 'woocommerce' );
 			case 'pickup_address':
 				return __( 'Pickup address', 'woocommerce' );
+			case 'pickup_details':
+				return __( 'Pickup details', 'woocommerce' );
 		}
 		return $label;
 	}

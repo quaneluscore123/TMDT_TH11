@@ -10,6 +10,7 @@
 
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductType;
+use Automattic\WooCommerce\Enums\CatalogVisibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -165,12 +166,12 @@ class WC_Product_Variation extends WC_Product_Simple {
 	public function get_permalink( $item_object = null ) {
 		$url = get_permalink( $this->get_parent_id() );
 
-		if ( ! empty( $item_object['variation'] ) ) {
-			$data = $item_object['variation'];
-		} elseif ( ! empty( $item_object['item_meta_array'] ) ) {
+		if ( ! empty( $item_object['item_meta_array'] ) ) {
 			$data_keys   = array_map( 'wc_variation_attribute_name', wp_list_pluck( $item_object['item_meta_array'], 'key' ) );
 			$data_values = wp_list_pluck( $item_object['item_meta_array'], 'value' );
 			$data        = array_intersect_key( array_combine( $data_keys, $data_values ), $this->get_variation_attributes() );
+		} elseif ( ! empty( $item_object['variation'] ) && is_array( $item_object['variation'] ) ) {
+			$data = $item_object['variation'];
 		} else {
 			$data = $this->get_variation_attributes();
 		}
@@ -480,7 +481,7 @@ class WC_Product_Variation extends WC_Product_Simple {
 				'shipping_class_id'  => 0,
 				'image_id'           => 0,
 				'purchase_note'      => '',
-				'catalog_visibility' => 'visible',
+				'catalog_visibility' => CatalogVisibility::VISIBLE,
 			)
 		);
 
@@ -508,9 +509,21 @@ class WC_Product_Variation extends WC_Product_Simple {
 
 	/**
 	 * Set attributes. Unlike the parent product which uses terms, variations are assigned
-	 * specific attributes using name value pairs.
+	 * specific attributes using name-value pairs. Taxonomy attribute values must use term
+	 * slugs, which can be URL-encoded and differ from the term name.
 	 *
-	 * @param array $raw_attributes array of raw attributes.
+	 * For example, if a global "Size" attribute has a term named "7½", whose stored
+	 * slug is "7%c2%bd", configure the variation using that term slug:
+	 *
+	 * $variation->set_attributes(
+	 *     array(
+	 *         'pa_size' => '7%c2%bd',
+	 *     )
+	 * );
+	 *
+	 * @param array $raw_attributes Array of raw attributes.
+	 *
+	 * @since 3.0.0
 	 */
 	public function set_attributes( $raw_attributes ) {
 		$raw_attributes = (array) $raw_attributes;
@@ -558,7 +571,7 @@ class WC_Product_Variation extends WC_Product_Simple {
 		 * @param bool $purchasable If the variation is purchasable.
 		 * @param object $variation The variation object.
 		 */
-		return apply_filters( 'woocommerce_variation_is_purchasable', $this->variation_is_visible() && parent::is_purchasable() && ( ProductStatus::PUBLISH === $this->parent_data['status'] || current_user_can( 'edit_post', $this->get_parent_id() ) ), $this );
+		return apply_filters( 'woocommerce_variation_is_purchasable', $this->variation_is_visible() && parent::is_purchasable(), $this );
 	}
 
 	/**

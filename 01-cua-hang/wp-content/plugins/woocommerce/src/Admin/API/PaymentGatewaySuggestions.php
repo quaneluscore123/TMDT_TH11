@@ -13,7 +13,7 @@ use Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions\Init as Sugg
 defined( 'ABSPATH' ) || exit;
 
 /**
- * PaymentGatewaySuggetsions Controller.
+ * PaymentGatewaySuggestions Controller.
  *
  * @internal
  * @extends WC_REST_Data_Controller
@@ -45,7 +45,7 @@ class PaymentGatewaySuggestions extends \WC_REST_Data_Controller {
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_suggestions' ),
-					'permission_callback' => array( $this, 'get_permission_check' ),
+					'permission_callback' => array( $this, 'user_can_manage_woocommerce' ),
 					'args'                => array(
 						'force_default_suggestions' => array(
 							'type'        => 'boolean',
@@ -80,9 +80,22 @@ class PaymentGatewaySuggestions extends \WC_REST_Data_Controller {
 	 */
 	public function get_permission_check( $request ) {
 		if ( ! current_user_can( 'install_plugins' ) ) {
-			return new \WP_Error( 'woocommerce_rest_cannot_update', __( 'Sorry, you cannot manage plugins.', 'woocommerce' ), array( 'status' => rest_authorization_required_code() ) );
+			return new \WP_Error( 'woocommerce_rest_cannot_update', __( 'You do not have permissions to manage plugins. Please contact your site administrator.', 'woocommerce' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		return true;
+	}
+
+	/**
+	 * Check if a given request has access to manage woocommerce.
+	 *
+	 * @return \WP_Error|boolean
+	 */
+	public function user_can_manage_woocommerce() {
+		if ( current_user_can( 'manage_woocommerce' ) ) {
+			return true;
+		}
+
+		return new \WP_Error( 'woocommerce_rest_invalid_user', __( 'You are not allowed to make this request.', 'woocommerce' ), array( 'status' => rest_authorization_required_code() ) );
 	}
 
 	/**
@@ -169,14 +182,14 @@ class PaymentGatewaySuggestions extends \WC_REST_Data_Controller {
 					'readonly'    => true,
 				),
 				'transaction_processors'  => array(
-					'description'         => __( 'Array of transaction processors and their images.', 'woocommerce' ),
-					'type'                => 'object',
-					'addtionalProperties' => array(
+					'description'          => __( 'Array of transaction processors and their images.', 'woocommerce' ),
+					'type'                 => 'object',
+					'additionalProperties' => array(
 						'type'   => 'string',
 						'format' => 'uri',
 					),
-					'context'             => array( 'view', 'edit' ),
-					'readonly'            => true,
+					'context'              => array( 'view', 'edit' ),
+					'readonly'             => true,
 				),
 			),
 		);

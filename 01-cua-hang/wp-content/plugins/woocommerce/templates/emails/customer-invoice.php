@@ -1,6 +1,6 @@
 <?php
 /**
- * Customer invoice email
+ * Customer order details email
  *
  * This template can be overridden by copying it to yourtheme/woocommerce/emails/customer-invoice.php.
  *
@@ -12,7 +12,7 @@
  *
  * @see https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates\Emails
- * @version 9.7.0
+ * @version 11.1.0
  */
 
 use Automattic\WooCommerce\Enums\OrderStatus;
@@ -32,9 +32,16 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 
 <?php echo $email_improvements_enabled ? '<div class="email-introduction">' : ''; ?>
-<?php /* translators: %s: Customer first name */ ?>
-<p><?php printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
-
+<p>
+<?php
+if ( ! empty( $order->get_billing_first_name() ) ) {
+	/* translators: %s: Customer first name */
+	printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) );
+} else {
+	printf( esc_html__( 'Hi,', 'woocommerce' ) );
+}
+?>
+</p>
 <?php if ( $order->needs_payment() ) { ?>
 	<p>
 	<?php
@@ -50,7 +57,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 				)
 			),
 			esc_html( get_bloginfo( 'name', 'display' ) ),
-			'<a href="' . esc_url( $order->get_checkout_payment_url() ) . '">' . esc_html__( 'Pay for this order', 'woocommerce' ) . '</a>'
+			'<a href="' . esc_url( $order->get_checkout_payment_url() ) . '" class="email-payment-link">' . esc_html__( 'Pay for this order', 'woocommerce' ) . '</a>'
 		);
 	} else {
 		printf(
@@ -64,7 +71,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 				)
 			),
 			esc_html( get_bloginfo( 'name', 'display' ) ),
-			'<a href="' . esc_url( $order->get_checkout_payment_url() ) . '">' . esc_html__( 'Pay for this order', 'woocommerce' ) . '</a>'
+			'<a href="' . esc_url( $order->get_checkout_payment_url() ) . '" class="email-payment-link">' . esc_html__( 'Pay for this order', 'woocommerce' ) . '</a>'
 		);
 	}
 	?>
@@ -113,9 +120,9 @@ do_action( 'woocommerce_email_customer_details', $order, $sent_to_admin, $plain_
  * Show user-defined additional content - this is set in each email's settings.
  */
 if ( $additional_content ) {
-	echo $email_improvements_enabled ? '<div class="email-additional-content">' : '';
+	echo $email_improvements_enabled ? '<table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation"><tr><td class="email-additional-content">' : '';
 	echo wp_kses_post( wpautop( wptexturize( $additional_content ) ) );
-	echo $email_improvements_enabled ? '</div>' : '';
+	echo $email_improvements_enabled ? '</td></tr></table>' : '';
 }
 
 /**

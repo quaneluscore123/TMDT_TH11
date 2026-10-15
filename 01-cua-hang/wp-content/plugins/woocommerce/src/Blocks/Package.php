@@ -25,7 +25,7 @@ class Package {
 
 	/**
 	 * For back compat this is provided. Ideally, you should register your
-	 * class with Automattic\Woocommerce\Blocks\Container and make Package a
+	 * class with Automattic\WooCommerce\Blocks\Container and make Package a
 	 * dependency.
 	 *
 	 * @since 2.5.0
@@ -106,13 +106,6 @@ class Package {
 					return new Bootstrap(
 						$container
 					);
-				}
-			);
-			// register Bootstrap.
-			$container->register(
-				Migration::class,
-				function () {
-					return new Migration();
 				}
 			);
 		}

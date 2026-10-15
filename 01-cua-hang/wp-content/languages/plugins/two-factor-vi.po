@@ -1,0 +1,97 @@
+# Translation of Plugins - Two Factor - Stable (latest release) in Vietnamese
+# This file is distributed under the same license as the Plugins - Two Factor - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2022-10-17 16:17:47+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: GlotPress/4.0.3\n"
+"Language: vi_VN\n"
+"Project-Id-Version: Plugins - Two Factor - Stable (latest release)\n"
+
+#: providers/class-two-factor-email.php:375
+msgid "Resend Code"
+msgstr "Gửi lại mã"
+
+#: class-two-factor-core.php:984 class-two-factor-core.php:1615
+msgid "Failed to create a login nonce."
+msgstr "Không thể tạo một tên đăng nhập nonce."
+
+#. Plugin Name of the plugin
+#: two-factor.php
+msgid "Two Factor"
+msgstr "Two Factor"
+
+#: providers/class-two-factor-totp.php:250
+msgid "Unable to save Two Factor Authentication code. Please re-scan the QR code and enter the code provided by your application."
+msgstr "Không thể lưu mã Xác thực hai yếu tố. Vui lòng quét lại mã QR và nhập mã do ứng dụng của bạn cung cấp."
+
+#: providers/class-two-factor-totp.php:401
+#: providers/class-two-factor-totp.php:791
+msgid "Authentication Code:"
+msgstr "Mã xác thực:"
+
+#. translators: %s: email address
+#: providers/class-two-factor-email.php:443
+msgid "Authentication codes will be sent to %s."
+msgstr "Mã xác thực sẽ được gửi tới %s."
+
+#: providers/class-two-factor-email.php:360
+msgid "A verification code has been sent to the email address associated with your account."
+msgstr "Mã xác minh đã được gửi đến địa chỉ email được liên kết với tài khoản của bạn."
+
+#: providers/class-two-factor-email.php:56
+msgctxt "Provider Label"
+msgid "Email"
+msgstr "Email"
+
+#: providers/class-two-factor-dummy.php:60
+msgid "Yup."
+msgstr "Yup."
+
+#: providers/class-two-factor-dummy.php:50
+msgid "Are you really you?"
+msgstr "Bạn có thực sự là bạn?"
+
+#: providers/class-two-factor-dummy.php:33
+msgctxt "Provider Label"
+msgid "Dummy Method"
+msgstr "Phương pháp giả"
+
+#: providers/class-two-factor-email.php:366
+msgid "Verification Code:"
+msgstr "Mã xác nhận:"
+
+#: providers/class-two-factor-backup-codes.php:219
+msgid "Download Codes"
+msgstr "Tải mã về"
+
+#: class-two-factor-core.php:2148 class-two-factor-core.php:2153
+msgid "Two-Factor Options"
+msgstr "Tùy chọn Two-Factor"
+
+#: class-two-factor-core.php:2066
+msgid "Disabled"
+msgstr "Tắt"
+
+#: class-two-factor-core.php:2045 two-factor.php:92
+msgid "Two-Factor"
+msgstr "Two-Factor"
+
+#: class-two-factor-core.php:1676
+msgid "You have logged in successfully."
+msgstr "Bạn đã đăng nhập thành công."
+
+#: class-two-factor-core.php:1862
+msgid "ERROR: Invalid verification code."
+msgstr "LỖI: Mã xác minh không hợp lệ."
+
+#: includes/function.login-header.php:104
+msgid "https://wordpress.org/"
+msgstr "https://vi.wordpress.org/"
+
+#: includes/function.login-header.php:133
+msgid "Powered by WordPress"
+msgstr "Được tạo bởi WordPress"

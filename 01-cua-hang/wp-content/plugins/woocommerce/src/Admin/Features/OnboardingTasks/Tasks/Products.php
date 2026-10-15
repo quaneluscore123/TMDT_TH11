@@ -3,15 +3,24 @@
 namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
 
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
+use Automattic\WooCommerce\Admin\Features\OnboardingTasks\TaskList;
 use Automattic\WooCommerce\Enums\ProductStatus;
-use Automattic\WooCommerce\Internal\Admin\WCAdminAssets;
 use Automattic\WooCommerce\Internal\Admin\Onboarding\OnboardingProfile;
+use Automattic\WooCommerce\Internal\Admin\WCAdminAssets;
+use Automattic\WooCommerce\Internal\Utilities\ProductUtil;
 
 /**
  * Products Task
  */
 class Products extends Task {
-	const PRODUCT_COUNT_TRANSIENT_NAME = 'woocommerce_product_task_product_count_transient';
+	const HAS_PRODUCT_TRANSIENT = 'woocommerce_product_task_has_product_transient';
+
+	/**
+	 * Whether a deferred revert check has already been scheduled for this request.
+	 *
+	 * @var bool
+	 */
+	private static $revert_scheduled = false;
 
 	/**
 	 * Constructor
@@ -20,14 +29,41 @@ class Products extends Task {
 	 */
 	public function __construct( $task_list ) {
 		parent::__construct( $task_list );
-		add_action( 'admin_enqueue_scripts', array( $this, 'possibly_add_manual_return_notice_script' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'possibly_add_import_return_notice_script' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'possibly_add_load_sample_return_notice_script' ) );
+		// Onboarding tasks open a pre-created draft via post.php, which WordPress otherwise highlights as All Products.
+		add_filter( 'submenu_file', array( $this, 'highlight_add_product_menu' ) );
 
-		add_action( 'woocommerce_update_product', array( $this, 'delete_product_count_cache' ) );
-		add_action( 'woocommerce_new_product', array( $this, 'delete_product_count_cache' ) );
-		add_action( 'wp_trash_post', array( $this, 'delete_product_count_cache' ) );
-		add_action( 'untrashed_post', array( $this, 'delete_product_count_cache' ) );
+		add_action( 'woocommerce_update_product', array( $this, 'maybe_set_has_product_transient' ), 10, 2 );
+		add_action( 'woocommerce_new_product', array( $this, 'maybe_set_has_product_transient' ), 10, 2 );
+		add_action( 'untrashed_post', array( $this, 'maybe_set_has_product_transient_on_untrashed_post' ) );
+
+		if ( ! $this->is_complete() ) {
+			add_action( 'current_screen', array( $this, 'maybe_redirect_to_add_product_tasklist' ), 30, 0 );
+		}
+
+		add_action( 'trashed_post', array( $this, 'on_product_trashed' ) );
+		add_action( 'deleted_post_product', array( $this, 'on_product_deleted' ) );
+	}
+
+	/**
+	 * Highlight Add product while creating a product from the onboarding task.
+	 *
+	 * @internal
+	 *
+	 * @param mixed $submenu_file Current submenu file.
+	 * @return mixed
+	 */
+	public function highlight_add_product_menu( $submenu_file ) {
+		$screen   = get_current_screen();
+		$tutorial = wc_clean( wp_unslash( $_GET['tutorial'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$tutorial = is_string( $tutorial ) ? $tutorial : '';
+
+		if ( ! $this->is_active() || ! wc_string_to_bool( $tutorial ) || ! $screen || 'post' !== $screen->base || 'product' !== $screen->post_type ) {
+			return $submenu_file;
+		}
+
+		return 'post-new.php?post_type=product';
 	}
 
 	/**
@@ -37,6 +73,24 @@ class Products extends Task {
 	 */
 	public function get_id() {
 		return 'products';
+	}
+
+	/**
+	 * Contextual image URL.
+	 *
+	 * @return string
+	 */
+	public function get_image_url() {
+		return WC()->plugin_url() . '/assets/images/task_list/sales-section-illustration.svg';
+	}
+
+	/**
+	 * Alt text for the contextual image.
+	 *
+	 * @return string
+	 */
+	public function get_image_alt() {
+		return __( 'Products illustration', 'woocommerce' );
 	}
 
 	/**
@@ -81,6 +135,10 @@ class Products extends Task {
 	 * @return bool
 	 */
 	public function is_complete() {
+		if ( $this->has_previously_completed() ) {
+			return true;
+		}
+
 		return self::has_products();
 	}
 
@@ -95,26 +153,13 @@ class Products extends Task {
 		);
 	}
 
-
 	/**
-	 * Adds a return to task list notice when completing the manual product task.
+	 * If a task is always accessible, relevant for when a task list is hidden but a task can still be viewed.
 	 *
-	 * @param string $hook Page hook.
+	 * @return bool
 	 */
-	public function possibly_add_manual_return_notice_script( $hook ) {
-		global $post;
-		if ( $hook !== 'post.php' || $post->post_type !== 'product' ) {
-			return;
-		}
-
-		if ( ! $this->is_active() || ! $this->is_complete() ) {
-			return;
-		}
-
-		WCAdminAssets::register_script( 'wp-admin-scripts', 'onboarding-product-notice', true );
-
-		// Clear the active task transient to only show notice once per active session.
-		delete_transient( self::ACTIVE_TASK_TRANSIENT );
+	public function is_always_accessible() {
+		return true;
 	}
 
 	/**
@@ -164,12 +209,94 @@ class Products extends Task {
 	}
 
 	/**
-	 * Delete the product count transient used in has_products() method to refresh the cache.
+	 * Set the has products transient if the post qualifies as a user created product.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public function maybe_set_has_product_transient_on_untrashed_post( $post_id ) {
+		if ( get_post_type( $post_id ) !== 'product' ) {
+			return;
+		}
+
+		$this->maybe_set_has_product_transient( $post_id, wc_get_product( $post_id ) );
+	}
+
+	/**
+	 * Set the has products transient if the product qualifies as a user created product.
+	 *
+	 * @param int        $product_id Product ID.
+	 * @param WC_Product $product Product object.
+	 */
+	public function maybe_set_has_product_transient( $product_id, $product ) {
+		if ( ! $this->has_previously_completed() && ProductStatus::PUBLISH === $product->get_status() ) {
+			set_transient( self::HAS_PRODUCT_TRANSIENT, 'yes' );
+			$this->possibly_track_completion();
+		}
+	}
+
+	/**
+	 * Handle product trashing via the trashed_post hook.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return void
+	 */
+	public function on_product_trashed( $post_id ) {
+		if ( get_post_type( $post_id ) !== 'product' ) {
+			return;
+		}
+
+		$this->revert_task_completion();
+	}
+
+	/**
+	 * Handle permanent product deletion via the deleted_post_product hook.
 	 *
 	 * @return void
 	 */
-	public static function delete_product_count_cache() {
-		delete_transient( self::PRODUCT_COUNT_TRANSIENT_NAME );
+	public function on_product_deleted() {
+		$this->revert_task_completion();
+	}
+
+	/**
+	 * Schedule a deferred check to revert task completion if no products remain.
+	 *
+	 * Uses the shutdown hook so that bulk operations (e.g. trashing many products
+	 * at once) only trigger a single has_products() query instead of one per product.
+	 *
+	 * @return void
+	 */
+	private function revert_task_completion(): void {
+		delete_transient( self::HAS_PRODUCT_TRANSIENT );
+
+		if ( self::$revert_scheduled ) {
+			return;
+		}
+
+		self::$revert_scheduled = true;
+		add_action( 'shutdown', array( $this, 'maybe_revert_on_shutdown' ) );
+	}
+
+	/**
+	 * Re-check whether valid products still exist and revert task completion if none remain.
+	 *
+	 * Runs once at the end of the request via the shutdown hook.
+	 *
+	 * @return void
+	 */
+	public function maybe_revert_on_shutdown(): void {
+		self::$revert_scheduled = false;
+
+		if ( self::has_products() ) {
+			return;
+		}
+
+		$completed_tasks = get_option( self::COMPLETED_OPTION, array() );
+		$task_id         = $this->get_id();
+
+		if ( in_array( $task_id, $completed_tasks, true ) ) {
+			$completed_tasks = array_values( array_diff( $completed_tasks, array( $task_id ) ) );
+			update_option( self::COMPLETED_OPTION, $completed_tasks );
+		}
 	}
 
 	/**
@@ -178,42 +305,33 @@ class Products extends Task {
 	 * @return bool
 	 */
 	public static function has_products() {
-		$product_counts = get_transient( self::PRODUCT_COUNT_TRANSIENT_NAME );
-		if ( false !== $product_counts && is_numeric( $product_counts ) ) {
-			return (int) $product_counts > 0;
+		$product_exists = get_transient( self::HAS_PRODUCT_TRANSIENT );
+		if ( $product_exists ) {
+			return 'yes' === $product_exists;
 		}
 
-		$product_counts = self::count_user_products();
-		set_transient( self::PRODUCT_COUNT_TRANSIENT_NAME, $product_counts );
-		return $product_counts > 0;
+		$counts = wp_count_posts( 'product' );
+		$value  = isset( $counts->publish ) && $counts->publish > 0 ? 'yes' : 'no';
+		set_transient( self::HAS_PRODUCT_TRANSIENT, $value );
+		return 'yes' === $value;
 	}
 
 	/**
-	 * Count the number of user created products.
-	 * Generated products have the _headstart_post meta key.
+	 * Redirect to the add product tasklist if there are no products.
 	 *
-	 * @return int The number of user created products.
+	 * @return void
 	 */
-	private static function count_user_products() {
-		$args = array(
-			'post_type'   => 'product',
-			'post_status' => ProductStatus::PUBLISH,
-			'fields'      => 'ids',
-			'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'relation' => 'OR',
-				array(
-					'key'     => '_headstart_post',
-					'compare' => 'NOT EXISTS',
-				),
-				array(
-					'key'     => '_edit_last',
-					'compare' => 'EXISTS',
-				),
-			),
-		);
+	public function maybe_redirect_to_add_product_tasklist() {
+		$screen = get_current_screen();
+		if ( $screen && 'edit' === $screen->base && 'product' === $screen->post_type ) {
+			$counts = wc_get_container()->get( ProductUtil::class )->get_counts_for_type( 'product' );
+			$count  = array_sum( $counts ) - ( $counts[ ProductStatus::AUTO_DRAFT ] ?? 0 );
+			if ( $count > 0 ) {
+				return;
+			}
 
-		$products_query = new \WP_Query( $args );
-
-		return $products_query->found_posts;
+			wp_safe_redirect( admin_url( 'admin.php?page=wc-admin&path=/add-product&task=products' ) );
+			exit;
+		}
 	}
 }

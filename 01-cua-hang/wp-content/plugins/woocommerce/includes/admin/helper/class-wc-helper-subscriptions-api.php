@@ -66,6 +66,21 @@ class WC_Helper_Subscriptions_API {
 		);
 		register_rest_route(
 			'wc/v3',
+			'/marketplace/subscriptions/activate-plugin',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'activate_plugin' ),
+				'permission_callback' => array( __CLASS__, 'get_permission' ),
+				'args'                => array(
+					'product_key' => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+				),
+			)
+		);
+		register_rest_route(
+			'wc/v3',
 			'/marketplace/subscriptions/disconnect',
 			array(
 				'methods'             => 'POST',
@@ -90,6 +105,26 @@ class WC_Helper_Subscriptions_API {
 					'product_key' => array(
 						'required' => true,
 						'type'     => 'string',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'wc/v3',
+			'/marketplace/subscriptions/auto-update',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'set_auto_update' ),
+				'permission_callback' => array( __CLASS__, 'get_permission' ),
+				'args'                => array(
+					'product_key' => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+					'enabled'     => array(
+						'required' => true,
+						'type'     => 'boolean',
 					),
 				),
 			)
@@ -125,6 +160,11 @@ class WC_Helper_Subscriptions_API {
 	 * as JSON.
 	 */
 	public static function get_subscriptions() {
+		// If the site is connected, mark the time when the my subscriptions tab is first loaded.
+		if ( WC_Helper::is_site_connected() === true && empty( WC_Helper_Options::get( 'my_subscriptions_tab_loaded' ) ) ) {
+			WC_Helper_Options::update( 'my_subscriptions_tab_loaded', date( 'Y-m-d H:i:s' ) );
+		}
+
 		$subscriptions = WC_Helper::get_subscription_list_data();
 		wp_send_json(
 			array_values(
@@ -138,10 +178,42 @@ class WC_Helper_Subscriptions_API {
 	 * as JSON.
 	 */
 	public static function refresh() {
-		WC_Helper::refresh_helper_subscriptions();
-		WC_Helper::get_subscriptions();
-		WC_Helper::get_product_usage_notice_rules();
-		self::get_subscriptions();
+		try {
+			WC_Helper::refresh_helper_subscriptions();
+			WC_Helper::get_subscriptions();
+			WC_Helper::get_product_usage_notice_rules();
+			WC_Helper::fetch_helper_connection_info();
+
+			// get_subscriptions() swallows Helper API failures and returns an empty
+			// array, so a refresh that could not reach WooCommerce.com would
+			// otherwise report success over an empty list. Surface the recorded
+			// failure instead. Checked before serving, since serving exits.
+			$api_error = WC_Helper::get_api_error();
+
+			if ( null !== $api_error ) {
+				wp_send_json_error(
+					array(
+						'message' => $api_error['message'],
+						// The upstream WooCommerce.com status, carried in the body
+						// rather than used as the response status. The failure is
+						// between this store and WooCommerce.com, so relaying it
+						// would have this endpoint claim the caller was rate
+						// limited or unauthorized when neither is true.
+						'code'    => $api_error['code'],
+					),
+					400
+				);
+			}
+
+			self::get_subscriptions();
+		} catch ( Exception $e ) {
+			wp_send_json_error(
+				array(
+					'message' => $e->getMessage(),
+				),
+				400
+			);
+		}
 	}
 
 	/**
@@ -154,12 +226,23 @@ class WC_Helper_Subscriptions_API {
 		try {
 			$success = WC_Helper::activate_helper_subscription( $product_key );
 		} catch ( Exception $e ) {
-			wp_send_json_error(
-				array(
-					'message' => $e->getMessage(),
-				),
-				400
+			$error_data = array(
+				'message' => $e->getMessage(),
 			);
+
+			if ( $e instanceof WC_Data_Exception ) {
+				$error_data['code'] = $e->getErrorCode();
+				// Include extra data from the exception so the client can render contextual UI (e.g. maxed out sites list).
+				$error_data['data'] = $e->getErrorData();
+				$status_code        = (int) $e->getCode();
+				if ( 100 > $status_code || 599 < $status_code ) {
+					$status_code = 400;
+				}
+			} else {
+				$status_code = 400;
+			}
+
+			wp_send_json_error( $error_data, $status_code );
 		}
 		if ( $success ) {
 			wp_send_json_success(
@@ -175,6 +258,76 @@ class WC_Helper_Subscriptions_API {
 				400
 			);
 		}
+	}
+
+	/**
+	 * Activate a plugin for a WooCommerce.com subscription.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 */
+	public static function activate_plugin( $request ) {
+		$product_key = $request->get_param( 'product_key' );
+		try {
+			$success = WC_Helper::activate_plugin( $product_key );
+		} catch ( Exception $e ) {
+			wp_send_json_error(
+				array(
+					'message' => $e->getMessage(),
+				),
+				400
+			);
+		}
+		if ( $success ) {
+			wp_send_json_success(
+				array(
+					'message' => __( 'The plugin for your subscription has been activated.', 'woocommerce' ),
+				)
+			);
+		} else {
+			wp_send_json_error(
+				array(
+					'message' => __( 'The plugin for your subscription couldn\'t be activated.', 'woocommerce' ),
+				),
+				400
+			);
+		}
+	}
+
+	/**
+	 * Turn auto-updates on or off for a subscription's installed plugin or theme.
+	 *
+	 * @param WP_REST_Request<array<string, mixed>> $request Request object.
+	 *
+	 * @return void
+	 */
+	public static function set_auto_update( $request ): void {
+		if ( ! current_user_can( 'update_plugins' ) && ! current_user_can( 'update_themes' ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Sorry, you are not allowed to modify plugins or themes.', 'woocommerce' ),
+				),
+				403
+			);
+		}
+
+		try {
+			WC_Helper::set_subscription_auto_update( $request->get_param( 'product_key' ), (bool) $request->get_param( 'enabled' ) );
+		} catch ( Exception $e ) {
+			wp_send_json_error(
+				array(
+					'message' => $e->getMessage(),
+				),
+				400
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => $request->get_param( 'enabled' )
+					? __( 'Auto-updates are now on for this product.', 'woocommerce' )
+					: __( 'Auto-updates are now off for this product.', 'woocommerce' ),
+			)
+		);
 	}
 
 	/**
@@ -220,7 +373,7 @@ class WC_Helper_Subscriptions_API {
 		$product_key  = $request->get_param( 'product_key' );
 		$subscription = WC_Helper::get_subscription( $product_key );
 
-		if ( ! $subscription ) {
+		if ( ! is_array( $subscription ) ) {
 			wp_send_json_error(
 				array(
 					'message' => __( 'We couldn\'t find a subscription for this product.', 'woocommerce' ),
@@ -246,7 +399,25 @@ class WC_Helper_Subscriptions_API {
 			);
 		}
 
+		if ( ! in_array( $subscription['product_type'] ?? null, array( 'plugin', 'theme' ), true ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'This product type is not supported.', 'woocommerce' ),
+				),
+				400
+			);
+		}
+
 		if ( 'plugin' === $subscription['product_type'] ) {
+			// manage_woocommerce (checked by get_permission() above) doesn't imply activate_plugins.
+			if ( ! current_user_can( 'activate_plugins' ) ) {
+				wp_send_json_error(
+					array(
+						'message' => __( 'You do not have permission to activate plugins.', 'woocommerce' ),
+					),
+					403
+				);
+			}
 			$success = activate_plugin( $subscription['local']['path'] );
 			if ( is_wp_error( $success ) ) {
 				wp_send_json_error(
@@ -257,6 +428,14 @@ class WC_Helper_Subscriptions_API {
 				);
 			}
 		} elseif ( 'theme' === $subscription['product_type'] ) {
+			if ( ! current_user_can( 'switch_themes' ) ) {
+				wp_send_json_error(
+					array(
+						'message' => __( 'You do not have permission to switch themes.', 'woocommerce' ),
+					),
+					403
+				);
+			}
 			switch_theme( $subscription['local']['slug'] );
 			$theme = wp_get_theme();
 			if ( $subscription['local']['slug'] !== $theme->get_stylesheet() ) {

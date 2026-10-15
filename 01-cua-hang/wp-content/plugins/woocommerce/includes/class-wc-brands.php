@@ -38,7 +38,7 @@ class WC_Brands {
 		add_action( 'woocommerce_register_taxonomy', array( __CLASS__, 'init_taxonomy' ) );
 		add_action( 'widgets_init', array( $this, 'init_widgets' ) );
 
-		if ( ! wc_current_theme_is_fse_theme() ) {
+		if ( ! wp_is_block_theme() ) {
 			add_filter( 'template_include', array( $this, 'template_loader' ) );
 		}
 
@@ -46,7 +46,7 @@ class WC_Brands {
 		add_action( 'wp', array( $this, 'body_class' ) );
 
 		add_action( 'woocommerce_product_meta_end', array( $this, 'show_brand' ) );
-		add_filter( 'woocommerce_structured_data_product', array( $this, 'add_structured_data' ), 20 );
+		add_filter( 'woocommerce_structured_data_product', array( $this, 'add_structured_data' ), 20, 2 );
 
 		// duplicate product brands.
 		add_action( 'woocommerce_product_duplicate_before_save', array( $this, 'duplicate_store_temporary_brands' ), 10, 2 );
@@ -57,9 +57,7 @@ class WC_Brands {
 
 		add_filter( 'post_type_link', array( $this, 'post_type_link' ), 11, 2 );
 
-		if ( 'yes' === get_option( 'wc_brands_show_description' ) ) {
-			add_action( 'woocommerce_archive_description', array( $this, 'brand_description' ) );
-		}
+		add_action( 'woocommerce_archive_description', array( $this, 'brand_description' ) );
 
 		add_filter( 'woocommerce_product_query_tax_query', array( $this, 'update_product_query_tax_query' ), 10, 1 );
 
@@ -76,62 +74,31 @@ class WC_Brands {
 		// Layered nav widget compatibility.
 		add_filter( 'woocommerce_layered_nav_term_html', array( $this, 'woocommerce_brands_update_layered_nav_link' ), 10, 4 );
 
-		// Filter the list of taxonomies overridden for the original term count.
-		add_filter( 'woocommerce_change_term_counts', array( $this, 'add_brands_to_terms' ) );
-		add_action( 'woocommerce_product_set_stock_status', array( $this, 'recount_after_stock_change' ) );
-		add_action( 'woocommerce_update_options_products_inventory', array( $this, 'recount_all_brands' ) );
-
-		// Product Editor compatibility.
-		add_action( 'woocommerce_layout_template_after_instantiation', array( $this, 'wc_brands_on_block_template_register' ), 10, 3 );
-	}
-
-	/**
-	 * Add product_brand to the taxonomies overridden for the original term count.
-	 *
-	 * @param array $taxonomies List of taxonomies.
-	 *
-	 * @return array
-	 */
-	public function add_brands_to_terms( $taxonomies ) {
-		$taxonomies[] = 'product_brand';
-		return $taxonomies;
+		// Block theme integration.
+		add_filter( 'hooked_block_types', array( $this, 'hook_product_brand_block' ), 10, 4 );
+		add_filter( 'hooked_block_core/post-terms', array( $this, 'configure_product_brand_block' ), 10, 5 );
 	}
 
 	/**
 	 * Recount the brands after the stock amount changes.
 	 *
+	 * @deprecated 11.2.0 Use wc_recount_after_stock_change() instead.
+	 *
 	 * @param int $product_id Product ID.
 	 */
 	public function recount_after_stock_change( $product_id ) {
-		if ( 'yes' !== get_option( 'woocommerce_hide_out_of_stock_items' ) || empty( $product_id ) ) {
-			return;
-		}
-
-		$product_terms = get_the_terms( $product_id, 'product_brand' );
-
-		if ( $product_terms ) {
-			$product_brands = array();
-
-			foreach ( $product_terms as $term ) {
-				$product_brands[ $term->term_id ] = $term->parent;
-			}
-
-			_wc_term_recount( $product_brands, get_taxonomy( 'product_brand' ), false, false );
-		}
+		wc_deprecated_function( __METHOD__, '11.2.0', 'wc_recount_after_stock_change()' );
+		wc_recount_after_stock_change( $product_id );
 	}
 
 	/**
 	 * Recount all brands.
+	 *
+	 * @deprecated 11.2.0 Use wc_recount_all_terms() instead.
 	 */
 	public function recount_all_brands() {
-		$product_brands = get_terms(
-			array(
-				'taxonomy'   => 'product_brand',
-				'hide_empty' => false,
-				'fields'     => 'id=>parent',
-			)
-		);
-		_wc_term_recount( $product_brands, get_taxonomy( 'product_brand' ), true, false );
+		wc_deprecated_function( __METHOD__, '11.2.0', 'wc_recount_all_terms()' );
+		wc_recount_all_terms();
 	}
 
 	/**
@@ -171,6 +138,10 @@ class WC_Brands {
 			return $permalink;
 		}
 
+		if ( empty( $permalink ) ) {
+			return $permalink;
+		}
+
 		// Abort early if the placeholder rewrite tag isn't in the generated URL.
 		if ( false === strpos( $permalink, '%' ) ) {
 			return $permalink;
@@ -179,13 +150,15 @@ class WC_Brands {
 		// Get the custom taxonomy terms in use by this post.
 		$terms = get_the_terms( $post->ID, 'product_brand' );
 
-		if ( empty( $terms ) ) {
-			// If no terms are assigned to this post, use a string instead (can't leave the placeholder there).
-			$product_brand = _x( 'uncategorized', 'slug', 'woocommerce' );
-		} else {
+		// If no terms are assigned to this post, use a string instead (can't leave the placeholder there).
+		$product_brand = _x( 'uncategorized', 'slug', 'woocommerce' );
+
+		if ( is_array( $terms ) && ! empty( $terms ) ) {
 			// Replace the placeholder rewrite tag with the first term's slug.
-			$first_term    = array_shift( $terms );
-			$product_brand = $first_term->slug;
+			$first_term = array_shift( $terms );
+			if ( $first_term instanceof WP_Term ) {
+				$product_brand = $first_term->slug;
+			}
 		}
 
 		$find = array(
@@ -227,25 +200,74 @@ class WC_Brands {
 	 * Enqueues styles.
 	 */
 	public function styles() {
+		if ( ! $this->should_load_brands_styles() ) {
+			return;
+		}
+
 		$version = Constants::get_constant( 'WC_VERSION' );
 		wp_enqueue_style( 'brands-styles', WC()->plugin_url() . '/assets/css/brands.css', array(), $version );
+	}
+
+	/**
+	 * Determines if brands styles should be loaded on the current page.
+	 *
+	 * @since 10.4.0
+	 * @return bool
+	 */
+	private function should_load_brands_styles() {
+		global $post;
+
+		// Should load on brand taxonomy archive pages.
+		if ( is_tax( 'product_brand' ) ) {
+			return true;
+		}
+
+		// Should load on single product pages that have brands assigned.
+		if ( is_singular( 'product' ) && has_term( '', 'product_brand' ) ) {
+			return true;
+		}
+
+		// Check if any brand shortcodes are present in the content.
+		if ( $post && ! empty( $post->post_content ) ) {
+			$brand_shortcodes = array(
+				'brand_products',
+				'product_brand',
+				'product_brand_list',
+				'product_brand_thumbnails',
+				'product_brand_thumbnails_description',
+			);
+
+			foreach ( $brand_shortcodes as $shortcode ) {
+				if ( has_shortcode( $post->post_content, $shortcode ) ) {
+					return true;
+				}
+			}
+		}
+
+		// Check if any brand widgets are active.
+		if ( is_active_widget( false, false, 'wc_brands_brand_description' ) ||
+			is_active_widget( false, false, 'woocommerce_brand_nav' ) ||
+			is_active_widget( false, false, 'wc_brands_brand_thumbnails' ) ) {
+			return true;
+		}
+
+		/**
+		 * Filter whether brands styles should be loaded.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param bool $should_load Whether to load brands styles.
+		 */
+		return apply_filters( 'woocommerce_should_load_brands_styles', false );
 	}
 
 	/**
 	 * Initializes brand taxonomy.
 	 */
 	public static function init_taxonomy() {
-		$shop_page_id = wc_get_page_id( 'shop' );
+		// Get the custom brand permalink slug, or use the default translatable slug.
+		$slug = get_option( 'woocommerce_brand_permalink', '' );
 
-		$base_slug     = $shop_page_id > 0 && get_page( $shop_page_id ) ? get_page_uri( $shop_page_id ) : 'shop';
-		$category_base = get_option( 'woocommerce_prepend_shop_page_to_urls' ) === 'yes' ? trailingslashit( $base_slug ) : '';
-
-		$slug = $category_base . __( 'brand', 'woocommerce' );
-		if ( '' === $category_base ) {
-			$slug = get_option( 'woocommerce_brand_permalink', '' );
-		}
-
-		// Can't provide transatable string as get_option default.
 		if ( '' === $slug ) {
 			$slug = __( 'brand', 'woocommerce' );
 		}
@@ -264,11 +286,15 @@ class WC_Brands {
 				'register_taxonomy_product_brand',
 				array(
 					'hierarchical'          => true,
-					'update_count_callback' => '_update_post_term_count',
+					'update_count_callback' => '_wc_term_recount',
 					'label'                 => __( 'Brands', 'woocommerce' ),
 					'labels'                => array(
-						'name'              => __( 'Brands', 'woocommerce' ),
+						'name'              => __( 'Product brands', 'woocommerce' ),
 						'singular_name'     => __( 'Brand', 'woocommerce' ),
+						// Non-contextual on purpose: keeps the pre-existing `Brands` msgid so existing
+						// translations and `gettext_woocommerce` customizations keep applying. Guarded by
+						// WC_Brands_Test::test_product_brand_menu_name_uses_non_contextual_brands_translation().
+						'menu_name'         => __( 'Brands', 'woocommerce' ),
 						'template_name'     => _x( 'Products by Brand', 'Template name', 'woocommerce' ),
 						'search_items'      => __( 'Search Brands', 'woocommerce' ),
 						'all_items'         => __( 'All Brands', 'woocommerce' ),
@@ -279,6 +305,7 @@ class WC_Brands {
 						'add_new_item'      => __( 'Add New Brand', 'woocommerce' ),
 						'new_item_name'     => __( 'New Brand Name', 'woocommerce' ),
 						'not_found'         => __( 'No Brands Found', 'woocommerce' ),
+						'no_terms'          => __( 'No brands', 'woocommerce' ),
 						'back_to_items'     => __( '&larr; Go to Brands', 'woocommerce' ),
 					),
 
@@ -323,7 +350,7 @@ class WC_Brands {
 	 * Handles template usage so that we can use our own templates instead of the themes.
 	 *
 	 * Templates are in the 'templates' folder. woocommerce looks for theme
-	 * overides in /theme/woocommerce/ by default
+	 * overrides in /theme/woocommerce/ by default
 	 *
 	 * For beginners, it also looks for a woocommerce.php template first. If the user adds
 	 * this to the theme (containing a woocommerce() inside) this will be used for all
@@ -361,6 +388,10 @@ class WC_Brands {
 	 * Displays brand description.
 	 */
 	public function brand_description() {
+		if ( 'yes' !== get_option( 'wc_brands_show_description' ) ) {
+			return;
+		}
+
 		if ( ! is_tax( 'product_brand' ) ) {
 			return;
 		}
@@ -398,31 +429,57 @@ class WC_Brands {
 			$labels   = $taxonomy->labels;
 
 			/* translators: %s - Label name */
-			echo wc_get_brands( $post->ID, ', ', ' <span class="posted_in">' . sprintf( _n( '%s: ', '%s: ', $brand_count, 'woocommerce' ), $labels->singular_name, $labels->name ), '</span>' ); // phpcs:ignore WordPress.Security.EscapeOutput
+			$brand_output = wc_get_brands( $post->ID, ', ', ' <span class="posted_in">' . sprintf( _n( '%s: ', '%s: ', $brand_count, 'woocommerce' ), $labels->singular_name, $labels->name ), '</span>' );
+
+			/**
+			 * Filter the brand output in product meta.
+			 *
+			 * @since 9.8.0
+			 *
+			 * @param string $brand_output The HTML output for brands.
+			 * @param array  $terms        Array of brand term objects.
+			 * @param int    $post_id      The product ID.
+			 */
+			echo apply_filters( 'woocommerce_product_brands_output', $brand_output, $terms, $post->ID ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 	}
 
 	/**
 	 * Add structured data to product page.
 	 *
-	 * @param  array $markup Markup.
+	 * @param  array           $markup  Markup.
+	 * @param  WC_Product|null $product Product data.
 	 * @return array $markup
 	 */
-	public function add_structured_data( $markup ) {
+	public function add_structured_data( $markup, $product = null ) {
 		global $post;
+
+		if ( ! is_array( $markup ) ) {
+			$markup = array();
+		}
 
 		if ( array_key_exists( 'brand', $markup ) ) {
 			return $markup;
 		}
 
-		$brands = get_the_terms( $post->ID, 'product_brand' );
+		$product_id = $product instanceof WC_Product ? $product->get_id() : ( isset( $post->ID ) ? $post->ID : 0 );
+
+		if ( ! $product_id ) {
+			return $markup;
+		}
+
+		$brands = get_the_terms( $product_id, 'product_brand' );
 
 		if ( ! empty( $brands ) && is_array( $brands ) ) {
 			// Can only return one brand, so pick the first.
+			$brand_thumbnail = wc_get_brand_thumbnail_url( $brands[0]->term_id, 'full' );
 			$markup['brand'] = array(
 				'@type' => 'Brand',
 				'name'  => $brands[0]->name,
 			);
+			if ( $brand_thumbnail ) {
+				$markup['brand']['logo'] = $brand_thumbnail;
+			}
 		}
 
 		return $markup;
@@ -468,9 +525,21 @@ class WC_Brands {
 
 		$brands = wp_get_post_terms( $args['post_id'], 'product_brand', array( 'fields' => 'ids' ) );
 
+		if ( is_wp_error( $brands ) ) {
+			return '';
+		}
+
 		// Bail early if we don't have any brands registered.
 		if ( 0 === count( $brands ) ) {
 			return '';
+		}
+
+		$args['width']  = self::normalize_product_brand_shortcode_dimension( $args['width'] );
+		$args['height'] = self::normalize_product_brand_shortcode_dimension( $args['height'] );
+
+		if ( '' !== $args['width'] || '' !== $args['height'] ) {
+			$args['width']  = '' !== $args['width'] ? $args['width'] : 'auto';
+			$args['height'] = '' !== $args['height'] ? $args['height'] : 'auto';
 		}
 
 		ob_start();
@@ -484,11 +553,6 @@ class WC_Brands {
 			$args['thumbnail'] = $thumbnail;
 			$args['term']      = get_term_by( 'id', $brand, 'product_brand' );
 
-			if ( $args['width'] || $args['height'] ) {
-				$args['width']  = ! empty( $args['width'] ) ? $args['width'] : 'auto';
-				$args['height'] = ! empty( $args['height'] ) ? $args['height'] : 'auto';
-			}
-
 			wc_get_template(
 				'shortcodes/single-brand.php',
 				$args,
@@ -498,6 +562,18 @@ class WC_Brands {
 		}
 
 		return ob_get_clean();
+	}
+
+	/**
+	 * Normalize a product brand shortcode image dimension.
+	 *
+	 * @param mixed $dimension Shortcode dimension value.
+	 * @return string Normalized dimension.
+	 */
+	private static function normalize_product_brand_shortcode_dimension( $dimension ) {
+		$dimension = is_scalar( $dimension ) ? trim( (string) $dimension ) : '';
+
+		return is_numeric( $dimension ) ? $dimension . 'px' : $dimension;
 	}
 
 	/**
@@ -537,13 +613,6 @@ class WC_Brands {
 		$terms          = get_terms( array( 'taxonomy' => 'product_brand', 'hide_empty' => ( $show_empty_brands ? false : true ) ) );
 		$alphabet       = apply_filters( 'woocommerce_brands_list_alphabet', range( 'a', 'z' ) );
 		$numbers        = apply_filters( 'woocommerce_brands_list_numbers', '0-9' );
-
-		/**
-		 * Check for empty brands and remove them from the list.
-		 */
-		if ( ! $show_empty_brands ) {
-			$terms = $this->remove_terms_with_empty_products( $terms );
-		}
 
 		foreach ( $terms as $term ) {
 			$term_letter = $this->get_brand_name_first_character( $term->name );
@@ -643,17 +712,13 @@ class WC_Brands {
 			return;
 		}
 
-		if ( $hide_empty ) {
-			$brands = $this->remove_terms_with_empty_products( $brands );
-		}
-
 		ob_start();
 
 		wc_get_template(
 			'widgets/brand-thumbnails.php',
 			array(
 				'brands'        => $brands,
-				'columns'       => is_numeric( $args['columns'] ) ? intval( $args['columns'] ) : 4,
+				'columns'       => is_numeric( $args['columns'] ) ? max( 1, absint( $args['columns'] ) ) : 4,
 				'fluid_columns' => wp_validate_boolean( $args['fluid_columns'] ),
 			),
 			'woocommerce',
@@ -694,7 +759,7 @@ class WC_Brands {
 		$brands = get_terms(
 			'product_brand',
 			array(
-				'hide_empty' => $args['hide_empty'],
+				'hide_empty' => $hide_empty,
 				'orderby'    => $args['orderby'],
 				'exclude'    => $exclude,
 				'number'     => $args['number'],
@@ -706,17 +771,13 @@ class WC_Brands {
 			return;
 		}
 
-		if ( $hide_empty ) {
-			$brands = $this->remove_terms_with_empty_products( $brands );
-		}
-
 		ob_start();
 
 		wc_get_template(
 			'widgets/brand-thumbnails-description.php',
 			array(
 				'brands'  => $brands,
-				'columns' => $args['columns'],
+				'columns' => is_numeric( $args['columns'] ) ? max( 1, absint( $args['columns'] ) ) : 1,
 			),
 			'woocommerce',
 			WC()->plugin_path() . '/templates/brands/'
@@ -998,22 +1059,6 @@ class WC_Brands {
 	}
 
 	/**
-	 * Remove terms with empty products.
-	 *
-	 * @param WP_Term[] $terms The terms array that needs to be removed of empty products.
-	 *
-	 * @return WP_Term[]
-	 */
-	private function remove_terms_with_empty_products( $terms ) {
-		return array_filter(
-			$terms,
-			function ( $term ) {
-				return $term->count > 0;
-			}
-		);
-	}
-
-	/**
 	 * Invalidates the layered nav counts cache.
 	 *
 	 * @return void
@@ -1039,32 +1084,78 @@ class WC_Brands {
 	}
 
 	/**
-	 * Add a new block to the template.
+	 * Hooks the product brand terms block into single product templates.
 	 *
-	 * @param string                 $template_id Template ID.
-	 * @param string                 $template_area Template area.
-	 * @param BlockTemplateInterface $template Template instance.
+	 * @param array $hooked_block_types The array of hooked block types.
+	 * @param int $relative_position The relative position of the hooked block.
+	 * @param string $anchor_block_type The type of anchor block.
+	 * @param WP_Block_Template $context The context of the block.
+	 *
+	 * @return array The array of hooked block types.
 	 */
-	public function wc_brands_on_block_template_register( $template_id, $template_area, $template ) {
+	public function hook_product_brand_block( $hooked_block_types, $relative_position, $anchor_block_type, $context ) {
 
-		if ( 'simple-product' === $template->get_id() ) {
-			$section = $template->get_section_by_id( 'product-catalog-section' );
-			if ( $section !== null ) {
-				$section->add_block(
-					array(
-						'id'         => 'woocommerce-brands-select',
-						'blockName'  => 'woocommerce/product-taxonomy-field',
-						'order'      => 15,
-						'attributes' => array(
-							'label'       => __( 'Brands', 'woocommerce-brands' ),
-							'createTitle' => __( 'Create new brand', 'woocommerce-brands' ),
-							'slug'        => 'product_brand',
-							'property'    => 'brands',
-						),
-					)
-				);
-			}
+		// Only add the block as the last child of the product meta block
+		if ( 'woocommerce/product-meta' === $anchor_block_type &&
+			 'last_child' === $relative_position &&
+			 $context instanceof WP_Block_Template &&
+			 'single-product' === $context->slug ) {
+
+				remove_action( 'woocommerce_product_meta_end', array( $this, 'show_brand' ) );
+
+				// Check if the template already has a product brand block
+				if ( ! $this->template_already_has_brand_block( $context ) ) {
+					// Simply add the core/post-terms block type
+					$hooked_block_types[] = 'core/post-terms';
+				}
 		}
+
+		return $hooked_block_types;
+	}
+
+	/**
+	 * Check if the template already contains a product brand block.
+	 *
+	 * @param WP_Block_Template $template The template object.
+	 *
+	 * @return boolean True if template contains a brand block.
+	 */
+	private function template_already_has_brand_block( $template ) {
+		if ( ! $template || empty( $template->content ) ) {
+			return false;
+		}
+
+		return strpos( $template->content, '<!-- wp:post-terms {"term":"product_brand"' ) !== false;
+	}
+
+	/**
+	 * Configures the attributes for the hooked product brand terms block.
+	 *
+	 * @param array $parsed_hooked_block The parsed hooked block.
+	 * @param string $hooked_block_type The type of hooked block.
+	 * @param int $relative_position The relative position of the hooked block.
+	 * @param array $parsed_anchor_block The parsed anchor block.
+	 * @param WP_Block_Template $context The context of the block.
+	 *
+	 * @return array The parsed hooked block.
+	 */
+	public function configure_product_brand_block( $parsed_hooked_block, $hooked_block_type, $relative_position, $parsed_anchor_block, $context ) {
+		if ( is_null( $parsed_hooked_block ) ) {
+			return $parsed_hooked_block;
+		}
+
+		if ( 'core/post-terms' === $hooked_block_type &&
+			 'last_child' === $relative_position &&
+			 'woocommerce/product-meta' === $parsed_anchor_block['blockName'] &&
+			 empty( $parsed_anchor_block['attrs'] ) ) {
+
+			$parsed_hooked_block['attrs'] = array(
+				'term'	 => 'product_brand',
+				'prefix' => __( 'Brands: ', 'woocommerce' ),
+			);
+		}
+
+		return $parsed_hooked_block;
 	}
 }
 

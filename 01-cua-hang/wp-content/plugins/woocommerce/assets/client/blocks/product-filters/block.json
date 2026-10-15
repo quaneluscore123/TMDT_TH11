@@ -2,13 +2,10 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "woocommerce/product-filters",
-	"version": "1.0.0",
-	"title": "Product Filters (Experimental)",
-	"description": "Let shoppers filter products displayed on the page.",
+	"title": "Product Filters",
+	"description": "Add a set of filters shoppers can use.",
 	"category": "woocommerce",
-	"keywords": [
-		"WooCommerce"
-	],
+	"keywords": [ "WooCommerce" ],
 	"supports": {
 		"align": true,
 		"color": {
@@ -18,7 +15,6 @@
 			"enableContrastChecker": false,
 			"button": true
 		},
-		"multiple": true,
 		"inserter": true,
 		"interactivity": true,
 		"typography": {
@@ -29,29 +25,39 @@
 				"type": "flex",
 				"orientation": "vertical",
 				"flexWrap": "nowrap",
-				"justifyContent":"stretch"
+				"justifyContent": "stretch"
 			},
 			"allowEditing": false
+		},
+		"position": {
+			"sticky": true
 		},
 		"spacing": {
 			"blockGap": true
 		}
 	},
 	"textdomain": "woocommerce",
-	"usesContext": [ "postId", "query", "queryId" ],
-	"viewScript": "wc-product-filters-frontend",
-	"example": {},
+	"usesContext": [ "postId", "query", "queryId", "forcePageReload" ],
 	"attributes": {
-		"overlayIcon": {
-			"type": "string",
-			"default": "filter-icon-2"
+		"isPreview": {
+			"type": "boolean",
+			"default": false
 		},
-		"overlayIconSize": {
-			"type": "number"
-		},
-		"overlayButtonType": {
+		"overlayMode": {
 			"type": "string",
-			"default": "label-icon"
+			"enum": [ "off", "mobile", "always" ]
+		},
+		"overlayPosition": {
+			"type": "string",
+			"enum": [ "left", "right" ]
 		}
-	}
+	},
+	"example": {
+		"attributes": {
+			"isPreview": true
+		}
+	},
+	"viewScriptModule": "woocommerce/product-filters",
+	"style": "file:../woocommerce/product-filters-style.css",
+	"editorStyle": "file:../woocommerce/product-filters-editor.css"
 }

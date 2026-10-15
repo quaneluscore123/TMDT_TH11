@@ -1,4 +1,6 @@
 <?php
+declare( strict_types=1 );
+
 namespace Automattic\WooCommerce\StoreApi\Schemas\V1;
 
 /**
@@ -45,19 +47,19 @@ abstract class ItemSchema extends ProductSchema {
 				'properties'  => [
 					'minimum'     => [
 						'description' => __( 'The minimum quantity allowed for this line item.', 'woocommerce' ),
-						'type'        => 'integer',
+						'type'        => 'number',
 						'context'     => [ 'view', 'edit' ],
 						'readonly'    => true,
 					],
 					'maximum'     => [
 						'description' => __( 'The maximum quantity allowed for this line item.', 'woocommerce' ),
-						'type'        => 'integer',
+						'type'        => 'number',
 						'context'     => [ 'view', 'edit' ],
 						'readonly'    => true,
 					],
 					'multiple_of' => [
 						'description' => __( 'The amount that quantities increment by. Quantity must be an multiple of this value.', 'woocommerce' ),
-						'type'        => 'integer',
+						'type'        => 'number',
 						'context'     => [ 'view', 'edit' ],
 						'readonly'    => true,
 						'default'     => 1,
@@ -97,7 +99,7 @@ abstract class ItemSchema extends ProductSchema {
 			],
 			'low_stock_remaining'  => [
 				'description' => __( 'Quantity left in stock if stock is low, or null if not applicable.', 'woocommerce' ),
-				'type'        => [ 'integer', 'null' ],
+				'type'        => [ 'number', 'null' ],
 				'context'     => [ 'view', 'edit' ],
 				'readonly'    => true,
 			],
@@ -144,13 +146,19 @@ abstract class ItemSchema extends ProductSchema {
 				'items'       => [
 					'type'       => 'object',
 					'properties' => [
-						'attribute' => [
+						'raw_attribute' => [
+							'description' => __( 'Variation system generated attribute name.', 'woocommerce' ),
+							'type'        => 'string',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						],
+						'attribute'     => [
 							'description' => __( 'Variation attribute name.', 'woocommerce' ),
 							'type'        => 'string',
 							'context'     => [ 'view', 'edit' ],
 							'readonly'    => true,
 						],
-						'value'     => [
+						'value'         => [
 							'description' => __( 'Variation attribute value.', 'woocommerce' ),
 							'type'        => 'string',
 							'context'     => [ 'view', 'edit' ],
@@ -167,6 +175,12 @@ abstract class ItemSchema extends ProductSchema {
 				'items'       => [
 					'type'       => 'object',
 					'properties' => [
+						'raw_key' => [
+							'description' => __( 'Machine-readable name for the metadata, set by the extension that added it. Never translated, so clients can match on it.', 'woocommerce' ),
+							'type'        => 'string',
+							'context'     => [ 'view', 'edit' ],
+							'readonly'    => true,
+						],
 						'name'    => [
 							'description' => __( 'Name of the metadata.', 'woocommerce' ),
 							'type'        => 'string',
@@ -310,7 +324,9 @@ abstract class ItemSchema extends ProductSchema {
 				'context'     => [ 'view', 'edit' ],
 				'readonly'    => true,
 			],
-			self::EXTENDING_KEY    => $this->get_extended_schema( self::IDENTIFIER ),
+			// static:: so each subclass advertises the extensions registered against its own
+			// endpoint. self:: here would resolve to the inherited ProductSchema identifier.
+			self::EXTENDING_KEY    => $this->get_extended_schema( static::IDENTIFIER ),
 		];
 	}
 }

@@ -68,7 +68,7 @@ final class Experimental_Abtest {
 	private $platform = 'woocommerce';
 
 	/**
-	 * Whether trcking consent is given.
+	 * Whether tracking consent is given.
 	 *
 	 * @var bool
 	 */
@@ -116,24 +116,6 @@ final class Experimental_Abtest {
 		);
 
 		return $abtest->get_variation( $experiment_name ) === 'treatment';
-	}
-
-	/**
-	 * Returns true if the current user is in the treatment group of the given experiment.
-	 *
-	 * If an exception occurs, it will be handled and false will be returned.
-	 *
-	 * @param string $experiment_name Name of the experiment.
-	 * @param bool   $as_auth_wpcom_user Request variation as an auth wp user or not.
-	 *
-	 * @return bool True if the user is in the treatment group, false otherwise (including if an exception is thrown).
-	 */
-	public static function in_treatment_handled_exception( string $experiment_name, bool $as_auth_wpcom_user = false ) {
-		try {
-			return self::in_treatment( $experiment_name, $as_auth_wpcom_user );
-		} catch ( \Exception $e ) {
-			return false;
-		}
 	}
 
 	/**
